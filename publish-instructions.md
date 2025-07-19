@@ -21,6 +21,7 @@ If you need to create a release without pushing a tag, you can:
 ## Version Management
 
 The workspace uses a single version defined in the root `Cargo.toml`:
+
 ```toml
 [workspace.package]
 version = "1.0.0"
