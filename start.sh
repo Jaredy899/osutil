@@ -18,22 +18,15 @@ check() {
     unset message
 }
 
-findArch() {
-    case "$(uname -m)" in
-        x86_64|amd64) arch="x86_64" ;;
-        aarch64|arm64) arch="aarch64" ;;
-        *) check 1 "Unsupported architecture"
-    esac
-}
+# Check if running on macOS
+if [ "$(uname)" != "Darwin" ]; then
+    check 1 "This utility is designed for macOS only"
+fi
 
 getUrl() {
-    case "${arch}" in
-        x86_64) echo "https://github.com/Jaredy899/macutil/releases/latest/download/macutil";;
-        *) echo "https://github.com/Jaredy899/macutil/releases/latest/download/macutil-${arch}";;
-    esac
+    echo "https://github.com/Jaredy899/macutil/releases/latest/download/macutil"
 }
 
-findArch
 temp_file=$(mktemp)
 check $? "Creating the temporary file"
 

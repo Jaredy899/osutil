@@ -13,54 +13,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: [x86_64-unknown-linux-musl, aarch64-unknown-linux-musl]
-    
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install musl-tools
-        if: matrix.target == 'x86_64-unknown-linux-musl'
-        run: sudo apt-get update && sudo apt-get install musl-tools
-        
-      - name: Cache Cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-registry-
-
-      - name: Cache Cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-index-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Install cross-rs for cross-compilation
-        run: cargo install cross
-
-      - name: Build binary
-        run: cross build --release --target=${{ matrix.target }}
-
-      - name: Rename binary
-        if: matrix.target == 'aarch64-unknown-linux-musl'
-        run: mv target/${{ matrix.target }}/release/macutil target/${{ matrix.target }}/release/macutil-aarch64
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: macutil-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/macutil*
-
   build-macos:
     runs-on: macos-latest
     
@@ -87,17 +39,14 @@ jobs:
       - name: Build binary
         run: cargo build --release
 
-      - name: Rename binary
-        run: mv target/release/macutil target/release/macutil-macos
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macutil-macos
-          path: target/release/macutil-macos
+          name: macutil
+          path: target/release/macutil
 
   release:
-    needs: [build-linux, build-macos]
+    needs: [build-macos]
     runs-on: ubuntu-latest
     
     steps:
@@ -121,22 +70,23 @@ jobs:
           body: |
             ## Downloads
             
-            - **Linux x86_64**: `macutil`
-            - **Linux aarch64**: `macutil-aarch64`
-            - **macOS**: `macutil-macos`
+            - **macOS**: `macutil`
             
             ## Installation
             
-            Download the appropriate binary for your platform and make it executable:
+            Download the binary and make it executable:
             ```bash
             chmod +x macutil
             ./macutil
             ```
+            
+            Or use the installer script:
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/Jaredy899/macutil/main/start.sh | sh
+            ```
 
           files: |
-            macutil-x86_64-unknown-linux-musl/macutil
-            macutil-aarch64-unknown-linux-musl/macutil-aarch64
-            macutil-macos/macutil-macos
+            macutil/macutil
             start.sh
             startdev.sh
           generate_release_notes: true
