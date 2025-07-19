@@ -35,6 +35,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Remove quarantine attribute to avoid Gatekeeper warning
+xattr -d com.apple.quarantine "$temp_file" 2>/dev/null || true
+
 "$temp_file" "$@"
 exit_code=$?
 
