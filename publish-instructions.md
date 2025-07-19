@@ -1,6 +1,6 @@
 # Publishing Instructions
 
-## Automated Release (Recommended)
+## Automated Release
 
 1. Update version in `Cargo.toml` (workspace package section)
 2. Commit and push changes
@@ -10,14 +10,13 @@
    - Create a release with all binaries
    - Upload to GitHub Releases
 
-## Manual Release (Legacy)
+## Manual Release (Alternative)
 
-1. Set Cargo.toml and core/cargo.toml version
-2. Publish macutil_core
-3. Set Tui/cargo.toml core version to new version
-4. Publish macutil_tui
-5. Run GitHub release action manually
-6. Update AUR macutil
+If you need to create a release without pushing a tag, you can:
+
+1. Update version in `Cargo.toml` (workspace package section)
+2. Build locally: `cargo build --release`
+3. Manually create a GitHub release and upload the binary from `target/release/macutil`
 
 ## Version Management
 
@@ -28,3 +27,13 @@ version = "1.0.0"
 ```
 
 All crates in the workspace inherit this version via `version.workspace = true`.
+
+## Available Workflows
+
+- **Release**: Automated release on tag push (recommended)
+- **rust**: Rust linting and formatting checks
+- **shellcheck**: Shell script validation
+- **bashisms**: Bash compatibility checks
+- **typos**: Spell checking
+- **preview**: Generate animated preview GIFs (optional)
+- **issue-slash-commands**: Issue management commands (optional)
