@@ -15,6 +15,13 @@ done
 return 0
 }
 
+brewprogram_exists() {
+for cmd in "$@"; do
+    brew list "$cmd" >/dev/null 2>&1 || return 1
+done
+return 0
+}
+
 checkCommandRequirements() {
     ## Check for requirements.
     REQUIREMENTS=$1
