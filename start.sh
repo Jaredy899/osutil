@@ -24,6 +24,11 @@ if [ "$(uname)" != "Darwin" ]; then
     check 1 "This utility is designed for macOS only"
 fi
 
+# Check if we have a proper terminal
+if [ ! -t 0 ] || [ ! -t 1 ]; then
+    check 1 "This utility requires an interactive terminal"
+fi
+
 getUrl() {
     echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/macutil"
 }
@@ -48,9 +53,16 @@ check $? "Downloading macutil"
 chmod +x "$temp_file"
 check $? "Making macutil executable"
 
+# Ensure we're in a proper terminal environment
+export TERM="${TERM:-xterm-256color}"
+export COLUMNS="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
+export LINES="${LINES:-$(tput lines 2>/dev/null || echo 24)}"
+
 "$temp_file" "$@"
-check $? "Executing macutil"
+exit_code=$?
 
 rm -f "$temp_file"
 check $? "Deleting the temporary file"
+
+exit $exit_code
 } # End of wrapping
