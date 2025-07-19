@@ -42,6 +42,9 @@ check $? "Downloading macutil"
 chmod +x "$temp_file"
 check $? "Making macutil executable"
 
+# Set basic terminal environment
+export TERM="${TERM:-xterm-256color}"
+
 "$temp_file" "$@"
 exit_code=$?
 
