@@ -24,9 +24,10 @@ if [ "$(uname)" != "Darwin" ]; then
     check 1 "This utility is designed for macOS only"
 fi
 
-# Check if we have a proper terminal
-if [ ! -t 0 ] || [ ! -t 1 ]; then
-    check 1 "This utility requires an interactive terminal"
+# Check if we have a proper terminal (but don't fail if not)
+is_interactive=false
+if [ -t 0 ] && [ -t 1 ]; then
+    is_interactive=true
 fi
 
 getUrl() {
@@ -53,16 +54,29 @@ check $? "Downloading macutil"
 chmod +x "$temp_file"
 check $? "Making macutil executable"
 
-# Ensure we're in a proper terminal environment
+# Set up terminal environment
 export TERM="${TERM:-xterm-256color}"
-export COLUMNS="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
-export LINES="${LINES:-$(tput lines 2>/dev/null || echo 24)}"
 
-"$temp_file" "$@"
-exit_code=$?
-
-rm -f "$temp_file"
-check $? "Deleting the temporary file"
+# Only set COLUMNS/LINES if we're in an interactive terminal
+if [ "$is_interactive" = "true" ]; then
+    export COLUMNS="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
+    export LINES="${LINES:-$(tput lines 2>/dev/null || echo 24)}"
+    
+    # Run the binary directly
+    "$temp_file" "$@"
+    exit_code=$?
+    
+    # Clean up temp file
+    rm -f "$temp_file"
+    check $? "Deleting the temporary file"
+else
+    # For non-interactive environments, just download and install
+    printf '%sDownloaded macutil successfully!%s\n' "$yellow" "$rc"
+    printf '%sTo run the TUI, please execute: %s%s\n' "$yellow" "$temp_file" "$rc"
+    printf '%sOr install it permanently: sudo mv %s /usr/local/bin/macutil%s\n' "$yellow" "$temp_file" "$rc"
+    printf '%sNote: The temporary file will remain at %s until you move or delete it%s\n' "$yellow" "$temp_file" "$rc"
+    exit_code=0
+fi
 
 exit $exit_code
 } # End of wrapping
