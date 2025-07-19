@@ -21,6 +21,7 @@ If you need to create a release without pushing a tag, you can:
 ## Version Management
 
 The workspace uses a single version defined in the root `Cargo.toml`:
+
 ```toml
 [workspace.package]
 version = "1.0.0"
@@ -41,8 +42,9 @@ All crates in the workspace inherit this version via `version.workspace = true`.
 ## Installation
 
 Users can install macutil using:
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Jaredy899/macutil/main/start.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/start.sh | sh
 ```
 
 Or download the binary directly from GitHub Releases.

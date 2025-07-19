@@ -4,6 +4,7 @@
 {
 rc='\033[0m'
 red='\033[0;31m'
+yellow='\033[1;33m'
 
 check() {
     exit_code=$1
@@ -24,9 +25,20 @@ if [ "$(uname)" != "Darwin" ]; then
 fi
 
 getUrl() {
-    echo "https://github.com/Jaredy899/macutil/releases/latest/download/macutil"
+    echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/macutil"
 }
 
+# Check if release exists
+checkRelease() {
+    printf '%sChecking for latest release...%s\n' "$yellow" "$rc"
+    if ! curl -fsL -o /dev/null "$(getUrl)" 2>/dev/null; then
+        printf '%sNo release found. Please check: https://github.com/Jaredy899/jaredmacutil/releases%s\n' "$yellow" "$rc"
+        printf '%sYou can also build from source: git clone https://github.com/Jaredy899/jaredmacutil && cd jaredmacutil && cargo build --release%s\n' "$yellow" "$rc"
+        exit 1
+    fi
+}
+
+checkRelease
 temp_file=$(mktemp)
 check $? "Creating the temporary file"
 
