@@ -33,18 +33,13 @@ All crates in the workspace inherit this version via `version.workspace = true`.
 
 - **Release**: Automated release on tag push (macOS only)
 - **rust**: Rust linting and formatting checks
-- **shellcheck**: Shell script validation
-- **bashisms**: Bash compatibility checks
-- **typos**: Spell checking
-- **preview**: Generate animated preview GIFs (optional)
-- **issue-slash-commands**: Issue management commands (optional)
 
 ## Installation
 
 Users can install macutil using:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/start.sh | sh
+sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/start.sh)
 ```
 
 Or download the binary directly from GitHub Releases.

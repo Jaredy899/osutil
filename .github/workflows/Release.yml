@@ -82,7 +82,7 @@ jobs:
             
             Or use the installer script:
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/start.sh | sh
+            sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/start.sh)
             ```
 
           files: |
