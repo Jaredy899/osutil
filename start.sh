@@ -28,8 +28,8 @@ findArch() {
 
 getUrl() {
     case "${arch}" in
-        x86_64) echo "https://github.com/ChrisTitusTech/macutil/releases/latest/download/macutil";;
-        *) echo "https://github.com/ChrisTitusTech/macutil/releases/latest/download/macutil-${arch}";;
+        x86_64) echo "https://github.com/Jaredy899/macutil/releases/latest/download/macutil";;
+        *) echo "https://github.com/Jaredy899/macutil/releases/latest/download/macutil-${arch}";;
     esac
 }
 
