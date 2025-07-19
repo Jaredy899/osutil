@@ -488,7 +488,7 @@ dependencies = [
 
 [[package]]
 name = "macutil_core"
-version = "0.0.3"
+version = "0.0.5"
 dependencies = [
  "ego-tree",
  "include_dir",
@@ -500,7 +500,7 @@ dependencies = [
 
 [[package]]
 name = "macutil_tui"
-version = "0.0.3"
+version = "0.0.5"
 dependencies = [
  "clap",
  "macutil_core",
@@ -1440,7 +1440,7 @@ checksum = "d135d17ab770252ad95e9a872d365cf3090e3be864a34ab46f48555993efc904"
 
 [[package]]
 name = "xtask"
-version = "0.0.3"
+version = "0.0.5"
 dependencies = [
  "macutil_core",
 ]

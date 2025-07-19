@@ -20,7 +20,7 @@ use ratatui::{
 };
 use std::rc::Rc;
 
-const MIN_WIDTH: u16 = 100;
+const MIN_WIDTH: u16 = 99;
 const MIN_HEIGHT: u16 = 25;
 const FLOAT_SIZE: u16 = 80;
 const CONFIRM_PROMPT_FLOAT_SIZE: u16 = 40;
