@@ -4,7 +4,6 @@
 {
 rc='\033[0m'
 red='\033[0;31m'
-yellow='\033[1;33m'
 
 check() {
     exit_code=$1
@@ -37,14 +36,9 @@ check $? "Downloading macutil"
 chmod +x "$temp_file"
 check $? "Making macutil executable"
 
-# Set basic terminal environment
-export TERM="${TERM:-xterm-256color}"
-
 "$temp_file" "$@"
-exit_code=$?
+check $? "Executing macutil"
 
 rm -f "$temp_file"
 check $? "Deleting the temporary file"
-
-exit $exit_code
 } # End of wrapping
