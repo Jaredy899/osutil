@@ -62,7 +62,7 @@ installZshDepend() {
 setupZshConfig() {
   printf "%b\n" "${YELLOW}Setting up Zsh configuration...${RC}"
 
-  wget https://raw.githubusercontent.com/ChrisTitusTech/maczsh/refs/heads/main/.zshrc -O "$HOME/.zshrc"
+  wget https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/.zshrc -O "$HOME/.zshrc"
 
   # Ensure .zshrc is sourced
   if [ ! -f "$HOME/.zshrc" ]; then
@@ -71,6 +71,13 @@ setupZshConfig() {
   fi
   
   printf "%b\n" "${GREEN}Zsh configuration has been set up successfully. Restart Shell.${RC}"
+}
+
+setupStarshipConfig() {
+  printf "%b\n" "${YELLOW}Setting up Starship configuration...${RC}"
+  
+  wget https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/starship.toml -O "$HOME/.config/starship.toml"
+  printf "%b\n" "${GREEN}Starship configuration has been set up successfully.${RC}"
 }
 
 checkEnv

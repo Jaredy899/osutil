@@ -5,7 +5,7 @@
 
 installDepend() {
     ## Check for dependencies.
-    DEPENDENCIES='tree trash-cli unzip cmake make jq'
+    DEPENDENCIES='tree multitail tealdeer unzip cmake make jq fd ripgrep automake autoconf rustup python pipx'
     printf "%b\n" "${YELLOW}Installing development dependencies...${RC}"
     
     # Check if Homebrew is installed

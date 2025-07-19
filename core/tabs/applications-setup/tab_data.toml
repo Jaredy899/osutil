@@ -156,6 +156,12 @@ script = "android-debloat.sh"
 task_list = "I"
 
 [[data]]
+name = "Applite"
+description = "Gui to install Mac applications through homebrew"
+script = "applite-setup.sh"
+task_list = "I"
+
+[[data]]
 name = "Fastfetch"
 description = "Fastfetch is a neofetch-like tool for fetching system information and displaying it prettily. It is written mainly in C, with performance and customizability in mind. This command installs fastfetch and configures from CTT's mybash repository. https://github.com/ChrisTitusTech/mybash"
 script = "fastfetch-setup.sh"
