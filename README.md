@@ -4,9 +4,24 @@ A simple utility tool for macOS system management and application setup.
 
 ## Installation
 
+### Quick Install (Recommended)
+```bash
+sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/start.sh)
+```
+
+### Alternative Install Methods
+```bash
+# Method 1: Process substitution (works with TUI)
+sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/start.sh)
+
+# Method 2: Piping (downloads but doesn't run TUI)
+curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/start.sh | sh
+```
+
+### Build from Source
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/jaredmacutil.git
+git clone https://github.com/Jaredy899/jaredmacutil.git
 cd jaredmacutil
 
 # Build and run
@@ -19,6 +34,10 @@ cargo build --release
 Run the application:
 
 ```bash
+# If installed via script
+macutil
+
+# If built from source
 ./target/release/macutil
 ```
 
