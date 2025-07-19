@@ -5,22 +5,10 @@
 rc='\033[0m'
 red='\033[0;31m'
 
-check() {
-    exit_code=$1
-    message=$2
-
-    if [ "$exit_code" -ne 0 ]; then
-        printf '%sERROR: %s%s\n' "$red" "$message" "$rc"
-        exit 1
-    fi
-
-    unset exit_code
-    unset message
-}
-
 # Check if running on macOS
 if [ "$(uname)" != "Darwin" ]; then
-    check 1 "This utility is designed for macOS only"
+    printf '%sERROR: This utility is designed for macOS only%s\n' "$red" "$rc"
+    exit 1
 fi
 
 getUrl() {
@@ -28,17 +16,32 @@ getUrl() {
 }
 
 temp_file=$(mktemp)
-check $? "Creating the temporary file"
+if [ $? -ne 0 ]; then
+    printf '%sERROR: Creating the temporary file%s\n' "$red" "$rc"
+    exit 1
+fi
 
 curl -fsL "$(getUrl)" -o "$temp_file"
-check $? "Downloading macutil"
+if [ $? -ne 0 ]; then
+    printf '%sERROR: Downloading macutil%s\n' "$red" "$rc"
+    rm -f "$temp_file"
+    exit 1
+fi
 
 chmod +x "$temp_file"
-check $? "Making macutil executable"
+if [ $? -ne 0 ]; then
+    printf '%sERROR: Making macutil executable%s\n' "$red" "$rc"
+    rm -f "$temp_file"
+    exit 1
+fi
 
 "$temp_file" "$@"
-check $? "Executing macutil"
+exit_code=$?
 
 rm -f "$temp_file"
-check $? "Deleting the temporary file"
+if [ $? -ne 0 ]; then
+    printf '%sERROR: Deleting the temporary file%s\n' "$red" "$rc"
+fi
+
+exit $exit_code
 } # End of wrapping
