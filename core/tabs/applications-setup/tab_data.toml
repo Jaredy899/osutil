@@ -43,6 +43,12 @@ task_list = "I"
 name = "Developer Tools"
 
 [[data.entries]]
+name = "Docker Desktop"
+description = "App to build and share containerised applications and microservices"
+script = "developer-tools/docker-desktop.sh"
+task_list = "I"
+
+[[data.entries]]
 name = "Github Desktop"
 description = "GitHub Desktop is a user-friendly application that simplifies the process of managing Git repositories and interacting with GitHub, providing a graphical interface for tasks like committing, branching, and syncing changes."
 script = "developer-tools/githubdesktop.sh"
@@ -59,6 +65,12 @@ name = "Neovim"
 description = "Neovim is a refactor, and sometimes redactor, in the tradition of Vim.\nIt is not a rewrite but a continuation and extension of Vim.\nThis command configures neovim from CTT's neovim configuration.\nhttps://github.com/ChrisTitusTech/neovim"
 script = "developer-tools/neovim.sh"
 task_list = "I FM"
+
+[[data.entries]]
+name = "OrbStack"
+description = "Replacement for Docker Desktop"
+script = "developer-tools/orbstack.sh"
+task_list = "I"
 
 [[data.entries]]
 name = "Sublime Text"
@@ -84,7 +96,32 @@ description = "Zed is a next-generation code editor written in rust, designed fo
 script = "developer-tools/zed.sh"
 task_list = "I"
 
+[[data]]
+name = "Multimedia"
 
+[[data.entries]]
+name = "Handbrake"
+description = "Open-source video transcoder available for Linux, Mac, and Windows"
+script = "multimedia/handbrake.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "IINA"
+description = "Free and open-source media player"
+script = "multimedia/iina.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "OBS"
+description = "Open-source software for live streaming and screen recording"
+script = "multimedia/obs.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "VLC media player"
+description = "Multimedia player"
+script = "multimedia/vlc.sh"
+task_list = "I"
 
 [[data]]
 name = "Web Browsers"
@@ -162,16 +199,40 @@ script = "applite-setup.sh"
 task_list = "I"
 
 [[data]]
+name = "Commander One"
+description = "Two-panel file manager"
+script = "commander-one.sh"
+task_list = "I"
+
+[[data]]
 name = "Fastfetch"
 description = "Fastfetch is a neofetch-like tool for fetching system information and displaying it prettily. It is written mainly in C, with performance and customizability in mind. This command installs fastfetch and configures from CTT's mybash repository. https://github.com/ChrisTitusTech/mybash"
 script = "fastfetch-setup.sh"
 task_list = "I FM"
 
 [[data]]
+name = "GrandPerspective"
+description = "Graphically shows disk usage within a file system"
+script = "grandperspective.sh"
+task_list = "I"
+
+[[data]]
 name = "Kitty"
 description = "kitty is a free and open-source GPU-accelerated terminal emulator for Linux, macOS, and some BSD distributions, focused on performance and features. kitty is written in a mix of C and Python programming languages. This command installs and configures kitty."
 script = "kitty-setup.sh"
 task_list = "I FM"
+
+[[data]]
+name = "OnyX"
+description = "Verify system files structure, run miscellaneous maintenance and more"
+script = "onyx.sh"
+task_list = "I"
+
+[[data]]
+name = "Raycast"
+description = "Control your tools with a few keystrokes"
+script = "raycast.sh"
+task_list = "I"
 
 [[data]]
 name = "ZSH Prompt"
