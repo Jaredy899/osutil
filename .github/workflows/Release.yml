@@ -59,14 +59,14 @@ jobs:
         id: extract_version
         run: |
           version=${GITHUB_REF#refs/tags/v}
-          echo "version=$version" >> $GITHUB_ENV
+          echo "version=$version" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref }}
-          name: Release ${{ env.version }}
+          name: Release ${{ steps.extract_version.outputs.version }}
           body: |
             ## Downloads
             
