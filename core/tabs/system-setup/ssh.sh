@@ -22,9 +22,19 @@ installSSHDepend() {
     printf "%b\n" "${GREEN}SSH dependencies installed!${RC}"
 }
 
+openFullDiskAccessPane() {
+    printf "%b\n" "${YELLOW}Opening Full Disk Access settings...${RC}"
+    open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
+    printf "%b\n" "${YELLOW}Please add your terminal app to the list and restart it before continuing.${RC}"
+}
+
 enableSSH() {
     printf "%b\n" "${CYAN}Enabling SSH access...${RC}"
-    "$ESCALATION_TOOL" systemsetup -setremotelogin on
+    if ! "$ESCALATION_TOOL" systemsetup -setremotelogin on 2>/dev/null; then
+        printf "%b\n" "${RED}Failed to enable SSH. Full Disk Access is required.${RC}"
+        openFullDiskAccessPane
+        exit 1
+    fi
     "$ESCALATION_TOOL" systemsetup -getremotelogin
     printf "%b\n" "${GREEN}SSH access enabled.${RC}"
 }
