@@ -66,6 +66,15 @@ setupStarshipConfig() {
   printf "%b\n" "${GREEN}Starship configuration has been set up successfully.${RC}"
 }
 
+setupFastfetchConfig() {
+    printf "%b\n" "${YELLOW}Copying Fastfetch config files...${RC}"
+    if [ -d "${HOME}/.config/fastfetch" ] && [ ! -d "${HOME}/.config/fastfetch-bak" ]; then
+        cp -r "${HOME}/.config/fastfetch" "${HOME}/.config/fastfetch-bak"
+    fi
+    mkdir -p "${HOME}/.config/fastfetch/"
+    curl -sSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/config.jsonc
+}
+
 # Function to setup zsh configuration
 setupZshConfig() {
   printf "%b\n" "${YELLOW}Setting up Zsh configuration...${RC}"
@@ -85,4 +94,5 @@ checkEnv
 backupZshConfig
 installZshDepend
 setupStarshipConfig
+setupFastfetchConfig
 setupZshConfig
