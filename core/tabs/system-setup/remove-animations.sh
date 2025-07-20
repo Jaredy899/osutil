@@ -42,6 +42,10 @@ removeAnimations() {
     $ESCALATION_TOOL defaults write com.apple.dock springboard-show-duration -float 0.1
     $ESCALATION_TOOL defaults write com.apple.dock springboard-hide-duration -float 0.1
     
+    # Auto hide dock
+    printf "%b\n" "${CYAN}Enabling auto hide dock...${RC}"
+    $ESCALATION_TOOL defaults write com.apple.dock autohide -bool true
+    
     # Disable dock hiding animation
     printf "%b\n" "${CYAN}Disabling dock hiding animations...${RC}"
     $ESCALATION_TOOL defaults write com.apple.dock autohide-time-modifier -float 0
