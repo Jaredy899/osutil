@@ -5,8 +5,7 @@
 installZoom() {
     if ! brewprogram_exists zoom; then
         printf "%b\n" "${YELLOW}Installing Zoom...${RC}"
-        brew install --cask zoom
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask zoom; then
             printf "%b\n" "${RED}Failed to install Zoom. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

@@ -7,7 +7,10 @@ installNeovim() {
     
     # Install Neovim and dependencies with brew
     printf "%b\n" "${CYAN}Installing Neovim and dependencies...${RC}"
-    brew install neovim ripgrep fzf
+    if ! brew install neovim ripgrep fzf; then
+        printf "%b\n" "${RED}Failed to install Neovim and dependencies. Please check your Homebrew installation or try again later.${RC}"
+        exit 1
+    fi
     
     # Backup existing config if it exists
     if [ -d "$HOME/.config/nvim" ] && [ ! -d "$HOME/.config/nvim-backup" ]; then

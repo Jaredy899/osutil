@@ -4,8 +4,7 @@
 
 installApplite() {
     if ! brewprogram_exists applite; then
-        brew install --cask applite
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask applite; then
             printf "%b\n" "${RED}Failed to install Applite. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

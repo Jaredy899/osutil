@@ -5,8 +5,7 @@
 installDockerDesktop() {
     if ! brewprogram_exists docker-desktop; then
         printf "%b\n" "${YELLOW}Installing Docker Desktop...${RC}"
-        brew install --cask docker
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask docker; then
             printf "%b\n" "${RED}Failed to install Docker Desktop. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

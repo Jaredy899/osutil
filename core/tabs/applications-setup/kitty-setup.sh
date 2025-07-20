@@ -4,8 +4,7 @@
 
 installKitty() {
     if ! brewprogram_exists kitty; then
-        brew install --cask kitty
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask kitty; then
             printf "%b\n" "${RED}Failed to install Kitty. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

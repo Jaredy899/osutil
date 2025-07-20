@@ -1,12 +1,11 @@
 #!/bin/sh -e
 
-. ../../common-script.sh
+. ../common-script.sh
 
 installOnyx() {
     if ! brewprogram_exists onyx; then
         printf "%b\n" "${YELLOW}Installing Onyx...${RC}"
-        brew install --cask onyx
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask onyx; then
             printf "%b\n" "${RED}Failed to install Onyx. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

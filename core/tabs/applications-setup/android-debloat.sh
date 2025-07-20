@@ -3,7 +3,10 @@
 . ../common-script.sh
 
 install_adb() {
-    brew install android-platform-tools
+    if ! brew install android-platform-tools; then
+        printf "%b\n" "${RED}Failed to install Android Platform Tools. Please check your Homebrew installation or try again later.${RC}"
+        exit 1
+    fi
 }
 
 install_universal_android_debloater() {

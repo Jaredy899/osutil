@@ -5,8 +5,7 @@
 installThunderBird() {
     if ! brewprogram_exists thunderbird; then
         printf "%b\n" "${YELLOW}Installing Thunderbird...${RC}"
-        brew install --cask thunderbird
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask thunderbird; then
             printf "%b\n" "${RED}Failed to install Thunderbird. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

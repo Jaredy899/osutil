@@ -5,8 +5,7 @@
 installHandbrake() {
     if ! brewprogram_exists handbrake; then
         printf "%b\n" "${YELLOW}Installing Handbrake...${RC}"
-        brew install --cask handbrake
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask handbrake; then
             printf "%b\n" "${RED}Failed to install Handbrake. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

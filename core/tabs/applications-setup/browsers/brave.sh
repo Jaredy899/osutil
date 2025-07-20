@@ -5,8 +5,7 @@
 installBrave() {
     if ! brewprogram_exists brave-browser; then
         printf "%b\n" "${YELLOW}Installing Brave...${RC}"
-        brew install --cask brave-browser
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask brave-browser; then
             printf "%b\n" "${RED}Failed to install Brave Browser. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

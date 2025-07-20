@@ -5,8 +5,7 @@
 installVivaldi() {
     if ! brewprogram_exists vivaldi; then
         printf "%b\n" "${YELLOW}Installing Vivaldi...${RC}"
-        brew install --cask vivaldi
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask vivaldi; then
             printf "%b\n" "${RED}Failed to install Vivaldi Browser. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

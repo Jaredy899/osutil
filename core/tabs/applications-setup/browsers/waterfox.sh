@@ -5,8 +5,7 @@
 installWaterfox() {
     if ! brewprogram_exists waterfox; then
         printf "%b\n" "${YELLOW}Installing waterfox...${RC}"
-        brew install --cask waterfox
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask waterfox; then
             printf "%b\n" "${RED}Failed to install Waterfox Browser. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

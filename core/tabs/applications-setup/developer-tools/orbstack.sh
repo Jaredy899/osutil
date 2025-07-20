@@ -5,8 +5,7 @@
 installOrbstack() {
     if ! brewprogram_exists orbstack; then
         printf "%b\n" "${YELLOW}Installing Orbstack...${RC}"
-        brew install --cask orbstack
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask orbstack; then
             printf "%b\n" "${RED}Failed to install Orbstack. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

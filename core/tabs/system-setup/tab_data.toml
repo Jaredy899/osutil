@@ -31,3 +31,21 @@ name = "Remove Animations"
 description = "This script is designed to remove snap packages and the snapd service from your system"
 script = "remove-animations.sh"
 task_list = "RP"
+
+[[data]]
+name = "Configure SSH"
+description = "The script enables and configures ssh into your Mac"
+script = "ssh.sh"
+task_list = "I PFM"
+
+[[data]]
+name = "Configure Trackpad"
+description = "Configures the Trackpad settings to my personal setup"
+script = "trackpad-setup.sh"
+task_list = "RP"
+
+[[data]]
+name = "Enable TouchID for sudo"
+description = "Enables TouchID when the system needs sudo access"
+script = "touch-id.sh"
+task_list = "RP"

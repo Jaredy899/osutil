@@ -5,8 +5,7 @@
 installDiscord() {
     if ! brewprogram_exists discord; then
         printf "%b\n" "${YELLOW}Installing Discord...${RC}"
-        brew install --cask discord
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask discord; then
             printf "%b\n" "${RED}Failed to install Discord. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

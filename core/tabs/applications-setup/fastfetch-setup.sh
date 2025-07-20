@@ -5,8 +5,7 @@
 installFastfetch() {
     if ! command_exists fastfetch; then
         printf "%b\n" "${YELLOW}Installing Fastfetch...${RC}"
-        brew install fastfetch
-        if [ $? -ne 0 ]; then
+        if ! brew install fastfetch; then
             printf "%b\n" "${RED}Failed to install Fastfetch. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

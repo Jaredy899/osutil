@@ -24,7 +24,7 @@ installZshDepend() {
 
     printf "%b\n" "${CYAN}Installing dependencies...${RC}"
     for package in $DEPENDENCIES; do
-        if brew list "$package" >/dev/null 2>&1; then
+        if brewprogram_exists "$package"; then
             printf "%b\n" "${GREEN}$package is already installed, skipping...${RC}"
         else
             printf "%b\n" "${CYAN}Installing $package...${RC}"
@@ -36,11 +36,11 @@ installZshDepend() {
     done
 
     # List of cask dependencies
-    CASK_DEPENDENCIES="ghostty"
+    CASK_DEPENDENCIES="ghostty font-fira-code-nerd-font"
 
     printf "%b\n" "${CYAN}Installing cask dependencies...${RC}"
     for cask in $CASK_DEPENDENCIES; do
-        if brew list --cask "$cask" >/dev/null 2>&1; then
+        if brewprogram_exists "$cask"; then
             printf "%b\n" "${GREEN}$cask is already installed, skipping...${RC}"
         else
             printf "%b\n" "${CYAN}Installing $cask...${RC}"
@@ -51,12 +51,20 @@ installZshDepend() {
         fi
     done
 
-    # Complete fzf installation
     if [ -e ~/.fzf/install ]; then
-        ~/.fzf/install --all
+        if ! ~/.fzf/install --all; then
+            printf "%b\n" "${RED}Failed to install fzf. Please check your brew installation.${RC}"
+            exit 1
+        fi
     fi
 }
 
+setupStarshipConfig() {
+  printf "%b\n" "${YELLOW}Setting up Starship configuration...${RC}"
+  
+  wget https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/starship.toml -O "$HOME/.config/starship.toml"
+  printf "%b\n" "${GREEN}Starship configuration has been set up successfully.${RC}"
+}
 
 # Function to setup zsh configuration
 setupZshConfig() {
@@ -73,14 +81,8 @@ setupZshConfig() {
   printf "%b\n" "${GREEN}Zsh configuration has been set up successfully. Restart Shell.${RC}"
 }
 
-setupStarshipConfig() {
-  printf "%b\n" "${YELLOW}Setting up Starship configuration...${RC}"
-  
-  wget https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/starship.toml -O "$HOME/.config/starship.toml"
-  printf "%b\n" "${GREEN}Starship configuration has been set up successfully.${RC}"
-}
-
 checkEnv
 backupZshConfig
 installZshDepend
+setupStarshipConfig
 setupZshConfig

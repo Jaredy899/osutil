@@ -5,8 +5,7 @@
 installVLC() {
     if ! brewprogram_exists vlc; then
         printf "%b\n" "${YELLOW}Installing VLC...${RC}"
-        brew install --cask vlc
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask vlc; then
             printf "%b\n" "${RED}Failed to install VLC. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

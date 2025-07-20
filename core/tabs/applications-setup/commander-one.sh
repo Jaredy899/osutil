@@ -1,12 +1,11 @@
 #!/bin/sh -e
 
-. ../../common-script.sh
+. ../common-script.sh
 
 installCommanderOne() {
     if ! brewprogram_exists commander-one; then
         printf "%b\n" "${YELLOW}Installing Commander One...${RC}"
-        brew install --cask commander-one
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask commander-one; then
             printf "%b\n" "${RED}Failed to install Commander One. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

@@ -5,8 +5,7 @@
 installChrome() {
     if ! brewprogram_exists google-chrome; then
         printf "%b\n" "${YELLOW}Installing Google Chrome...${RC}"
-        brew install --cask google-chrome
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask google-chrome; then
             printf "%b\n" "${RED}Failed to install Google Chrome Browser. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

@@ -5,8 +5,7 @@
 installSublime() {
     if ! brewprogram_exists sublime-text; then
         printf "%b\n" "${YELLOW}Installing Sublime...${RC}"
-        brew install --cask sublime-text
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask sublime-text; then
             printf "%b\n" "${RED}Failed to install Sublime. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

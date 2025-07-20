@@ -5,8 +5,7 @@
 installZed() {
     if ! brewprogram_exists zed; then
         printf "%b\n" "${CYAN}Installing Zed.${RC}"
-        brew install --cask zed
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask zed; then
             printf "%b\n" "${RED}Failed to install Zed. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

@@ -5,8 +5,7 @@
 installGithubDesktop() {
     if ! brewprogram_exists github; then
         printf "%b\n" "${YELLOW}Installing Github Desktop...${RC}"
-        brew install --cask github
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask github; then
             printf "%b\n" "${RED}Failed to install Github Desktop. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

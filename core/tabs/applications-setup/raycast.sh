@@ -1,12 +1,11 @@
 #!/bin/sh -e
 
-. ../../common-script.sh
+. ../common-script.sh
 
 installRaycast() {
     if ! brewprogram_exists raycast; then
         printf "%b\n" "${YELLOW}Installing Raycast...${RC}"
-        brew install --cask raycast
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask raycast; then
             printf "%b\n" "${RED}Failed to install Raycast. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

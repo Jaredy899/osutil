@@ -5,8 +5,7 @@
 installSlack() {
     if ! brewprogram_exists slack; then
         printf "%b\n" "${YELLOW}Installing Slack...${RC}"
-        brew install --cask slack
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask slack; then
             printf "%b\n" "${RED}Failed to install Slack. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

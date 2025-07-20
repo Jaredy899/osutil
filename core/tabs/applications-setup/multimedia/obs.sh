@@ -5,8 +5,7 @@
 installOBS() {
     if ! brewprogram_exists obs; then
         printf "%b\n" "${YELLOW}Installing OBS...${RC}"
-        brew install --cask obs
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask obs; then
             printf "%b\n" "${RED}Failed to install OBS. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

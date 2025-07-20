@@ -1,12 +1,11 @@
 #!/bin/sh -e
 
-. ../../common-script.sh
+. ../common-script.sh
 
 installGrandPerspective() {
     if ! brewprogram_exists grandperspective; then
         printf "%b\n" "${YELLOW}Installing GrandPerspective...${RC}"
-        brew install --cask grandperspective
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask grandperspective; then
             printf "%b\n" "${RED}Failed to install GrandPerspective. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

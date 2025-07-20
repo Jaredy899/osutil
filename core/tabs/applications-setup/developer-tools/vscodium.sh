@@ -5,8 +5,7 @@
 installVsCodium() {
     if ! brewprogram_exists vscodium; then
         printf "%b\n" "${YELLOW}Installing VS Codium...${RC}"
-        brew install --cask vscodium
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask vscodium; then
             printf "%b\n" "${RED}Failed to install VS Codium. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

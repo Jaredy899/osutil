@@ -5,8 +5,7 @@
 installIina() {
     if ! brewprogram_exists iina; then
         printf "%b\n" "${YELLOW}Installing IINA...${RC}"
-        brew install --cask iina
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask iina; then
             printf "%b\n" "${RED}Failed to install IINA. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi

@@ -5,8 +5,7 @@
 installLibreWolf() {
     if ! brewprogram_exists librewolf; then
         printf "%b\n" "${YELLOW}Installing Librewolf...${RC}"
-        brew install --cask librewolf
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask librewolf; then
             printf "%b\n" "${RED}Failed to install LibreWolf Browser. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi
