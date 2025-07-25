@@ -6,11 +6,13 @@ use std::{
     fs::File,
     io::{BufRead, BufReader, Read},
     ops::{Deref, DerefMut},
-    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     rc::Rc,
 };
 use temp_dir::TempDir;
+
+#[cfg(not(windows))]
+use std::os::unix::fs::PermissionsExt;
 
 const TAB_DATA: Dir = include_dir!("$CARGO_MANIFEST_DIR/tabs");
 
@@ -210,45 +212,86 @@ fn create_directory(
                 }));
             }
             EntryType::Script(script) => {
-                let script = command_dir.join(script);
-                if !script.exists() {
-                    panic!("Script {} does not exist", script.display());
-                }
+                let script_base_path = command_dir.join(&script);
+                let script_path = if cfg!(windows) {
+                    script_base_path.with_extension("ps1")
+                } else {
+                    script_base_path.with_extension("sh")
+                };
 
-                if let Some((executable, args)) = get_shebang(&script, validate) {
-                    node.append(Rc::new(ListNode {
-                        name: entry.name,
-                        description: entry.description,
-                        command: Command::LocalFile {
-                            executable,
-                            args,
-                            file: script,
-                        },
-                        task_list: entry.task_list,
-                        multi_select,
-                    }));
+                if script_path.exists() {
+                    if let Some((executable, args)) = get_shebang(&script_path, validate) {
+                        node.append(Rc::new(ListNode {
+                            name: entry.name,
+                            description: entry.description,
+                            command: Command::LocalFile {
+                                executable,
+                                args,
+                                file: script_path,
+                            },
+                            task_list: entry.task_list,
+                            multi_select,
+                        }));
+                    }
                 }
             }
         }
     }
 }
 
+#[cfg(windows)]
 fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String>)> {
-    let default_executable = || Some(("/bin/sh".into(), vec!["-e".into()]));
+    if script_path.extension() == Some(std::ffi::OsStr::new("ps1")) {
+        let executable = "powershell.exe".to_string();
+        let is_valid = !validate || which::which(&executable).is_ok();
+        if is_valid {
+            Some((
+                executable,
+                vec![
+                    "-NoProfile".to_string(),
+                    "-ExecutionPolicy".to_string(),
+                    "Bypass".to_string(),
+                    "-File".to_string(),
+                    script_path.to_string_lossy().to_string(),
+                ],
+            ))
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+}
 
-    let script = File::open(script_path).expect("Failed to open script file");
-    let mut reader = BufReader::new(script);
+#[cfg(not(windows))]
+fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String>)> {
+    let default_executable = || {
+        if script_path.extension() == Some(std::ffi::OsStr::new("sh")) {
+            let mut args = vec!["-e".to_string()];
+            args.push(script_path.to_string_lossy().to_string());
+            Some(("/bin/sh".into(), args))
+        } else {
+            None
+        }
+    };
 
-    // Take the first 2 characters from the reader; check whether it's a shebang
+    let script_file = match File::open(script_path) {
+        Ok(file) => file,
+        Err(_) => return default_executable(),
+    };
+    let mut reader = BufReader::new(script_file);
+
     let mut two_chars = [0; 2];
     if reader.read_exact(&mut two_chars).is_err() || two_chars != *b"#!" {
         return default_executable();
     }
 
-    let first_line = reader.lines().next().unwrap().unwrap();
+    let first_line = match reader.lines().next() {
+        Some(Ok(line)) => line,
+        _ => return default_executable(),
+    };
 
     let mut parts = first_line.split_whitespace();
-
     let Some(executable) = parts.next() else {
         return default_executable();
     };
@@ -262,6 +305,12 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
     })
 }
 
+#[cfg(windows)]
+fn is_executable(path: &Path) -> bool {
+    path.is_file()
+}
+
+#[cfg(not(windows))]
 fn is_executable(path: &Path) -> bool {
     path.metadata()
         .map(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
