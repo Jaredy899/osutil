@@ -1,0 +1,5 @@
+directories = [
+    "applications-setup",
+    "communication-apps",
+    "system-setup",
+] 

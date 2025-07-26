@@ -3,11 +3,15 @@ use ego_tree::{NodeMut, Tree};
 use include_dir::{include_dir, Dir};
 use serde::Deserialize;
 use std::{
-    fs::File,
-    io::{BufRead, BufReader, Read},
     ops::{Deref, DerefMut},
     path::{Path, PathBuf},
     rc::Rc,
+};
+
+#[cfg(not(windows))]
+use std::{
+    fs::File,
+    io::{BufRead, BufReader, Read},
 };
 use temp_dir::TempDir;
 
@@ -49,7 +53,10 @@ pub fn get_tabs(validate: bool) -> TabList {
         .into_iter()
         .map(|path| {
             let directory = path.parent().unwrap().to_owned();
-            let data = std::fs::read_to_string(path).expect("Failed to read tab data");
+            println!("Trying to read: {:?}", path);
+            let data = std::fs::read_to_string(&path).unwrap_or_else(|e| {
+                panic!("Failed to read tab data at {:?}: {}", path, e);
+            });
             let mut tab_data: TabEntry = toml::from_str(&data).expect("Failed to parse tab data");
 
             if validate {
@@ -306,6 +313,7 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
 }
 
 #[cfg(windows)]
+#[allow(dead_code)]
 fn is_executable(path: &Path) -> bool {
     path.is_file()
 }
@@ -324,14 +332,39 @@ impl TabDirectories {
             .extract(&temp_dir)
             .expect("Failed to extract the saved directory");
 
-        let tab_files = std::fs::read_to_string(temp_dir.path().join("tabs.toml"))
-            .expect("Failed to read tabs.toml");
+        // Determine the platform and load the appropriate tabs.toml
+        let platform = Self::detect_platform();
+        let platform_tabs_file = temp_dir.path().join(platform).join("tabs.toml");
+        let fallback_tabs_file = temp_dir.path().join("tabs.toml");
+        
+        let (tab_files, use_platform_paths) = if platform_tabs_file.exists() {
+            (std::fs::read_to_string(&platform_tabs_file).expect("Failed to read platform tabs.toml"), true)
+        } else {
+            (std::fs::read_to_string(&fallback_tabs_file).expect("Failed to read tabs.toml"), false)
+        };
+        
         let data: Self = toml::from_str(&tab_files).expect("Failed to parse tabs.toml");
         let tab_paths = data
             .directories
             .iter()
-            .map(|path| temp_dir.path().join(path).join("tab_data.toml"))
+            .map(|path| {
+                if use_platform_paths {
+                    temp_dir.path().join(platform).join(path).join("tab_data.toml")
+                } else {
+                    temp_dir.path().join(path).join("tab_data.toml")
+                }
+            })
             .collect();
         (temp_dir, tab_paths)
+    }
+
+    fn detect_platform() -> &'static str {
+        if cfg!(target_os = "windows") {
+            "windows"
+        } else if cfg!(target_os = "macos") {
+            "macos"
+        } else {
+            "linux"
+        }
     }
 }

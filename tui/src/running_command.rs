@@ -167,35 +167,40 @@ impl RunningCommand {
     pub fn new(commands: &[&Command]) -> Self {
         let pty_system = NativePtySystem::default();
 
-        // Build the command based on the provided Command enum variant
-        let mut cmd: CommandBuilder = CommandBuilder::new("sh");
-        cmd.arg("-c");
+        // For now, we'll handle only the first command since multiple commands with different executables would be complex
+        let command = commands.first().expect("No commands provided");
+        
+        let (executable, args) = match command {
+            Command::Raw(prompt) => {
+                // For raw commands, use the default shell
+                #[cfg(windows)]
+                let shell = "powershell.exe";
+                #[cfg(not(windows))]
+                let shell = "sh";
+                
+                (shell.to_string(), vec!["-c".to_string(), prompt.clone()])
+            }
+            Command::LocalFile { executable, args, file: _ } => {
+                // For local files, use the executable and args as determined by get_shebang
+                let full_args = args.clone();
+                // The file path is already included in args from get_shebang, so we don't need to add it again
+                (executable.clone(), full_args)
+            }
+            Command::None => panic!("Command::None was treated as a command"),
+        };
 
-        // All the merged commands are passed as a single argument to reduce the overhead of rebuilding the command arguments for each and every command
-        let mut script = String::new();
-        for command in commands {
-            match command {
-                Command::Raw(prompt) => script.push_str(&format!("{}\n", prompt)),
-                Command::LocalFile {
-                    executable,
-                    args,
-                    file,
-                } => {
-                    if let Some(parent_directory) = file.parent() {
-                        script.push_str(&format!("cd {}\n", parent_directory.display()));
-                    }
-                    script.push_str(executable);
-                    for arg in args {
-                        script.push(' ');
-                        script.push_str(arg);
-                    }
-                    script.push('\n'); // Ensures that each command is properly separated for execution preventing directory errors
-                }
-                Command::None => panic!("Command::None was treated as a command"),
+        let mut cmd: CommandBuilder = CommandBuilder::new(&executable);
+        
+        // If it's a LocalFile command, we need to set the working directory
+        if let Command::LocalFile { file, .. } = command {
+            if let Some(parent_directory) = file.parent() {
+                cmd.cwd(parent_directory);
             }
         }
-
-        cmd.arg(script);
+        
+        for arg in args {
+            cmd.arg(arg);
+        }
 
         // Open a pseudo-terminal with initial size
         let pair = pty_system

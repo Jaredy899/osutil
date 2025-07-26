@@ -1,0 +1,115 @@
+name = "Applications Setup"
+
+[[data]]
+name = "Communication Apps"
+
+[[data.entries]]
+name = "Discord"
+description = "Discord is a versatile communication platform for gamers and communities, offering voice, video, and text chat features."
+script = "discord-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Signal"
+description = "Signal is a privacy-focused messaging app that provides end-to-end encryption for secure text, voice, and video communication."
+script = "signal-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Slack"
+description = "Slack is a collaboration platform designed for team communication, featuring channels, direct messaging, file sharing, and integrations with various productivity tools."
+script = "slack-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Telegram"
+description = "Telegram is a cloud-based messaging app known for its speed and security, offering features like group chats, channels, and end-to-end encrypted calls."
+script = "telegram-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Thunderbird"
+description = "Thunderbird is a free, open-source email client that offers powerful features like customizable email management, a built-in calendar, and extensive add-ons for enhanced functionality."
+script = "thunderbird-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Zoom"
+description = "Zoom is a widely-used video conferencing platform that allows users to host virtual meetings, webinars, and online collaboration with features like screen sharing and recording."
+script = "zoom-setup.ps1"
+task_list = "I"
+
+[[data]]
+name = "Developer Tools"
+
+[[data.entries]]
+name = "VS Code"
+description = "Visual Studio Code (VS Code) is a lightweight, open-source code editor with built-in support for debugging, version control, and extensions for various programming languages and frameworks."
+script = "vscode-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "VS Codium"
+description = "VSCodium is a free, open-source version of Visual Studio Code (VS Code) that removes Microsoft-specific telemetry and branding."
+script = "vscodium-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Sublime Text"
+description = "Sublime Text is a fast, lightweight, and customizable text editor known for its simplicity, powerful features, and wide range of plugins for various programming languages."
+script = "sublime-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Neovim"
+description = "Neovim is a refactor, and sometimes redactor, in the tradition of Vim. It is not a rewrite but a continuation and extension of Vim."
+script = "neovim-setup.ps1"
+task_list = "I FM"
+
+[[data]]
+name = "Terminal Emulators"
+
+[[data.entries]]
+name = "Alacritty"
+description = "Alacritty is a modern terminal emulator that comes with sensible defaults, but allows for extensive configuration."
+script = "alacritty-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Kitty"
+description = "Kitty is a modern, fast, feature-rich, GPU based terminal emulator."
+script = "kitty-setup.ps1"
+task_list = "I"
+
+[[data]]
+name = "System Tools"
+
+[[data.entries]]
+name = "FastFetch"
+description = "FastFetch is a CLI tool to display information about your operating system, software and hardware."
+script = "fastfetch-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "GrandPerspective"
+description = "GrandPerspective is a small utility application that graphically shows the disk usage within a file system."
+script = "grandperspective-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Commander One"
+description = "Commander One is a dual-panel file manager for macOS with advanced features."
+script = "commander-one-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Raycast"
+description = "Raycast is a blazingly fast, totally extendable launcher. It lets you complete tasks, calculate, share common links, and much more."
+script = "raycast-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Onyx"
+description = "Onyx is a multifunction utility for macOS that lets you verify the structure of the system files, run miscellaneous system and file maintenance tasks."
+script = "onyx-setup.ps1"
+task_list = "I" 

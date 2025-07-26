@@ -1,8 +1,9 @@
+#[cfg(unix)]
 use crate::floating_text::FloatingText;
-
 #[cfg(unix)]
 use nix::unistd::Uid;
 
+#[cfg(unix)]
 const ROOT_WARNING: &str = "WARNING: You are running this utility as root!\n
 This means you have full system access and commands can potentially damage your system if used incorrectly.\n
 Please proceed with caution and make sure you understand what each script does before executing it.";

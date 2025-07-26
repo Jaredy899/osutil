@@ -4,12 +4,13 @@ use crate::{
     float::{Float, FloatContent},
     floating_text::FloatingText,
     hint::{create_shortcut_list, Shortcut},
-    root::check_root_status,
     running_command::RunningCommand,
     shortcuts,
     theme::Theme,
     Args,
 };
+#[cfg(unix)]
+use crate::root::check_root_status;
 use macutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind},
@@ -105,7 +106,7 @@ impl AppState {
         #[cfg(unix)]
         let root_warning = check_root_status(args.bypass_root);
         #[cfg(not(unix))]
-        let root_warning = None;
+        let _root_warning: Option<crate::floating_text::FloatingText<'static>> = None;
 
         let tabs = macutil_core::get_tabs(!args.override_validation);
         let root_id = tabs[0].tree.root().id();

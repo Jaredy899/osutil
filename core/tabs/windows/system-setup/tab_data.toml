@@ -1,0 +1,28 @@
+name = "System Setup"
+
+[[data]]
+name = "System Setup"
+
+[[data.entries]]
+name = "System Update"
+description = "Update Windows and installed applications to the latest versions."
+script = "system-update.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "System Cleanup"
+description = "Clean up temporary files, old downloads, and system cache to free up disk space."
+script = "system-cleanup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "Developer Setup"
+description = "Install common development tools and configure the development environment."
+script = "dev-setup.ps1"
+task_list = "I"
+
+[[data.entries]]
+name = "SSH Setup"
+description = "Configure SSH for secure remote access and file transfers."
+script = "ssh-setup.ps1"
+task_list = "I" 
