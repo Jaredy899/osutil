@@ -1,4 +1,4 @@
-name: Release
+name: Multi-Platform Release
 
 on:
   push:
@@ -13,6 +13,102 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  linux_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install required packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential musl-tools musl-dev gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf libc6-dev-arm64-cross libc6-dev-armhf-cross
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-registry-
+
+      - name: Cache Cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-index-
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl,aarch64-unknown-linux-musl,armv7-unknown-linux-musleabihf
+
+      - name: Install cross-rs for cross-compilation
+        run: cargo install cross
+
+      - name: Build x86_64 binary
+        run: cargo build --target-dir=build --release --verbose --target=x86_64-unknown-linux-musl --all-features
+
+      - name: Build aarch64 binary
+        run: |
+          cross build --target-dir=build --release --verbose --target=aarch64-unknown-linux-musl --all-features
+          mv ./build/aarch64-unknown-linux-musl/release/macutil ./build/aarch64-unknown-linux-musl/release/macutil-aarch64
+
+      - name: Build armv7 binary
+        run: |
+          cross build --target-dir=build --release --verbose --target=armv7-unknown-linux-musleabihf --all-features
+          mv ./build/armv7-unknown-linux-musleabihf/release/macutil ./build/armv7-unknown-linux-musleabihf/release/macutil-armv7l
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-binaries
+          path: |
+            ./build/x86_64-unknown-linux-musl/release/macutil
+            ./build/aarch64-unknown-linux-musl/release/macutil-aarch64
+            ./build/armv7-unknown-linux-musleabihf/release/macutil-armv7l
+
+  windows_build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-registry-
+
+      - name: Cache Cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-index-
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cross-compilation targets
+        run: |
+          rustup target add x86_64-pc-windows-gnu
+
+      - name: Install Windows cross-compilation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64
+
+      - name: Build for Windows
+        run: cargo build --release --target x86_64-pc-windows-gnu
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binary
+          path: target/x86_64-pc-windows-gnu/release/macutil.exe
+
   build-macos:
     runs-on: macos-latest
     
@@ -36,17 +132,33 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build binary
-        run: cargo build --release
+      - name: Install macOS targets
+        run: |
+          rustup target add x86_64-apple-darwin
+          rustup target add aarch64-apple-darwin
 
-      - name: Upload artifact
+      - name: Build for macOS (x86_64)
+        run: cargo build --release --target x86_64-apple-darwin
+
+      - name: Build for macOS (ARM)
+        run: cargo build --release --target aarch64-apple-darwin
+
+      - name: Create universal macOS binary
+        run: |
+          # Create a universal binary that works on both Intel and ARM
+          lipo -create \
+            target/x86_64-apple-darwin/release/macutil \
+            target/aarch64-apple-darwin/release/macutil \
+            -output target/release/macutil
+
+      - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macutil
+          name: macos-binary
           path: target/release/macutil
 
   release:
-    needs: [build-macos]
+    needs: [linux_build, windows_build, build-macos]
     runs-on: ubuntu-latest
     
     steps:
@@ -70,23 +182,43 @@ jobs:
           body: |
             ## Downloads
             
-            - **macOS**: `macutil`
+            ### Linux (Multiple Architectures)
+            - **x86_64**: `macutil` (x86_64 Linux)
+            - **aarch64**: `macutil-aarch64` (ARM64 Linux)
+            - **armv7l**: `macutil-armv7l` (ARMv7 Linux)
+            
+            ### macOS
+            - **Universal**: `macutil-macos` (Intel & ARM)
+            
+            ### Windows
+            - **x86_64**: `macutil-windows.exe` (Windows)
             
             ## Installation
             
-            Download the binary and make it executable:
+            ### Linux
             ```bash
-            chmod +x macutil
-            ./macutil
+            sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/install-linux.sh)
             ```
             
-            Or use the installer script:
+            ### macOS
             ```bash
-            bash <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/start.sh)
+            bash <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/install-macos.sh)
+            ```
+            
+            ### Windows
+            ```powershell
+            irm https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/install-windows.ps1 | iex
             ```
 
           files: |
-            macutil/macutil
+            linux-binaries/macutil
+            linux-binaries/macutil-aarch64
+            linux-binaries/macutil-armv7l
+            macos-binary/macutil
+            windows-binary/macutil.exe
+            install-linux.sh
+            install-macos.sh
+            install-windows.ps1
             start.sh
             startdev.sh
           generate_release_notes: true
