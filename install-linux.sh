@@ -15,7 +15,7 @@ fi
 
 # Detect architecture
 detect_architecture() {
-    local arch=$(uname -m)
+    arch=$(uname -m)
     case "$arch" in
         x86_64)
             echo "x86_64"
@@ -35,7 +35,7 @@ detect_architecture() {
 }
 
 getUrl() {
-    local arch=$1
+    arch=$1
     case "$arch" in
         x86_64)
             echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/macutil"
