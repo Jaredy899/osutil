@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 
 
 
-function Clean-System {
+function Clear-System {
     Write-Host "Performing Windows system cleanup..."
     # Clean temporary files
     Write-Host "Cleaning temporary files..."
@@ -36,5 +36,4 @@ function Clean-System {
     Write-Host "System cleanup completed!"
 }
 
-
-Clean-System
+Clear-System

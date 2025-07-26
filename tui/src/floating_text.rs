@@ -60,7 +60,24 @@ impl<'a> FloatingText<'a> {
         }
         .unwrap();
 
-        let processed_text = Self::get_highlighted_string(&src).unwrap_or_else(|| Text::from(src));
+        // Determine if we should apply syntax highlighting based on file extension
+        let processed_text = if let Command::LocalFile { file, .. } = command {
+            if let Some(extension) = file.extension() {
+                if extension == "ps1" {
+                    // For PowerShell files, don't apply bash syntax highlighting
+                    Text::from(src)
+                } else {
+                    // For other files, try bash syntax highlighting
+                    Self::get_highlighted_string(&src).unwrap_or_else(|| Text::from(src))
+                }
+            } else {
+                // No extension, try bash syntax highlighting
+                Self::get_highlighted_string(&src).unwrap_or_else(|| Text::from(src))
+            }
+        } else {
+            // For raw commands, try bash syntax highlighting
+            Self::get_highlighted_string(&src).unwrap_or_else(|| Text::from(src))
+        };
 
         Self {
             inner_area_size: (0, 0),
