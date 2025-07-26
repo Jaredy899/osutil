@@ -6,134 +6,230 @@ name = "Communication Apps"
 [[data.entries]]
 name = "Discord"
 description = "Discord is a versatile communication platform for gamers and communities, offering voice, video, and text chat features."
-script = "discord-setup.sh"
+script = "communication-apps/discord.sh"
 task_list = "I"
 
 [[data.entries]]
 name = "Signal"
 description = "Signal is a privacy-focused messaging app that provides end-to-end encryption for secure text, voice, and video communication."
-script = "signal-setup.sh"
+script = "communication-apps/signal.sh"
 task_list = "I"
 
 [[data.entries]]
 name = "Slack"
 description = "Slack is a collaboration platform designed for team communication, featuring channels, direct messaging, file sharing, and integrations with various productivity tools."
-script = "slack-setup.sh"
+script = "communication-apps/slack.sh"
 task_list = "I"
 
 [[data.entries]]
 name = "Telegram"
 description = "Telegram is a cloud-based messaging app known for its speed and security, offering features like group chats, channels, and end-to-end encrypted calls."
-script = "telegram-setup.sh"
+script = "communication-apps/telegram.sh"
 task_list = "I"
 
 [[data.entries]]
 name = "Thunderbird"
 description = "Thunderbird is a free, open-source email client that offers powerful features like customizable email management, a built-in calendar, and extensive add-ons for enhanced functionality."
-script = "thunderbird-setup.sh"
+script = "communication-apps/thunderbird.sh"
 task_list = "I"
 
 [[data.entries]]
 name = "Zoom"
 description = "Zoom is a widely-used video conferencing platform that allows users to host virtual meetings, webinars, and online collaboration with features like screen sharing and recording."
-script = "zoom-setup.sh"
+script = "communication-apps/zoom.sh"
 task_list = "I"
 
 [[data]]
 name = "Developer Tools"
 
 [[data.entries]]
-name = "VS Code"
-description = "Visual Studio Code (VS Code) is a lightweight, open-source code editor with built-in support for debugging, version control, and extensions for various programming languages and frameworks."
-script = "vscode-setup.sh"
+name = "Docker Desktop"
+description = "App to build and share containerised applications and microservices"
+script = "developer-tools/docker-desktop.sh"
 task_list = "I"
 
 [[data.entries]]
-name = "VS Codium"
-description = "VSCodium is a free, open-source version of Visual Studio Code (VS Code) that removes Microsoft-specific telemetry and branding."
-script = "vscodium-setup.sh"
+name = "Github Desktop"
+description = "GitHub Desktop is a user-friendly application that simplifies the process of managing Git repositories and interacting with GitHub, providing a graphical interface for tasks like committing, branching, and syncing changes."
+script = "developer-tools/github-desktop.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "JetBrains Toolbox"
+description = "JetBrains Toolbox is a collection of tools and an app that help developers work with JetBrains products."
+script = "developer-tools/jetbrains-toolbox.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Neovim"
+description = "Neovim is a refactor, and sometimes redactor, in the tradition of Vim.\nIt is not a rewrite but a continuation and extension of Vim.\nThis command configures neovim from CTT's neovim configuration.\nhttps://github.com/ChrisTitusTech/neovim"
+script = "developer-tools/neovim.sh"
+task_list = "I FM"
+
+[[data.entries]]
+name = "OrbStack"
+description = "Replacement for Docker Desktop"
+script = "developer-tools/orbstack.sh"
 task_list = "I"
 
 [[data.entries]]
 name = "Sublime Text"
 description = "Sublime Text is a fast, lightweight, and customizable text editor known for its simplicity, powerful features, and wide range of plugins for various programming languages."
-script = "sublime-setup.sh"
+script = "developer-tools/sublime.sh"
 task_list = "I"
 
 [[data.entries]]
-name = "Neovim"
-description = "Neovim is a refactor, and sometimes redactor, in the tradition of Vim. It is not a rewrite but a continuation and extension of Vim."
-script = "neovim-setup.sh"
+name = "VS Code"
+description = "Visual Studio Code (VS Code) is a lightweight, open-source code editor with built-in support for debugging, version control, and extensions for various programming languages and frameworks."
+script = "developer-tools/vscode.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "VS Codium"
+description = "VSCodium is a free, open-source version of Visual Studio Code (VS Code) that removes Microsoft-specific telemetry and branding."
+script = "developer-tools/vscodium.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Zed"
+description = "Zed is a next-generation code editor written in rust, designed for high-performance collaboration with humans and AI."
+script = "developer-tools/zed.sh"
+task_list = "I"
+
+[[data]]
+name = "Multimedia"
+
+[[data.entries]]
+name = "Handbrake"
+description = "Open-source video transcoder available for Linux, Mac, and Windows"
+script = "multimedia/handbrake.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "IINA"
+description = "Free and open-source media player"
+script = "multimedia/iina.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "OBS"
+description = "Open-source software for live streaming and screen recording"
+script = "multimedia/obs.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "VLC media player"
+description = "Multimedia player"
+script = "multimedia/vlc.sh"
+task_list = "I"
+
+[[data]]
+name = "Web Browsers"
+
+[[data.entries]]
+name = "Brave"
+description = "Brave is a free and open-source web browser developed by Brave Software, Inc. based on the Chromium web browser."
+script = "browsers/brave.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Chromium"
+description = "Chromium is an open-source web browser project started by Google, to provide the source code for the proprietary Google Chrome browser."
+script = "browsers/chromium.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Google Chrome"
+description = "Google Chrome is a fast, secure, and free web browser, built for the modern web."
+script = "browsers/google-chrome.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "LibreWolf"
+description = "LibreWolf is a fork of Firefox, focused on privacy, security, and freedom."
+script = "browsers/librewolf.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Mozilla Firefox"
+description = "Mozilla Firefox is a free and open-source web browser developed by the Mozilla Foundation."
+script = "browsers/firefox.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Zen Browser"
+description = "Zen Browser is a privacy-focused web browser designed for enhanced security and a seamless browsing experience."
+script = "browsers/zen-browser.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Thorium"
+description = "Thorium is a Chromium-based browser focused on privacy and performance."
+script = "browsers/thorium.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Vivaldi"
+description = "Vivaldi is a freeware, cross-platform web browser developed by Vivaldi Technologies."
+script = "browsers/vivaldi.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "waterfox"
+description = "Waterfox is the privacy-focused web browser engineered to give you speed, control, and peace of mind on the internet."
+script = "browsers/waterfox.sh"
+task_list = "FI"
+
+[[data]]
+name = "Alacritty"
+description = "Alacritty is a modern terminal emulator that comes with sensible defaults, but allows for extensive configuration. By integrating with other applications, rather than reimplementing their functionality, it manages to provide a flexible set of features with high performance. The supported platforms currently consist of BSD, Linux, macOS and Windows. This command installs and configures alacritty terminal emulator."
+script = "alacritty.sh"
 task_list = "I FM"
 
-[[data.entries]]
-name = "Docker Desktop"
-description = "Docker Desktop for Mac is the easiest way to run Docker on macOS."
-script = "docker-desktop-setup.sh"
-task_list = "I"
-
-[[data.entries]]
-name = "OrbStack"
-description = "OrbStack is a fast, light, and simple replacement for Docker Desktop."
-script = "orbstack-setup.sh"
+[[data]]
+name = "Applite"
+description = "Gui to install Mac applications through homebrew"
+script = "applite.sh"
 task_list = "I"
 
 [[data]]
-name = "Terminal Emulators"
-
-[[data.entries]]
-name = "Alacritty"
-description = "Alacritty is a modern terminal emulator that comes with sensible defaults, but allows for extensive configuration."
-script = "alacritty-setup.sh"
-task_list = "I"
-
-[[data.entries]]
-name = "Kitty"
-description = "Kitty is a modern, fast, feature-rich, GPU based terminal emulator."
-script = "kitty-setup.sh"
-task_list = "I"
-
-[[data.entries]]
-name = "Zsh"
-description = "Zsh is a shell designed for interactive use, although it is also a powerful scripting language."
-script = "zsh-setup.sh"
-task_list = "I"
-
-[[data]]
-name = "System Tools"
-
-[[data.entries]]
-name = "FastFetch"
-description = "FastFetch is a CLI tool to display information about your operating system, software and hardware."
-script = "fastfetch-setup.sh"
-task_list = "I"
-
-[[data.entries]]
-name = "GrandPerspective"
-description = "GrandPerspective is a small utility application that graphically shows the disk usage within a file system."
-script = "grandperspective-setup.sh"
-task_list = "I"
-
-[[data.entries]]
 name = "Commander One"
-description = "Commander One is a dual-panel file manager for macOS with advanced features."
-script = "commander-one-setup.sh"
+description = "Two-panel file manager"
+script = "commander-one.sh"
 task_list = "I"
 
-[[data.entries]]
+[[data]]
+name = "Fastfetch"
+description = "Fastfetch is a neofetch-like tool for fetching system information and displaying it prettily. It is written mainly in C, with performance and customizability in mind. This command installs fastfetch and configures from CTT's mybash repository. https://github.com/ChrisTitusTech/mybash"
+script = "fastfetch.sh"
+task_list = "I FM"
+
+[[data]]
+name = "GrandPerspective"
+description = "Graphically shows disk usage within a file system"
+script = "grandperspective.sh"
+task_list = "I"
+
+[[data]]
+name = "Kitty"
+description = "kitty is a free and open-source GPU-accelerated terminal emulator for Linux, macOS, and some BSD distributions, focused on performance and features. kitty is written in a mix of C and Python programming languages. This command installs and configures kitty."
+script = "kitty.sh"
+task_list = "I FM"
+
+[[data]]
+name = "OnyX"
+description = "Verify system files structure, run miscellaneous maintenance and more"
+script = "onyx.sh"
+task_list = "I"
+
+[[data]]
 name = "Raycast"
-description = "Raycast is a blazingly fast, totally extendable launcher. It lets you complete tasks, calculate, share common links, and much more."
-script = "raycast-setup.sh"
+description = "Control your tools with a few keystrokes"
+script = "raycast.sh"
 task_list = "I"
 
-[[data.entries]]
-name = "Onyx"
-description = "Onyx is a multifunction utility for macOS that lets you verify the structure of the system files, run miscellaneous system and file maintenance tasks."
-script = "onyx-setup.sh"
-task_list = "I"
-
-[[data.entries]]
-name = "AppLite"
-description = "AppLite is a lightweight application launcher for macOS."
-script = "applite-setup.sh"
-task_list = "I" 
+[[data]]
+name = "ZSH Prompt"
+description = "The Z shell is a Unix shell that can be used as an interactive login shell and as a command interpreter for shell scripting. Zsh is an extended Bourne shell with many improvements, including some features of Bash, ksh, and tcsh. This command installs ZSH prompt and provides basic configuration."
+script = "zsh.sh"
+task_list = "I FM"

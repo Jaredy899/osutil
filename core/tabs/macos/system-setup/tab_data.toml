@@ -1,52 +1,51 @@
 name = "System Setup"
 
 [[data]]
-name = "System Setup"
-
-[[data.entries]]
-name = "System Update"
-description = "Update macOS and installed applications to the latest versions."
-script = "system-update.sh"
-task_list = "I"
-
-[[data.entries]]
-name = "System Cleanup"
-description = "Clean up temporary files, old downloads, and system cache to free up disk space."
-script = "system-cleanup.sh"
-task_list = "I"
-
-[[data.entries]]
-name = "Developer Setup"
-description = "Install common development tools and configure the development environment."
+name = "Development Setup"
+description = "This script is designed to handle the installation of various development dependencies and tools across different Linux distributions"
 script = "dev-setup.sh"
 task_list = "I"
 
-[[data.entries]]
-name = "SSH Setup"
-description = "Configure SSH for secure remote access and file transfers."
-script = "ssh.sh"
-task_list = "I"
+[[data]]
+name = "Full System Cleanup"
+description = "This script is designed to remove unnecessary packages, clean old cache files, remove temporary files, and to empty the trash."
+script = "system-cleanup.sh"
+task_list = "RP PFM"
+multi_select = false
 
-[[data.entries]]
-name = "Remove Animations"
-description = "Remove system animations to improve performance on older hardware."
-script = "remove-animations.sh"
-task_list = "I"
+[[data]]
+name = "Full System Update"
+description = "This command updates your system to the latest packages available for your distro"
+script = "system-update.sh"
+task_list = "PFM"
+multi_select = false
 
-[[data.entries]]
+[[data]]
 name = "Fix Finder"
-description = "Fix common Finder issues and improve performance."
+description = "Finder optimizations for people without a mental disorder."
 script = "fix-finder.sh"
-task_list = "I"
+task_list = "I PFM"
 
-[[data.entries]]
-name = "Touch ID Setup"
-description = "Configure Touch ID for secure authentication."
-script = "touch-id.sh"
-task_list = "I"
+[[data]]
+name = "Remove Animations"
+description = "This script is designed to remove snap packages and the snapd service from your system"
+script = "remove-animations.sh"
+task_list = "RP"
 
-[[data.entries]]
-name = "Trackpad Setup"
-description = "Configure trackpad settings for optimal performance."
+[[data]]
+name = "Configure SSH"
+description = "The script enables and configures ssh into your Mac"
+script = "ssh.sh"
+task_list = "I PFM"
+
+[[data]]
+name = "Configure Trackpad"
+description = "Configures the Trackpad settings to my personal setup"
 script = "trackpad-setup.sh"
-task_list = "I" 
+task_list = "RP"
+
+[[data]]
+name = "Enable TouchID for sudo"
+description = "Enables TouchID when the system needs sudo access"
+script = "touch-id.sh"
+task_list = "RP"
