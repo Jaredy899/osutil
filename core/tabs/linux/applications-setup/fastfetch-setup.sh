@@ -5,11 +5,36 @@
 installFastfetch() {
     if ! command_exists fastfetch; then
         printf "%b\n" "${YELLOW}Installing Fastfetch...${RC}"
-        if ! brew install fastfetch; then
-            printf "%b\n" "${RED}Failed to install Fastfetch. Please check your Homebrew installation or try again later.${RC}"
-            exit 1
-        fi
-        printf "%b\n" "${GREEN}Fastfetch installed successfully!${RC}"
+        case "$PACKAGER" in
+            pacman)
+                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm fastfetch
+                ;;
+            apt-get|nala)
+                if "$ESCALATION_TOOL" "$PACKAGER" install -y fastfetch 2>/dev/null; then
+                    return 0
+                fi
+                case "$ARCH" in
+                    x86_64)
+                        DEB_FILE="fastfetch-linux-amd64.deb"
+                        ;;
+                    aarch64)
+                        DEB_FILE="fastfetch-linux-aarch64.deb"
+                        ;;
+                esac
+                curl -sSLo "/tmp/fastfetch.deb" "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$DEB_FILE"
+                "$ESCALATION_TOOL" "$PACKAGER" install -y /tmp/fastfetch.deb
+                rm /tmp/fastfetch.deb
+                ;;
+            apk)
+                "$ESCALATION_TOOL" "$PACKAGER" add fastfetch zoxide
+                ;;
+            xbps-install)
+                "$ESCALATION_TOOL" "$PACKAGER" -Sy fastfetch
+                ;;
+            *)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y fastfetch
+                ;;
+        esac
     else
         printf "%b\n" "${GREEN}Fastfetch is already installed.${RC}"
     fi
@@ -21,54 +46,54 @@ setupFastfetchConfig() {
         cp -r "${HOME}/.config/fastfetch" "${HOME}/.config/fastfetch-bak"
     fi
     mkdir -p "${HOME}/.config/fastfetch/"
-    curl -sSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/config.jsonc
+    curl -sSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/ChrisTitusTech/mybash/main/config.jsonc
 }
 
 setupFastfetchShell() {
-    printf "%b\n" "${YELLOW}Configuring shell integration...${RC}"
+	printf "%b\n" "${YELLOW}Configuring shell integration...${RC}"
 
-    current_shell=$(basename "$SHELL")
-    rc_file=""
+	current_shell=$(basename "$SHELL")
+	rc_file=""
 
-    case "$current_shell" in
-    "bash")
-        rc_file="$HOME/.bashrc"
-        ;;
-    "zsh")
-        rc_file="$HOME/.zshrc"
-        ;;
-    "fish")
-        rc_file="$HOME/.config/fish/config.fish"
-        ;;
-    "nu")
-        rc_file="$HOME/.config/nushell/config.nu"
-        ;;
-    *)
-        printf "%b\n" "${RED}$current_shell is not supported. Update your shell configuration manually.${RC}"
-        ;;
-    esac
+	case "$current_shell" in
+	"bash")
+		rc_file="$HOME/.bashrc"
+		;;
+	"zsh")
+		rc_file="$HOME/.zshrc"
+		;;
+	"fish")
+		rc_file="$HOME/.config/fish/config.fish"
+		;;
+	"nu")
+		rc_file="$HOME/.config/nushell/config.nu"
+		;;
+	*)
+		printf "%b\n" "${RED}$current_shell is not supported. Update your shell configuration manually.${RC}"
+		;;
+	esac
 
-    if [ ! -f "$rc_file" ]; then
-        printf "%b\n" "${RED}Shell config file $rc_file not found${RC}"
-    else
-        if grep -q "fastfetch" "$rc_file"; then
-            printf "%b\n" "${YELLOW}Fastfetch is already configured in $rc_file${RC}"
-            return 0
-        else
-            printf "%b" "${GREEN}Would you like to add fastfetch to $rc_file? [y/N] ${RC}"
-            read -r response
-            if [ "$response" = "y" ] || [ "$response" = "Y" ]; then
-                printf "\n# Run fastfetch on shell initialization\nfastfetch\n" >>"$rc_file"
-                printf "%b\n" "${GREEN}Added fastfetch to $rc_file${RC}"
-            else
-                printf "%b\n" "${YELLOW}Skipped adding fastfetch to shell config${RC}"
-            fi
-        fi
-    fi
-
+	if [ ! -f "$rc_file" ]; then
+		printf "%b\n" "${RED}Shell config file $rc_file not found${RC}"
+	else
+		if grep -q "fastfetch" "$rc_file"; then
+			printf "%b\n" "${YELLOW}Fastfetch is already configured in $rc_file${RC}"
+			return 0
+		else
+			printf "%b" "${GREEN}Would you like to add fastfetch to $rc_file? [y/N] ${RC}"
+			read -r response
+			if [ "$response" = "y" ] || [ "$response" = "Y" ]; then
+				printf "\n# Run fastfetch on shell initialization\nfastfetch\n" >>"$rc_file"
+				printf "%b\n" "${GREEN}Added fastfetch to $rc_file${RC}"
+			else
+				printf "%b\n" "${YELLOW}Skipped adding fastfetch to shell config${RC}"
+			fi
+		fi
+	fi
 }
 
 checkEnv
+checkEscalationTool
 installFastfetch
 setupFastfetchConfig
 setupFastfetchShell

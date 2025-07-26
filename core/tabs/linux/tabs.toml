@@ -1,5 +1,8 @@
 directories = [
     "applications-setup",
-    "communication-apps",
+    "desktop-environments",
+    "gaming",
+    "security",
     "system-setup",
-] 
+    "utils"
+]

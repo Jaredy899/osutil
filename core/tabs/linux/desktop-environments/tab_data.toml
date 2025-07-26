@@ -1,0 +1,92 @@
+name = "Desktop Environments"
+warning = "⚠️ BETA WARNING ⚠️\n\nDesktop Environment installations are currently in BETA.\n\nInstalling multiple desktop environments may:\n• Cause conflicts between desktop managers\n• Break your current desktop setup\n• Require manual configuration to resolve issues\n• Lead to unexpected behavior\n\nIt is recommended to:\n• Test in a virtual machine first\n• Create a system backup before proceeding\n• Install only one desktop environment at a time\n\nProceed with caution!"
+
+[[data]]
+name = "GNOME"
+description = "GNOME is a modern, user-friendly desktop environment focused on simplicity and elegance, featuring a clean interface and tight integration with core applications."
+script = "gnome-setup.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = false
+data = "command_exists"
+values = ["dnf", "eopkg"]
+
+[[data]]
+name = "KDE Plasma"
+description = "KDE Plasma is a highly customizable desktop environment with a rich feature set, offering extensive personalization options and a polished, modern look and feel."
+script = "kde-setup.sh"
+task_list = "I SS"
+
+[[data]]
+name = "XFCE"
+description = "XFCE is a lightweight, fast desktop environment that maintains low system resource usage while providing a complete and easy-to-use desktop experience."
+script = "xfce-setup.sh"
+task_list = "I SS"
+
+[[data]]
+name = "Cinnamon"
+description = "Cinnamon is a desktop environment derived from GNOME 3 that aims to provide a traditional desktop experience with modern features and technologies."
+script = "cinnamon-setup.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = false
+data = "command_exists"
+values = ["apk", "eopkg"]
+
+[[data]]
+name = "MATE"
+description = "MATE is a desktop environment that continues the GNOME 2 experience, offering a classic, intuitive interface with modern code and active development."
+script = "mate-setup.sh"
+task_list = "I SS"
+
+[[data]]
+name = "LXQt"
+description = "LXQt is a lightweight Qt desktop environment that focuses on being a resource-efficient alternative while maintaining a user-friendly interface."
+script = "lxqt-setup.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = false
+data = "command_exists"
+values = ["eopkg"]
+
+[[data]]
+name = "Budgie"
+description = "Budgie is a modern desktop environment focusing on simplicity and elegance, designed with the modern user in mind."
+script = "budgie-setup.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = false
+data = "command_exists"
+values = ["apk", "apt-get", "nala"]
+
+[[data]]
+name = "Deepin"
+description = "Deepin Desktop Environment (DDE) is an elegant, user-friendly desktop environment originally created for Deepin Linux, featuring a beautiful design and smooth animations."
+script = "deepin-setup.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = false
+data = "command_exists"
+values = ["apk", "apt-get", "eopkg"]
+
+[[data]]
+name = "i3"
+description = "i3 is a tiling window manager designed for X11, focused on efficiency and customization for power users and developers."
+script = "i3-setup.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = false
+data = "command_exists"
+values = ["apk"]
+
+[[data]]
+name = "Sway"
+description = "Sway is a tiling Wayland compositor and a drop-in replacement for the i3 window manager for X11, compatible with i3 configuration."
+script = "sway-setup.sh"
+task_list = "I SS" 

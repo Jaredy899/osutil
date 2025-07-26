@@ -2,97 +2,127 @@
 
 . ../common-script.sh
 
-backupZshConfig() {
-    printf "%b\n" "${YELLOW}Backing up existing Zsh configuration...${RC}"
-    
-    # Backup existing .zshrc if it exists
-    if [ -f "$HOME/.zshrc" ] && [ ! -f "$HOME/.zshrc-backup" ]; then
-        cp "$HOME/.zshrc" "$HOME/.zshrc-backup"
-        printf "%b\n" "${GREEN}Existing .zshrc backed up to .zshrc-backup.${RC}"
-    fi
-    
-    # Backup existing .config/zsh if it exists
-    if [ -d "$HOME/.config/zsh" ] && [ ! -d "$HOME/.config/zsh-backup" ]; then
-        cp -r "$HOME/.config/zsh" "$HOME/.config/zsh-backup"
-        printf "%b\n" "${GREEN}Existing Zsh config backed up to .config/zsh-backup.${RC}"
+# Function to install zsh
+installZsh() {
+    if ! command_exists zsh; then
+        printf "%b\n" "${YELLOW}Installing Zsh...${RC}"
+        case "$PACKAGER" in
+            pacman)
+                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm zsh
+                ;;
+            apk)
+                "$ESCALATION_TOOL" "$PACKAGER" add zsh
+                ;;
+            xbps-install)
+                "$ESCALATION_TOOL" "$PACKAGER" -Sy zsh
+                ;;
+            *)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y zsh
+                ;;
+        esac
+    else
+        printf "%b\n" "${GREEN}ZSH is already installed.${RC}"
     fi
 }
 
-installZshDepend() {
-    # List of dependencies
-    DEPENDENCIES="zsh-autocomplete bat tree multitail fastfetch wget unzip fontconfig starship fzf zoxide"
+installFont() {
+    FONT_NAME="MesloLGS Nerd Font Mono"
+    if fc-list :family | grep -iq "$FONT_NAME"; then
+        printf "%b\n" "${GREEN}Font '$FONT_NAME' is installed.${RC}"
+    else
+        printf "%b\n" "${YELLOW}Installing font '$FONT_NAME'${RC}"
+        FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip"
+        FONT_DIR="$HOME/.local/share/fonts"
+        TEMP_DIR=$(mktemp -d)
+        curl -sSLo "$TEMP_DIR/${FONT_NAME}.zip" "$FONT_URL"
+        unzip "$TEMP_DIR/${FONT_NAME}.zip" -d "$TEMP_DIR"
+        mkdir -p "$FONT_DIR/$FONT_NAME"
+        mv "$TEMP_DIR"/*.ttf "$FONT_DIR/$FONT_NAME"
+        fc-cache -fv
+        rm -rf "$TEMP_DIR"
+        printf "%b\n" "${GREEN}'$FONT_NAME' installed successfully.${RC}"
+    fi
+}
 
-    printf "%b\n" "${CYAN}Installing dependencies...${RC}"
-    for package in $DEPENDENCIES; do
-        if brewprogram_exists "$package"; then
-            printf "%b\n" "${GREEN}$package is already installed, skipping...${RC}"
-        else
-            printf "%b\n" "${CYAN}Installing $package...${RC}"
-            if ! brew install "$package"; then
-                printf "%b\n" "${RED}Failed to install $package. Please check your brew installation.${RC}"
-                exit 1
-            fi
-        fi
-    done
+installStarshipAndFzf() {
+    if command_exists starship; then
+        printf "%b\n" "${GREEN}Starship already installed${RC}"
+        return
+    fi
 
-    # List of cask dependencies
-    CASK_DEPENDENCIES="ghostty font-fira-code-nerd-font"
+    if [ "$PACKAGER" = "eopkg" ]; then
+        "$ESCALATION_TOOL" "$PACKAGER" install -y starship || {
+            printf "%b\n" "${RED}Failed to install starship with Solus!${RC}"
+            exit 1
+        }
+    else
+        curl -sSL https://starship.rs/install.sh | "$ESCALATION_TOOL" sh || {
+            printf "%b\n" "${RED}Failed to install starship!${RC}"
+            exit 1
+        }
+    fi
 
-    printf "%b\n" "${CYAN}Installing cask dependencies...${RC}"
-    for cask in $CASK_DEPENDENCIES; do
-        if brewprogram_exists "$cask"; then
-            printf "%b\n" "${GREEN}$cask is already installed, skipping...${RC}"
-        else
-            printf "%b\n" "${CYAN}Installing $cask...${RC}"
-            if ! brew install --cask "$cask"; then
-                printf "%b\n" "${RED}Failed to install $cask. Please check your brew installation.${RC}"
-                exit 1
-            fi
-        fi
-    done
+    if command_exists fzf; then
+        printf "%b\n" "${GREEN}Fzf already installed${RC}"
+    else
+        git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+        "$ESCALATION_TOOL" ~/.fzf/install
+    fi
+}
 
-    if [ -e ~/.fzf/install ]; then
-        if ! ~/.fzf/install --all; then
-            printf "%b\n" "${RED}Failed to install fzf. Please check your brew installation.${RC}"
+installZoxide() {
+    if command_exists zoxide; then
+        printf "%b\n" "${GREEN}Zoxide already installed${RC}"
+        return
+    fi
+
+    if [ "$PACKAGER" = "apk" ]; then
+        "$ESCALATION_TOOL" "$PACKAGER" add zoxide
+    else
+        if ! curl -sSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh; then
+            printf "%b\n" "${RED}Something went wrong during zoxide install!${RC}"
             exit 1
         fi
     fi
 }
 
-setupStarshipConfig() {
-  printf "%b\n" "${YELLOW}Setting up Starship configuration...${RC}"
-  
-  wget https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/starship.toml -O "$HOME/.config/starship.toml"
-  printf "%b\n" "${GREEN}Starship configuration has been set up successfully.${RC}"
-}
+BASE_URL="https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes"
+ZSHRC_URL="https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/.zshrc"
 
-setupFastfetchConfig() {
-    printf "%b\n" "${YELLOW}Copying Fastfetch config files...${RC}"
-    if [ -d "${HOME}/.config/fastfetch" ] && [ ! -d "${HOME}/.config/fastfetch-bak" ]; then
-        cp -r "${HOME}/.config/fastfetch" "${HOME}/.config/fastfetch-bak"
+setupAndReplaceConfigs() {
+    printf "%b\n" "${YELLOW}Setting up Zsh and downloading configurations...${RC}"
+
+    # Create necessary directories
+    mkdir -p "$HOME/.config/zsh"
+    mkdir -p "$HOME/.config/fastfetch"
+    mkdir -p "$HOME/.config"
+
+    # Download .zshrc from your mac repo
+    curl -fsSL "$ZSHRC_URL" -o "$HOME/.config/zsh/.zshrc"
+
+    # Ensure /etc/zsh/zshenv sets ZDOTDIR to the user's config directory
+    [ ! -f /etc/zsh/zshenv ] && "$ESCALATION_TOOL" mkdir -p /etc/zsh && "$ESCALATION_TOOL" touch /etc/zsh/zshenv
+    grep -q "ZDOTDIR" /etc/zsh/zshenv 2>/dev/null || \
+        echo "export ZDOTDIR=\"$HOME/.config/zsh\"" | "$ESCALATION_TOOL" tee -a /etc/zsh/zshenv
+
+    # Handle Alpine and Solus special cases for /etc/profile and .profile
+    if [ -f /etc/alpine-release ]; then
+        "$ESCALATION_TOOL" curl -sSfL -o "/etc/profile" "$BASE_URL/profile"
+    elif [ "$DTYPE" = "solus" ]; then
+        curl -sSfL -o "$HOME/.profile" "$BASE_URL/.profile"
     fi
-    mkdir -p "${HOME}/.config/fastfetch/"
-    curl -sSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/config.jsonc
-}
 
-# Function to setup zsh configuration
-setupZshConfig() {
-  printf "%b\n" "${YELLOW}Setting up Zsh configuration...${RC}"
+    # Download fastfetch and starship configs
+    curl -sSfL -o "$HOME/.config/fastfetch/config.jsonc" "$BASE_URL/config.jsonc"
+    curl -sSfL -o "$HOME/.config/starship.toml" "$BASE_URL/starship.toml"
 
-  wget https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/.zshrc -O "$HOME/.zshrc"
-
-  # Ensure .zshrc is sourced
-  if [ ! -f "$HOME/.zshrc" ]; then
-    printf "%b\n" "${RED}Zsh configuration file not found!${RC}"
-    exit 1
-  fi
-  
-  printf "%b\n" "${GREEN}Zsh configuration has been set up successfully. Restart Shell.${RC}"
+    printf "%b\n" "${GREEN}Zsh and other configurations set up successfully.${RC}"
 }
 
 checkEnv
-backupZshConfig
-installZshDepend
-setupStarshipConfig
-setupFastfetchConfig
-setupZshConfig
+checkEscalationTool
+installZsh
+installFont
+installStarshipAndFzf
+installZoxide
+setupAndReplaceConfigs
