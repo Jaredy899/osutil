@@ -2,6 +2,7 @@
 
 # Prevent execution if this script was only partially downloaded
 {
+# Define color codes using echo -e to avoid shell interpretation issues
 rc='\033[0m'
 red='\033[0;31m'
 green='\033[0;32m'
@@ -9,7 +10,7 @@ blue='\033[0;34m'
 
 # Check if running on macOS
 if [ "$(uname)" != "Darwin" ]; then
-    printf '%sERROR: This installer is designed for macOS only%s\n' "$red" "$rc"
+    echo -e "${red}ERROR: This installer is designed for macOS only${rc}"
     exit 1
 fi
 
@@ -29,32 +30,31 @@ getInstallPath() {
 installPath=$(getInstallPath)
 installDir=$(dirname "$installPath")
 
-printf '%sInstalling osutil for macOS...%s\n' "$blue" "$rc"
+echo -e "${blue}Installing osutil for macOS...${rc}"
 
 # Create installation directory if it doesn't exist
 if [ ! -d "$installDir" ]; then
-    printf 'Creating directory: %s\n' "$installDir"
+    echo "Creating directory: $installDir"
     mkdir -p "$installDir"
 fi
 
 # Download the binary
 temp_file=$(mktemp)
-if ! mktemp; then
-    printf '%sERROR: Creating the temporary file%s\n' "$red" "$rc"
+if [ $? -ne 0 ]; then
+    echo -e "${red}ERROR: Creating the temporary file${rc}"
     exit 1
 fi
 
-printf 'Downloading osutil...\n'
+echo "Downloading osutil..."
 if ! curl -fsL "$(getUrl)" -o "$temp_file"; then
-    printf '%sERROR: Downloading osutil%s\n' "$red" "$rc"
+    echo -e "${red}ERROR: Downloading osutil${rc}"
     rm -f "$temp_file"
     exit 1
 fi
 
 # Make it executable
-chmod +x "$temp_file"
 if ! chmod +x "$temp_file"; then
-    printf '%sERROR: Making osutil executable%s\n' "$red" "$rc"
+    echo -e "${red}ERROR: Making osutil executable${rc}"
     rm -f "$temp_file"
     exit 1
 fi
@@ -63,9 +63,8 @@ fi
 xattr -d com.apple.quarantine "$temp_file" 2>/dev/null || true
 
 # Move to installation location
-mv "$temp_file" "$installPath"
 if ! mv "$temp_file" "$installPath"; then
-    printf '%sERROR: Installing osutil to %s%s\n' "$red" "$installPath" "$rc"
+    echo -e "${red}ERROR: Installing osutil to $installPath${rc}"
     rm -f "$temp_file"
     exit 1
 fi
@@ -73,17 +72,18 @@ fi
 # Remove quarantine attribute from installed binary
 xattr -d com.apple.quarantine "$installPath" 2>/dev/null || true
 
-printf '%s✓ osutil installed successfully to %s%s\n' "$green" "$installPath" "$rc"
+echo -e "${green}✓ osutil installed successfully to $installPath${rc}"
 
 # Check if the installation directory is in PATH
 if echo "$PATH" | grep -q "$installDir"; then
-    printf '%s✓ osutil is ready to use!%s\n' "$green" "$rc"
+    echo -e "${green}✓ osutil is ready to use!${rc}"
 else
-    printf '%s⚠  Please add %s to your PATH or restart your terminal%s\n' "$blue" "$installDir" "$rc"
-    printf "   You can run: export PATH=\"\$PATH:%s\"%s\n" "$installDir" "$rc"
+    echo -e "${blue}⚠  Please add $installDir to your PATH or restart your terminal${rc}"
+    echo "   You can run: export PATH=\"\$PATH:$installDir\""
 fi
 
-printf '\nRunning osutil...\n'
+echo ""
+echo "Running osutil..."
 exec "$installPath"
 
 } # End of wrapping 
