@@ -76,7 +76,7 @@ fi
 
 # Download the binary
 temp_file=$(mktemp)
-if ! mktemp; then
+if [ -z "$temp_file" ]; then
     printf '%sERROR: Creating the temporary file%s\n' "$red" "$rc"
     exit 1
 fi
@@ -89,7 +89,6 @@ if ! curl -fsL "$(getUrl "$ARCH")" -o "$temp_file"; then
 fi
 
 # Make it executable
-chmod +x "$temp_file"
 if ! chmod +x "$temp_file"; then
     printf '%sERROR: Making osutil executable%s\n' "$red" "$rc"
     rm -f "$temp_file"
@@ -97,7 +96,6 @@ if ! chmod +x "$temp_file"; then
 fi
 
 # Move to installation location
-mv "$temp_file" "$installPath"
 if ! mv "$temp_file" "$installPath"; then
     printf '%sERROR: Installing osutil to %s%s\n' "$red" "$installPath" "$rc"
     rm -f "$temp_file"
