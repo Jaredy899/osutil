@@ -48,6 +48,10 @@ impl portable_pty::MasterPty for DummyPty {
         Ok(Box::new(std::io::empty()))
     }
 
+    fn tty_name(&self) -> Option<std::path::PathBuf> {
+        None
+    }
+
     #[cfg(unix)]
     fn process_group_leader(&self) -> Option<i32> {
         None
