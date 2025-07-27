@@ -276,9 +276,9 @@ checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
 name = "ego-tree"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c6ba7d4eec39eaa9ab24d44a0e73a7949a1095a8b3f3abb11eddf27dbb56a53"
+checksum = "b2972feb8dffe7bc8c5463b1dacda1b0dfbed3710e50f977d965429692d74cd8"
 
 [[package]]
 name = "either"
@@ -554,7 +554,7 @@ checksum = "b4ce411919553d3f9fa53a0880544cda985a112117a0444d5ff1e870a893d6ea"
 
 [[package]]
 name = "osutil_core"
-version = "1.1.0"
+version = "1.1.2"
 dependencies = [
  "ego-tree",
  "include_dir",
@@ -566,7 +566,7 @@ dependencies = [
 
 [[package]]
 name = "osutil_tui"
-version = "1.1.0"
+version = "1.1.2"
 dependencies = [
  "anyhow",
  "clap",
@@ -1380,7 +1380,7 @@ checksum = "d135d17ab770252ad95e9a872d365cf3090e3be864a34ab46f48555993efc904"
 
 [[package]]
 name = "xtask"
-version = "1.1.0"
+version = "1.1.2"
 dependencies = [
  "osutil_core",
 ]
