@@ -15,18 +15,17 @@ A cross-platform system utility tool with a modern TUI interface.
 ### Windows
 ```powershell
 # Download and run the installer
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1" -OutFile "install-windows.ps1"
-.\install-windows.ps1
+irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
 ```
 
 ### macOS
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-macos.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-macos.sh)
 ```
 
 ### Linux
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-linux.sh | bash
+sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-linux.sh)
 ```
 
 ## PowerShell Script Performance
