@@ -327,7 +327,7 @@ fn is_executable(path: &Path) -> bool {
 
 impl TabDirectories {
     fn get_tabs() -> (TempDir, Vec<PathBuf>) {
-        let temp_dir = TempDir::with_prefix("macutil_scripts").unwrap();
+        let temp_dir = TempDir::with_prefix("osutil_scripts").unwrap();
         TAB_DATA
             .extract(&temp_dir)
             .expect("Failed to extract the saved directory");

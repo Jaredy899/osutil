@@ -1,5 +1,5 @@
 use crate::{state::ListEntry, theme::Theme};
-use macutil_core::{ego_tree::NodeId, Tab};
+use osutil_core::{ego_tree::NodeId, Tab};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
     prelude::*,

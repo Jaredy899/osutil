@@ -1,5 +1,5 @@
 use crate::{float::FloatContent, hint::Shortcut, shortcuts, theme::Theme};
-use macutil_core::Command;
+use osutil_core::Command;
 use oneshot::{channel, Receiver};
 use portable_pty::{
     ChildKiller, CommandBuilder, ExitStatus, MasterPty, NativePtySystem, PtySize, PtySystem,
@@ -311,7 +311,7 @@ impl RunningCommand {
         let mut log_path = std::env::temp_dir();
         let date_format = format_description!("[year]-[month]-[day]-[hour]-[minute]-[second]");
         log_path.push(format!(
-            "macutil_log_{}.log",
+            "osutil_log_{}.log",
             OffsetDateTime::now_local()
                 .unwrap_or(OffsetDateTime::now_utc())
                 .format(&date_format)

@@ -487,37 +487,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "macutil_core"
-version = "0.1.2"
-dependencies = [
- "ego-tree",
- "include_dir",
- "serde",
- "temp-dir",
- "toml",
- "which",
-]
-
-[[package]]
-name = "macutil_tui"
-version = "0.1.2"
-dependencies = [
- "clap",
- "macutil_core",
- "nix 0.29.0",
- "oneshot",
- "portable-pty",
- "rand",
- "ratatui",
- "time",
- "tree-sitter-bash",
- "tree-sitter-highlight",
- "tui-term",
- "unicode-width 0.2.0",
- "vt100-ctt",
-]
-
-[[package]]
 name = "memchr"
 version = "2.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -596,6 +565,37 @@ name = "oneshot"
 version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4ce411919553d3f9fa53a0880544cda985a112117a0444d5ff1e870a893d6ea"
+
+[[package]]
+name = "osutil_core"
+version = "0.1.2"
+dependencies = [
+ "ego-tree",
+ "include_dir",
+ "serde",
+ "temp-dir",
+ "toml",
+ "which",
+]
+
+[[package]]
+name = "osutil_tui"
+version = "0.1.2"
+dependencies = [
+ "clap",
+ "nix 0.29.0",
+ "oneshot",
+ "osutil_core",
+ "portable-pty",
+ "rand",
+ "ratatui",
+ "time",
+ "tree-sitter-bash",
+ "tree-sitter-highlight",
+ "tui-term",
+ "unicode-width 0.2.0",
+ "vt100-ctt",
+]
 
 [[package]]
 name = "parking_lot"
@@ -1442,7 +1442,7 @@ checksum = "d135d17ab770252ad95e9a872d365cf3090e3be864a34ab46f48555993efc904"
 name = "xtask"
 version = "0.1.2"
 dependencies = [
- "macutil_core",
+ "osutil_core",
 ]
 
 [[package]]

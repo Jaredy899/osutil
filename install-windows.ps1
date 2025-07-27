@@ -17,7 +17,7 @@
     }
     
     function Get-Url {
-        return "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/macutil-windows.exe"
+        return "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil-windows.exe"
     }
     
     function Get-InstallPath {
@@ -25,25 +25,25 @@
         $paths = @(
             "$env:LOCALAPPDATA\Microsoft\WinGet\Packages",
             "$env:USERPROFILE\.local\bin",
-            "$env:USERPROFILE\AppData\Local\Programs\macutil"
+            "$env:USERPROFILE\AppData\Local\Programs\osutil"
         )
         
         foreach ($path in $paths) {
             if (Test-Path $path -PathType Container) {
-                return "$path\macutil.exe"
+                return "$path\osutil.exe"
             }
         }
         
         # Create the first directory if none exist
-        $installDir = "$env:USERPROFILE\AppData\Local\Programs\macutil"
+        $installDir = "$env:USERPROFILE\AppData\Local\Programs\osutil"
         New-Item -ItemType Directory -Path $installDir -Force | Out-Null
-        return "$installDir\macutil.exe"
+        return "$installDir\osutil.exe"
     }
     
     $installPath = Get-InstallPath
     $installDir = Split-Path $installPath -Parent
     
-    Write-Host "${Blue}Installing macutil for Windows...${Reset}"
+    Write-Host "${Blue}Installing osutil for Windows...${Reset}"
     
     # Create installation directory if it doesn't exist
     if (!(Test-Path $installDir -PathType Container)) {
@@ -54,24 +54,24 @@
     # Download the binary
     $tempFile = [System.IO.Path]::GetTempFileName()
     try {
-        Write-Host "Downloading macutil..."
+        Write-Host "Downloading osutil..."
         Invoke-WebRequest -Uri (Get-Url) -OutFile $tempFile -UseBasicParsing
         
         # Move to installation location
         Move-Item -Path $tempFile -Destination $installPath -Force
         
-        Write-Host "${Green}✓ macutil installed successfully to $installPath${Reset}"
+        Write-Host "${Green}✓ osutil installed successfully to $installPath${Reset}"
         
         # Check if the installation directory is in PATH
         $pathDirs = $env:PATH -split ';'
         if ($pathDirs -contains $installDir) {
-            Write-Host "${Green}✓ macutil is ready to use!${Reset}"
+            Write-Host "${Green}✓ osutil is ready to use!${Reset}"
         } else {
             Write-Host "${Blue}⚠  Please add $installDir to your PATH or restart your terminal${Reset}"
             Write-Host "   You can run: `$env:PATH += `";$installDir`""
         }
         
-        Write-Host "`nUsage: macutil"
+        Write-Host "`nUsage: osutil"
         
     } catch {
         Write-Host "${Red}ERROR: $($_.Exception.Message)${Reset}"

@@ -1,6 +1,6 @@
 # Multi-Platform Build and Installation System
 
-This document describes the comprehensive multi-platform build and installation system for macutil.
+This document describes the comprehensive multi-platform build and installation system for osutil.
 
 ## Overview
 
@@ -110,13 +110,13 @@ cargo build --release --target aarch64-apple-darwin
 ### install-linux.sh
 - Auto-detects system architecture (x86_64, aarch64, armv7l)
 - Downloads the appropriate binary from GitHub Releases
-- Installs to `/usr/local/bin/macutil` (if writable) or `~/.local/bin/macutil`
+- Installs to `/usr/local/bin/osutil` (if writable) or `~/.local/bin/osutil`
 - Checks PATH and provides helpful messages
 - Includes error handling and cleanup
 
 ### install-macos.sh
 - Downloads the macOS binary from GitHub Releases
-- Installs to `/usr/local/bin/macutil` (if writable) or `~/.local/bin/macutil`
+- Installs to `/usr/local/bin/osutil` (if writable) or `~/.local/bin/osutil`
 - Removes quarantine attributes to avoid Gatekeeper warnings
 - Checks PATH and provides helpful messages
 - Includes error handling and cleanup

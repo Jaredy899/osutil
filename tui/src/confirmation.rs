@@ -140,7 +140,7 @@ impl FloatContent for ConfirmPrompt {
                 ("Abort", ["N", "n", "q", "Esc"]),
                 ("Scroll up", ["k", "Up"]),
                 ("Scroll down", ["j", "Down"]),
-                ("Close macutil", ["CTRL-c"]),
+                ("Close osutil", ["CTRL-c"]),
             ),
         )
     }

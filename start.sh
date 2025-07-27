@@ -12,7 +12,7 @@ if [ "$(uname)" != "Darwin" ]; then
 fi
 
 getUrl() {
-    echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/macutil"
+    echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil"
 }
 
 temp_file=$(mktemp)
@@ -23,14 +23,14 @@ fi
 
 curl -fsL "$(getUrl)" -o "$temp_file"
 if [ $? -ne 0 ]; then
-    printf '%sERROR: Downloading macutil%s\n' "$red" "$rc"
+    printf '%sERROR: Downloading osutil%s\n' "$red" "$rc"
     rm -f "$temp_file"
     exit 1
 fi
 
 chmod +x "$temp_file"
 if [ $? -ne 0 ]; then
-    printf '%sERROR: Making macutil executable%s\n' "$red" "$rc"
+    printf '%sERROR: Making osutil executable%s\n' "$red" "$rc"
     rm -f "$temp_file"
     exit 1
 fi

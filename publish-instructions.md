@@ -36,7 +36,7 @@ All crates in the workspace inherit this version via `version.workspace = true`.
 
 ## Installation
 
-Users can install macutil using platform-specific commands:
+Users can install osutil using platform-specific commands:
 
 ### Linux
 ```bash

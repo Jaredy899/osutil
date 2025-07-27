@@ -1,4 +1,4 @@
-# MacUtil
+# OSutil
 
 A simple utility tool for system management and application setup, now supporting Linux, macOS, and Windows.
 
@@ -41,10 +41,10 @@ Run the application:
 
 ```bash
 # If installed via script
-macutil
+osutil
 
 # If built from source
-./target/release/macutil
+./target/release/osutil
 ```
 
 For development:

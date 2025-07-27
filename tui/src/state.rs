@@ -11,7 +11,7 @@ use crate::{
 };
 #[cfg(unix)]
 use crate::root::check_root_status;
-use macutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
+use osutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind},
     layout::Flex,
@@ -108,14 +108,14 @@ impl AppState {
         #[cfg(not(unix))]
         let _root_warning: Option<crate::floating_text::FloatingText<'static>> = None;
 
-        let tabs = macutil_core::get_tabs(!args.override_validation);
+        let tabs = osutil_core::get_tabs(!args.override_validation);
         let root_id = tabs[0].tree.root().id();
 
         let longest_tab_display_len = tabs
             .iter()
             .map(|tab| tab.name.len() + args.theme.tab_icon().len())
             .max()
-            .unwrap_or(22) as u16; // 22 is the length of "macutil by Chris Titus" title
+            .unwrap_or(22) as u16; // 22 is the length of "osutil by Chris Titus" title
 
         let mut state = Self {
             areas: None,
@@ -208,7 +208,7 @@ impl AppState {
 
             Focus::List => {
                 let mut hints = Vec::new();
-                hints.push(Shortcut::new("Exit macutil", ["q", "CTRL-c"]));
+                hints.push(Shortcut::new("Exit osutil", ["q", "CTRL-c"]));
 
                 if self.at_root() {
                     hints.push(Shortcut::new("Focus tab list", ["h", "Left"]));
@@ -245,7 +245,7 @@ impl AppState {
             Focus::TabList => (
                 "Tab list",
                 shortcuts!(
-                    ("Exit macutil", ["q", "CTRL-c"]),
+                    ("Exit osutil", ["q", "CTRL-c"]),
                     ("Focus action list", ["l", "Right", "Enter"]),
                     ("Select item above", ["k", "Up"]),
                     ("Select item below", ["j", "Down"]),
@@ -307,7 +307,7 @@ impl AppState {
         });
 
         let label = Paragraph::new(Line::from(vec![
-            Span::styled("macutil ", Style::default().bold()),
+            Span::styled("osutil ", Style::default().bold()),
 //            Span::styled("by Chris Titus", Style::default().italic()),
         ]))
         .block(label_block)

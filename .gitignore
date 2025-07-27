@@ -4,7 +4,7 @@
 /build/
 rust/target/
 rust/build/
-/build/macutil
+/build/osutil
 
 # Rust generated files
 **/*.rs.bk

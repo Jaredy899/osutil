@@ -67,9 +67,9 @@ fn build_target(target: &str) -> Result<(), DynError> {
 }
 
 fn create_universal_macos_binary() -> Result<(), DynError> {
-    let x86_64_path = "target/x86_64-apple-darwin/release/macutil";
-    let aarch64_path = "target/aarch64-apple-darwin/release/macutil";
-    let output_path = "target/release/macutil";
+    let x86_64_path = "target/x86_64-apple-darwin/release/osutil";
+let aarch64_path = "target/aarch64-apple-darwin/release/osutil";
+let output_path = "target/release/osutil";
     
     // Check if both binaries exist
     if !std::path::Path::new(x86_64_path).exists() {

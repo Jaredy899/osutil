@@ -38,13 +38,13 @@ getUrl() {
     arch=$1
     case "$arch" in
         x86_64)
-            echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/macutil"
+            echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil"
             ;;
         aarch64)
-            echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/macutil-aarch64"
+            echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil-aarch64"
             ;;
         armv7l)
-            echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/macutil-armv7l"
+            echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil-armv7l"
             ;;
         *)
             printf '%sERROR: Invalid architecture: %s%s\n' "$red" "$arch" "$rc"
@@ -56,9 +56,9 @@ getUrl() {
 getInstallPath() {
     # Try to install to /usr/local/bin first, fallback to ~/.local/bin
     if [ -w /usr/local/bin ]; then
-        echo "/usr/local/bin/macutil"
+        echo "/usr/local/bin/osutil"
     else
-        echo "$HOME/.local/bin/macutil"
+        echo "$HOME/.local/bin/osutil"
     fi
 }
 
@@ -66,7 +66,7 @@ ARCH=$(detect_architecture)
 installPath=$(getInstallPath)
 installDir=$(dirname "$installPath")
 
-printf '%sInstalling macutil for Linux (%s)...%s\n' "$blue" "$ARCH" "$rc"
+printf '%sInstalling osutil for Linux (%s)...%s\n' "$blue" "$ARCH" "$rc"
 
 # Create installation directory if it doesn't exist
 if [ ! -d "$installDir" ]; then
@@ -81,10 +81,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-printf 'Downloading macutil for %s...\n' "$ARCH"
+printf 'Downloading osutil for %s...\n' "$ARCH"
 curl -fsL "$(getUrl "$ARCH")" -o "$temp_file"
 if [ $? -ne 0 ]; then
-    printf '%sERROR: Downloading macutil for %s%s\n' "$red" "$ARCH" "$rc"
+    printf '%sERROR: Downloading osutil for %s%s\n' "$red" "$ARCH" "$rc"
     rm -f "$temp_file"
     exit 1
 fi
@@ -92,7 +92,7 @@ fi
 # Make it executable
 chmod +x "$temp_file"
 if [ $? -ne 0 ]; then
-    printf '%sERROR: Making macutil executable%s\n' "$red" "$rc"
+    printf '%sERROR: Making osutil executable%s\n' "$red" "$rc"
     rm -f "$temp_file"
     exit 1
 fi
@@ -100,21 +100,21 @@ fi
 # Move to installation location
 mv "$temp_file" "$installPath"
 if [ $? -ne 0 ]; then
-    printf '%sERROR: Installing macutil to %s%s\n' "$red" "$installPath" "$rc"
+    printf '%sERROR: Installing osutil to %s%s\n' "$red" "$installPath" "$rc"
     rm -f "$temp_file"
     exit 1
 fi
 
-printf '%s✓ macutil installed successfully to %s%s\n' "$green" "$installPath" "$rc"
+printf '%s✓ osutil installed successfully to %s%s\n' "$green" "$installPath" "$rc"
 
 # Check if the installation directory is in PATH
 if echo "$PATH" | grep -q "$installDir"; then
-    printf '%s✓ macutil is ready to use!%s\n' "$green" "$rc"
+    printf '%s✓ osutil is ready to use!%s\n' "$green" "$rc"
 else
     printf '%s⚠  Please add %s to your PATH or restart your terminal%s\n' "$blue" "$installDir" "$rc"
     printf '   You can run: export PATH="$PATH:%s"%s\n' "$installDir" "$rc"
 fi
 
-printf '\nUsage: macutil\n'
+printf '\nUsage: osutil\n'
 
 } # End of wrapping 

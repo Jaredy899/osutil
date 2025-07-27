@@ -1,5 +1,5 @@
 use crate::{float::FloatContent, hint::Shortcut, shortcuts, theme::Theme};
-use macutil_core::Command;
+use osutil_core::Command;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, MouseEvent, MouseEventKind},
     prelude::*,

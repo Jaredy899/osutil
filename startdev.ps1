@@ -5,30 +5,32 @@ $ErrorActionPreference = 'Stop'
 try {
     # Function to fetch the latest release tag from the GitHub API
     function Get-LatestRelease {
-        $latestRelease = (Invoke-RestMethod -Uri "https://api.github.com/repos/Jaredy899/macutil/releases").tag_name | Select-Object -First 1
-        if (-not $latestRelease) {
+        $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/Jaredy899/jaredmacutil/releases"
+        $latestRelease = $releases | Select-Object -First 1
+        if (-not $latestRelease.tag_name) {
             Write-Error "Error fetching release data"
             return $null
         }
-        return $latestRelease
+        return $latestRelease.tag_name
     }
 
-    # Function to redirect to the latest pre-release version
-    function Redirect-ToLatestPreRelease {
+    # Function to get the latest pre-release or fallback to latest release URL
+    function Get-LatestPreReleaseUrl {
         $latestRelease = Get-LatestRelease
         if ($latestRelease) {
-            $url = "https://github.com/Jaredy899/macutil/releases/download/$latestRelease/macutil.exe"
+            $url = "https://github.com/Jaredy899/jaredmacutil/releases/download/$latestRelease/osutil.exe"
         }
         else {
             Write-Host 'Unable to determine latest pre-release version.'
             Write-Host "Using latest Full Release"
-            $url = "https://github.com/Jaredy899/macutil/releases/latest/download/macutil.exe"
+            $url = "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil.exe"
         }
-        Add-Arch
+        $url = Add-Arch -Url $url
         Write-Host "Using URL: $url"
+        return $url
     }
 
-    function Check-Error {
+    function Test-Error {
         param(
             [int]$exitCode,
             [string]$message
@@ -40,29 +42,32 @@ try {
     }
 
     function Add-Arch {
+        param(
+            [string]$Url
+        )
         # PowerShell doesn't have a direct equivalent of `uname -m`, but we can use other methods.
         # For simplicity, we'll assume x86_64 for now.
-        # A more robust solution might involve checking environment variables or using .NET APIs.
         $arch = "x86_64"
         if ($arch -ne "x86_64") {
-            $url = "$url-$arch"
+            return "$Url-$arch"
         }
+        return $Url
     }
 
-    Redirect-ToLatestPreRelease
+    $url = Get-LatestPreReleaseUrl
 
     $tempFile = [System.IO.Path]::GetTempFileName()
-    Check-Error $? "Creating the temporary file"
+    Test-Error $? "Creating the temporary file"
 
-    Write-Host "Downloading macutil from $url"
+    Write-Host "Downloading osutil from $url"
     Invoke-WebRequest -Uri $url -OutFile $tempFile
-    Check-Error $? "Downloading macutil"
+    Test-Error $? "Downloading osutil"
 
     & $tempFile $args
-    Check-Error $LASTEXITCODE "Executing macutil"
+    Test-Error $LASTEXITCODE "Executing osutil"
 
     Remove-Item -Path $tempFile -Force
-    Check-Error $? "Deleting the temporary file"
+    Test-Error $? "Deleting the temporary file"
 }
 catch {
     Write-Error $_.Exception.Message

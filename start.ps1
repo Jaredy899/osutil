@@ -10,7 +10,7 @@ try {
     }
 
     function Get-Url {
-        "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/macutil.exe"
+        "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil.exe"
     }
 
     $tempFile = [System.IO.Path]::GetTempFileName()
@@ -20,10 +20,10 @@ try {
     }
 
     $url = Get-Url
-    Write-Host "Downloading macutil from $url"
+    Write-Host "Downloading osutil from $url"
     Invoke-WebRequest -Uri $url -OutFile $tempFile
     if (-not $?) {
-        Write-Error "ERROR: Downloading macutil"
+        Write-Error "ERROR: Downloading osutil"
         Remove-Item -Path $tempFile -Force
         exit 1
     }
