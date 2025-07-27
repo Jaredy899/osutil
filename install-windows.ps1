@@ -35,7 +35,7 @@ $exeFile = [System.IO.Path]::ChangeExtension($tempFile, ".exe")
 
 try {
     Write-Host "Downloading osutil..."
-    $response = Invoke-WebRequest -Uri (Get-Url) -OutFile $tempFile -UseBasicParsing
+    Invoke-WebRequest -Uri (Get-Url) -OutFile $tempFile -UseBasicParsing
     Write-Host "${Green}✓ Download completed successfully${Reset}"
     Write-Host "File size: $((Get-Item $tempFile).Length) bytes"
 

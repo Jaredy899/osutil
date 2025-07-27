@@ -1,3 +1,5 @@
+#[cfg(unix)]
+use crate::root::check_root_status;
 use crate::{
     confirmation::{ConfirmPrompt, ConfirmStatus},
     filter::{Filter, SearchAction},
@@ -9,8 +11,6 @@ use crate::{
     theme::Theme,
     Args,
 };
-#[cfg(unix)]
-use crate::root::check_root_status;
 use osutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind},
@@ -208,7 +208,7 @@ impl AppState {
 
             Focus::List => {
                 let mut hints = Vec::new();
-                hints.push(Shortcut::new("Exit osutil", ["q", "CTRL-c"]));
+                hints.push(Shortcut::new("Exit OSutil", ["q", "CTRL-c"]));
 
                 if self.at_root() {
                     hints.push(Shortcut::new("Focus tab list", ["h", "Left"]));
@@ -245,7 +245,7 @@ impl AppState {
             Focus::TabList => (
                 "Tab list",
                 shortcuts!(
-                    ("Exit osutil", ["q", "CTRL-c"]),
+                    ("Exit OSutil", ["q", "CTRL-c"]),
                     ("Focus action list", ["l", "Right", "Enter"]),
                     ("Select item above", ["k", "Up"]),
                     ("Select item below", ["j", "Down"]),
@@ -307,8 +307,8 @@ impl AppState {
         });
 
         let label = Paragraph::new(Line::from(vec![
-            Span::styled("osutil ", Style::default().bold()),
-//            Span::styled("by Chris Titus", Style::default().italic()),
+            Span::styled("OSutil ", Style::default().bold()),
+            //            Span::styled("by Chris Titus", Style::default().italic()),
         ]))
         .block(label_block)
         .centered();
@@ -316,7 +316,7 @@ impl AppState {
         let (keybind_scope, shortcuts) = self.get_keybinds();
 
         let keybinds_block = Block::bordered()
-            .title(format!(" {} ", keybind_scope))
+            .title(format!(" {keybind_scope} "))
             .border_set(border::ROUNDED);
 
         let keybind_render_width = keybinds_block.inner(area).width;
@@ -412,7 +412,7 @@ impl AppState {
                         chunks[1].width as usize - left_content.len() - right_content.len(),
                     );
                     Line::styled(
-                        format!("{}{}{}", left_content, center_space, right_content),
+                        format!("{left_content}{center_space}{right_content}"),
                         self.theme.cmd_color(),
                     )
                     .patch_style(style)
@@ -427,7 +427,7 @@ impl AppState {
         };
 
         let title = if self.multi_select {
-            &format!("{}[Multi-Select] ", TITLE)
+            &format!("{TITLE}[Multi-Select] ")
         } else {
             TITLE
         };
@@ -850,7 +850,13 @@ impl AppState {
             .map(|node| &node.command)
             .collect();
 
-        let command = RunningCommand::new(&commands);
+        let script_names: Vec<String> = self
+            .selected_commands
+            .iter()
+            .map(|node| node.name.clone())
+            .collect();
+
+        let command = RunningCommand::new_with_names(&commands, &script_names);
         self.spawn_float(command, FLOAT_SIZE, FLOAT_SIZE);
         self.selected_commands.clear();
     }
