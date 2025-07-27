@@ -36,6 +36,10 @@ try {
     Invoke-WebRequest -Uri (Get-Url) -OutFile $tempFile -UseBasicParsing
     Test-Error $LASTEXITCODE "Downloading osutil"
     
+    # Unblock the file to allow execution
+    Write-Host "Unblocking downloaded file..."
+    Unblock-File -Path $tempFile
+    
     Write-Host "${Green}✓ osutil downloaded successfully${Reset}"
     Write-Host "`n${Blue}Launching osutil...${Reset}"
     
