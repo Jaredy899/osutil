@@ -1,3 +1,5 @@
+#[cfg(unix)]
+use crate::root::check_root_status;
 use crate::{
     confirmation::{ConfirmPrompt, ConfirmStatus},
     filter::{Filter, SearchAction},
@@ -9,8 +11,6 @@ use crate::{
     theme::Theme,
     Args,
 };
-#[cfg(unix)]
-use crate::root::check_root_status;
 use osutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind},
@@ -308,7 +308,7 @@ impl AppState {
 
         let label = Paragraph::new(Line::from(vec![
             Span::styled("OSutil ", Style::default().bold()),
-//            Span::styled("by Chris Titus", Style::default().italic()),
+            //            Span::styled("by Chris Titus", Style::default().italic()),
         ]))
         .block(label_block)
         .centered();

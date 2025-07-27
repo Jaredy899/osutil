@@ -1,6 +1,6 @@
 use crate::{float::FloatContent, hint::Shortcut, shortcuts, theme::Theme};
-use osutil_core::Command;
 use oneshot::{channel, Receiver};
+use osutil_core::Command;
 use portable_pty::{
     ChildKiller, CommandBuilder, ExitStatus, MasterPty, NativePtySystem, PtySize, PtySystem,
 };
@@ -30,7 +30,7 @@ impl portable_pty::MasterPty for DummyPty {
     fn resize(&self, _size: portable_pty::PtySize) -> anyhow::Result<()> {
         Ok(())
     }
-    
+
     fn get_size(&self) -> anyhow::Result<portable_pty::PtySize> {
         Ok(portable_pty::PtySize {
             rows: 24,
@@ -39,11 +39,11 @@ impl portable_pty::MasterPty for DummyPty {
             pixel_height: 0,
         })
     }
-    
+
     fn take_writer(&self) -> anyhow::Result<Box<dyn Write + Send>> {
         Ok(Box::new(std::io::sink()))
     }
-    
+
     fn try_clone_reader(&self) -> anyhow::Result<Box<dyn std::io::Read + Send>> {
         Ok(Box::new(std::io::empty()))
     }
@@ -209,32 +209,36 @@ impl RunningCommand {
         // For now, we'll handle only the first command since multiple commands with different executables would be complex
         let command = commands.first().expect("No commands provided");
         let _script_name = script_names.first().cloned();
-        
+
         // Check if this is an interactive PowerShell script on Windows
         #[cfg(windows)]
         {
-            if let Command::LocalFile { executable, file, .. } = command {
+            if let Command::LocalFile {
+                executable, file, ..
+            } = command
+            {
                 if executable.contains("pwsh") || executable.contains("powershell") {
                     // Check if user wants to force all PowerShell scripts to run in separate terminals
-                    let force_separate_terminal = std::env::var("OSUTIL_FORCE_POWERSHELL_SEPARATE").is_ok();
-                    
+                    let force_separate_terminal =
+                        std::env::var("OSUTIL_FORCE_POWERSHELL_SEPARATE").is_ok();
+
                     if force_separate_terminal {
                         // Launch in separate terminal window
                         return Self::launch_in_separate_terminal(command, _script_name);
                     }
-                    
+
                     // Check if the script contains interactive elements
                     if let Ok(content) = std::fs::read_to_string(file) {
                         let interactive_keywords = [
                             "Read-Host",
-                            "Read-Host -AsSecureString", 
+                            "Read-Host -AsSecureString",
                             "Read-Host -Timeout",
                             "Console::ReadLine",
                             "Console::ReadKey",
                             "pause",
-                            "cmd /c pause"
+                            "cmd /c pause",
                         ];
-                        
+
                         let heavy_operation_keywords = [
                             "Invoke-WebRequest",
                             "Start-BitsTransfer",
@@ -251,17 +255,17 @@ impl RunningCommand {
                             "Invoke-RestMethod",
                             "Invoke-Expression",
                             "& $localPath",
-                            "& $scriptPath"
+                            "& $scriptPath",
                         ];
-                        
-                        let is_interactive = interactive_keywords.iter().any(|&keyword| {
-                            content.contains(keyword)
-                        });
-                        
-                        let is_heavy_operation = heavy_operation_keywords.iter().any(|&keyword| {
-                            content.contains(keyword)
-                        });
-                        
+
+                        let is_interactive = interactive_keywords
+                            .iter()
+                            .any(|&keyword| content.contains(keyword));
+
+                        let is_heavy_operation = heavy_operation_keywords
+                            .iter()
+                            .any(|&keyword| content.contains(keyword));
+
                         // Run in separate terminal if interactive OR if it's a heavy operation
                         if is_interactive || is_heavy_operation {
                             // Launch in separate terminal window
@@ -271,13 +275,13 @@ impl RunningCommand {
                 }
             }
         }
-        
+
         #[cfg(windows)]
         let pty_system = NativePtySystem::default();
-        
+
         #[cfg(not(windows))]
         let pty_system = NativePtySystem::default();
-        
+
         let (executable, args) = match command {
             Command::Raw(prompt) => {
                 // For raw commands, use the default shell
@@ -285,10 +289,14 @@ impl RunningCommand {
                 let shell = "powershell.exe";
                 #[cfg(not(windows))]
                 let shell = "sh";
-                
+
                 (shell.to_string(), vec!["-c".to_string(), prompt.clone()])
             }
-            Command::LocalFile { executable, args, file: _ } => {
+            Command::LocalFile {
+                executable,
+                args,
+                file: _,
+            } => {
                 // For local files, use the executable and args as determined by get_shebang
                 let full_args = args.clone();
                 // The file path is already included in args from get_shebang, so we don't need to add it again
@@ -298,14 +306,14 @@ impl RunningCommand {
         };
 
         let mut cmd: CommandBuilder = CommandBuilder::new(&executable);
-        
+
         // If it's a LocalFile command, we need to set the working directory
         if let Command::LocalFile { file, .. } = command {
             if let Some(parent_directory) = file.parent() {
                 cmd.cwd(parent_directory);
             }
         }
-        
+
         // Windows-specific PTY configuration
         #[cfg(windows)]
         {
@@ -318,7 +326,7 @@ impl RunningCommand {
             cmd.env("PROMPT", "$P$G");
             cmd.env("PSModulePath", "");
         }
-        
+
         for arg in args {
             cmd.arg(arg);
         }
@@ -347,7 +355,7 @@ impl RunningCommand {
                 };
             }
         };
-        
+
         #[cfg(not(windows))]
         let pair = match pty_system.openpty(PtySize {
             rows: 24, // Initial number of rows (will be updated dynamically)
@@ -385,32 +393,30 @@ impl RunningCommand {
             }) {
                 eprintln!("Failed to resize PTY after creation: {e}");
             }
-            
+
             // Add a small delay to let the PTY settle
             std::thread::sleep(std::time::Duration::from_millis(100));
         }
 
         let (tx, rx) = channel();
         // Thread waiting for the child to complete
-        let command_handle = std::thread::spawn(move || {
-            match pair.slave.spawn_command(cmd) {
-                Ok(mut child) => {
-                    let killer = child.clone_killer();
-                    if let Err(e) = tx.send(killer) {
-                        eprintln!("Failed to send killer: {e}");
-                    }
-                    match child.wait() {
-                        Ok(status) => status,
-                        Err(e) => {
-                            eprintln!("Failed to wait for child: {e}");
-                            ExitStatus::with_exit_code(1)
-                        }
+        let command_handle = std::thread::spawn(move || match pair.slave.spawn_command(cmd) {
+            Ok(mut child) => {
+                let killer = child.clone_killer();
+                if let Err(e) = tx.send(killer) {
+                    eprintln!("Failed to send killer: {e}");
+                }
+                match child.wait() {
+                    Ok(status) => status,
+                    Err(e) => {
+                        eprintln!("Failed to wait for child: {e}");
+                        ExitStatus::with_exit_code(1)
                     }
                 }
-                Err(e) => {
-                    eprintln!("Failed to spawn command: {e}");
-                    ExitStatus::with_exit_code(1)
-                }
+            }
+            Err(e) => {
+                eprintln!("Failed to spawn command: {e}");
+                ExitStatus::with_exit_code(1)
             }
         });
 
@@ -509,9 +515,10 @@ impl RunningCommand {
             }
         }
         // Return a default exit status if we can't get the real one
-        self.status.as_ref().cloned().unwrap_or_else(|| {
-            ExitStatus::with_exit_code(1)
-        })
+        self.status
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| ExitStatus::with_exit_code(1))
     }
 
     /// Send SIGHUB signal, *not* SIGKILL or SIGTERM, to the child process
@@ -548,12 +555,25 @@ impl RunningCommand {
     /// Launch an interactive PowerShell script in a separate terminal window
     #[cfg(windows)]
     fn launch_in_separate_terminal(command: &Command, script_name: Option<String>) -> Self {
-        if let Command::LocalFile { executable: _, args: _, file } = command {
+        if let Command::LocalFile {
+            executable: _,
+            args: _,
+            file,
+        } = command
+        {
             // Launch in a new PowerShell window with the script file
             let result = std::process::Command::new("cmd")
-                .args(["/c", "start", "pwsh", "-ExecutionPolicy", "Bypass", "-File", &file.to_string_lossy()])
+                .args([
+                    "/c",
+                    "start",
+                    "pwsh",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    &file.to_string_lossy(),
+                ])
                 .spawn();
-            
+
             match result {
                 Ok(_) => {
                     // Use TOML name if available, otherwise use filename
@@ -571,10 +591,10 @@ impl RunningCommand {
                             script_name.to_string()
                         }
                     };
-                    
+
                     // Create a properly formatted multi-line message
                     let message = format!("SUCCESS!\r\n\r\nScript '{display_name}' launched in separate terminal.\r\n\r\nPress Enter to continue...");
-                    
+
                     // Create a dummy RunningCommand that shows success
                     Self {
                         buffer: Arc::new(Mutex::new(message.into_bytes())),
@@ -596,10 +616,10 @@ impl RunningCommand {
                     } else {
                         error_msg
                     };
-                    
+
                     // Create a properly formatted multi-line error message
                     let message = format!("ERROR!\r\n\r\nFailed to launch script: {display_error}.\r\n\r\nFalling back to TUI...");
-                    
+
                     // Create a dummy RunningCommand that shows error
                     Self {
                         buffer: Arc::new(Mutex::new(message.into_bytes())),
@@ -671,13 +691,13 @@ impl RunningCommand {
             KeyCode::Esc => vec![27],
             _ => return,
         };
-        
+
         // Send the keycodes to the virtual terminal
         if let Err(e) = self.writer.write_all(&input_bytes) {
             // Log the error but don't panic - this allows the TUI to continue
             eprintln!("Failed to write to PTY: {e}");
         }
-        
+
         // Flush the writer to ensure the data is sent immediately
         if let Err(e) = self.writer.flush() {
             eprintln!("Failed to flush PTY writer: {e}");

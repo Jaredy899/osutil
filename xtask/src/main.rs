@@ -1,6 +1,6 @@
+mod build;
 mod docgen;
 mod path;
-mod build;
 
 use std::{env, error::Error};
 
@@ -8,8 +8,8 @@ type DynError = Box<dyn Error>;
 
 pub mod tasks {
     use crate::{
-        docgen::{userguide, write, USER_GUIDE},
         build::{build_all, build_cross_platform, build_linux_only},
+        docgen::{userguide, write, USER_GUIDE},
         DynError,
     };
 

@@ -349,20 +349,31 @@ impl TabDirectories {
         let platform = Self::detect_platform();
         let platform_tabs_file = temp_dir.path().join(platform).join("tabs.toml");
         let fallback_tabs_file = temp_dir.path().join("tabs.toml");
-        
+
         let (tab_files, use_platform_paths) = if platform_tabs_file.exists() {
-            (std::fs::read_to_string(&platform_tabs_file).expect("Failed to read platform tabs.toml"), true)
+            (
+                std::fs::read_to_string(&platform_tabs_file)
+                    .expect("Failed to read platform tabs.toml"),
+                true,
+            )
         } else {
-            (std::fs::read_to_string(&fallback_tabs_file).expect("Failed to read tabs.toml"), false)
+            (
+                std::fs::read_to_string(&fallback_tabs_file).expect("Failed to read tabs.toml"),
+                false,
+            )
         };
-        
+
         let data: Self = toml::from_str(&tab_files).expect("Failed to parse tabs.toml");
         let tab_paths = data
             .directories
             .iter()
             .map(|path| {
                 if use_platform_paths {
-                    temp_dir.path().join(platform).join(path).join("tab_data.toml")
+                    temp_dir
+                        .path()
+                        .join(platform)
+                        .join(path)
+                        .join("tab_data.toml")
                 } else {
                     temp_dir.path().join(path).join("tab_data.toml")
                 }
