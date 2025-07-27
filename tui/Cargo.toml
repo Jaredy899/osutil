@@ -27,7 +27,7 @@ rand = { version = "0.8.5", optional = true }
 osutil_core = { path = "../core" }
 tree-sitter-highlight = { version = "0.24.4", optional = true }
 tree-sitter-bash = { version = "0.23.3", optional = true }
-nix = { version = "0.29.0", features = [ "user" ], optional = true }
+nix = { version = "0.30.1", features = [ "user" ], optional = true }
 vt100-ctt = "0.16.0"
 anyhow = "1.0"
 
