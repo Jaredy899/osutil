@@ -59,14 +59,18 @@ jobs:
           cross build --target-dir=build --release --verbose --target=armv7-unknown-linux-musleabihf --features "syntax-highlighting"
           mv ./build/armv7-unknown-linux-musleabihf/release/osutil ./build/armv7-unknown-linux-musleabihf/release/osutil-armv7l
 
+      - name: Prepare Linux binaries for upload
+        run: |
+          mkdir -p linux-binaries
+          cp ./build/x86_64-unknown-linux-musl/release/osutil linux-binaries/
+          cp ./build/aarch64-unknown-linux-musl/release/osutil-aarch64 linux-binaries/
+          cp ./build/armv7-unknown-linux-musleabihf/release/osutil-armv7l linux-binaries/
+
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-binaries
-          path: |
-            ./build/x86_64-unknown-linux-musl/release/osutil
-            ./build/aarch64-unknown-linux-musl/release/osutil-aarch64
-            ./build/armv7-unknown-linux-musleabihf/release/osutil-armv7l
+          path: linux-binaries/
 
   windows_build:
     runs-on: ubuntu-latest
@@ -103,14 +107,16 @@ jobs:
       - name: Build for Windows
         run: cargo build --release --target x86_64-pc-windows-gnu --no-default-features
 
-      - name: Rename Windows binary
-        run: cp target/x86_64-pc-windows-gnu/release/osutil.exe target/x86_64-pc-windows-gnu/release/osutil-windows.exe
+      - name: Prepare Windows binary for upload
+        run: |
+          mkdir -p windows-binaries
+          cp target/x86_64-pc-windows-gnu/release/osutil.exe windows-binaries/osutil-windows.exe
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-binary
-          path: target/x86_64-pc-windows-gnu/release/osutil-windows.exe
+          path: windows-binaries/
 
   build-macos:
     runs-on: macos-latest
@@ -156,14 +162,16 @@ jobs:
             target/aarch64-apple-darwin/release/osutil \
             -output target/release/osutil
 
-      - name: Rename macOS binary
-        run: cp target/release/osutil target/release/osutil-macos
+      - name: Prepare macOS binary for upload
+        run: |
+          mkdir -p macos-binaries
+          cp target/release/osutil macos-binaries/osutil-macos
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-binary
-          path: target/release/osutil-macos
+          path: macos-binaries/
 
   release:
     needs: [linux_build, windows_build, build-macos]
