@@ -205,15 +205,24 @@ impl FloatContent for RunningCommand {
 pub static TERMINAL_UPDATED: AtomicBool = AtomicBool::new(true);
 
 impl RunningCommand {
-    pub fn new(commands: &[&Command]) -> Self {
+    pub fn new_with_names(commands: &[&Command], script_names: &[String]) -> Self {
         // For now, we'll handle only the first command since multiple commands with different executables would be complex
         let command = commands.first().expect("No commands provided");
+        let script_name = script_names.first().cloned();
         
         // Check if this is an interactive PowerShell script on Windows
         #[cfg(windows)]
         {
             if let Command::LocalFile { executable, file, .. } = command {
                 if executable.contains("pwsh") || executable.contains("powershell") {
+                    // Check if user wants to force all PowerShell scripts to run in separate terminals
+                    let force_separate_terminal = std::env::var("OSUTIL_FORCE_POWERSHELL_SEPARATE").is_ok();
+                    
+                    if force_separate_terminal {
+                        // Launch in separate terminal window
+                        return Self::launch_in_separate_terminal(command, script_name);
+                    }
+                    
                     // Check if the script contains interactive elements
                     if let Ok(content) = std::fs::read_to_string(file) {
                         let interactive_keywords = [
@@ -226,13 +235,37 @@ impl RunningCommand {
                             "cmd /c pause"
                         ];
                         
+                        let heavy_operation_keywords = [
+                            "Invoke-WebRequest",
+                            "Start-BitsTransfer",
+                            "Install-Module",
+                            "Install-PackageProvider",
+                            "Add-WindowsCapability",
+                            "Get-WindowsUpdate",
+                            "Install-WindowsUpdate",
+                            "winget install",
+                            "choco install",
+                            "scoop install",
+                            "Expand-Archive",
+                            "Start-Process",
+                            "Invoke-RestMethod",
+                            "Invoke-Expression",
+                            "& $localPath",
+                            "& $scriptPath"
+                        ];
+                        
                         let is_interactive = interactive_keywords.iter().any(|&keyword| {
                             content.contains(keyword)
                         });
                         
-                        if is_interactive {
+                        let is_heavy_operation = heavy_operation_keywords.iter().any(|&keyword| {
+                            content.contains(keyword)
+                        });
+                        
+                        // Run in separate terminal if interactive OR if it's a heavy operation
+                        if is_interactive || is_heavy_operation {
                             // Launch in separate terminal window
-                            return Self::launch_in_separate_terminal(command);
+                            return Self::launch_in_separate_terminal(command, script_name);
                         }
                     }
                 }
@@ -514,7 +547,7 @@ impl RunningCommand {
 
     /// Launch an interactive PowerShell script in a separate terminal window
     #[cfg(windows)]
-    fn launch_in_separate_terminal(command: &Command) -> Self {
+    fn launch_in_separate_terminal(command: &Command, script_name: Option<String>) -> Self {
         if let Command::LocalFile { executable: _, args: _, file } = command {
             // Launch in a new PowerShell window with the script file
             let result = std::process::Command::new("cmd")
@@ -523,11 +556,28 @@ impl RunningCommand {
             
             match result {
                 Ok(_) => {
+                    // Use TOML name if available, otherwise use filename
+                    let display_name = if let Some(name) = script_name {
+                        if name.len() > 25 {
+                            format!("{}...", &name[..22])
+                        } else {
+                            name
+                        }
+                    } else {
+                        let script_name = file.file_name().unwrap_or_default().to_string_lossy();
+                        if script_name.len() > 15 {
+                            format!("{}...", &script_name[..12])
+                        } else {
+                            script_name.to_string()
+                        }
+                    };
+                    
+                    // Create a properly formatted multi-line message
+                    let message = format!("SUCCESS!\r\n\r\nScript '{}' launched in separate terminal.\r\n\r\nPress Enter to continue...", display_name);
+                    
                     // Create a dummy RunningCommand that shows success
                     Self {
-                        buffer: Arc::new(Mutex::new(
-                            format!("Launched interactive script in separate PowerShell window.\n\nScript: {}\n\nPlease complete the script in the new PowerShell window, then return here.\nPress Enter to continue.", file.to_string_lossy()).into_bytes()
-                        )),
+                        buffer: Arc::new(Mutex::new(message.into_bytes())),
                         command_thread: None,
                         child_killer: None,
                         _reader_thread: std::thread::spawn(|| {}),
@@ -539,11 +589,20 @@ impl RunningCommand {
                     }
                 }
                 Err(e) => {
+                    // Truncate error message if it's too long
+                    let error_msg = e.to_string();
+                    let display_error = if error_msg.len() > 20 {
+                        format!("{}...", &error_msg[..17])
+                    } else {
+                        error_msg
+                    };
+                    
+                    // Create a properly formatted multi-line error message
+                    let message = format!("ERROR!\r\n\r\nFailed to launch script: {}.\r\n\r\nFalling back to TUI...", display_error);
+                    
                     // Create a dummy RunningCommand that shows error
                     Self {
-                        buffer: Arc::new(Mutex::new(
-                            format!("Failed to launch script in separate terminal: {}\n\nFalling back to TUI execution.", e).into_bytes()
-                        )),
+                        buffer: Arc::new(Mutex::new(message.into_bytes())),
                         command_thread: None,
                         child_killer: None,
                         _reader_thread: std::thread::spawn(|| {}),
@@ -559,7 +618,7 @@ impl RunningCommand {
             // Fallback for non-LocalFile commands
             Self {
                 buffer: Arc::new(Mutex::new(
-                    "Cannot launch non-file command in separate terminal".as_bytes().to_vec()
+                    "ERROR!\r\n\r\nCannot launch in separate terminal.\r\n\r\nFalling back to TUI...".as_bytes().to_vec()
                 )),
                 command_thread: None,
                 child_killer: None,

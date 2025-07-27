@@ -1,93 +1,96 @@
-# OSutil
+# osutil
 
-A simple utility tool for system management and application setup, now supporting Linux, macOS, and Windows.
+A cross-platform system utility tool with a modern TUI interface.
+
+## Features
+
+- **Cross-platform support**: Windows, macOS, and Linux
+- **Modern TUI interface**: Built with Ratatui for a responsive and intuitive experience
+- **Extensible script system**: Easy to add new scripts and utilities
+- **Smart script execution**: Automatically detects interactive and heavy-operation scripts
+- **Performance optimized**: PowerShell scripts with heavy operations run in separate terminals
 
 ## Installation
 
-### Quick Install (Recommended)
-
-#### Linux
-```bash
-sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-linux.sh)
-```
-
-#### macOS
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-macos.sh)
-```
-
-#### Windows
+### Windows
 ```powershell
-irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
+# Download and run the installer
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1" -OutFile "install-windows.ps1"
+.\install-windows.ps1
 ```
 
-**Troubleshooting Windows Installation:**
-
-If you encounter download errors, try these steps:
-
-1. **Check PowerShell execution policy:**
-   ```powershell
-   Get-ExecutionPolicy
-   ```
-   If it's "Restricted", run:
-   ```powershell
-   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-   ```
-
-2. **Run the diagnostic script:**
-   ```powershell
-   irm https://raw.githubusercontent.com/Jaredy899/osutil/main/test-powershell-connection.ps1 | iex
-   ```
-
-3. **Manual installation:**
-   - Download the latest release from: https://github.com/Jaredy899/osutil/releases
-   - Extract and run `osutil-windows.exe`
-
-### Build from Source
-
+### macOS
 ```bash
-# Clone the repository
-git clone https://github.com/Jaredy899/osutil.git
-cd osutil
+curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-macos.sh | bash
+```
 
-# Build for all platforms
-cargo xtask build
+### Linux
+```bash
+curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-linux.sh | bash
+```
 
-# Or build for current platform only
-cargo build --release
+## PowerShell Script Performance
+
+On Windows, osutil automatically detects PowerShell scripts that would benefit from running in separate terminal windows:
+
+### Automatic Detection
+
+Scripts are automatically launched in separate terminals if they contain:
+
+**Interactive elements:**
+- `Read-Host` commands
+- `Console::ReadLine` or `Console::ReadKey`
+- `pause` commands
+
+**Heavy operations:**
+- `Invoke-WebRequest` or `Start-BitsTransfer` (downloads)
+- `Install-Module` or `Install-PackageProvider` (package installations)
+- `Add-WindowsCapability` (Windows features)
+- `Get-WindowsUpdate` or `Install-WindowsUpdate` (system updates)
+- `winget install`, `choco install`, `scoop install` (package managers)
+- `Expand-Archive` (file extraction)
+- `Start-Process` (process launching)
+- `Invoke-RestMethod` or `Invoke-Expression` (API calls)
+- Script execution with `& $localPath` or `& $scriptPath`
+
+### Force All PowerShell Scripts to Run in Separate Terminals
+
+If you want all PowerShell scripts to run in separate terminals for maximum performance, set the environment variable:
+
+```powershell
+$env:OSUTIL_FORCE_POWERSHELL_SEPARATE = "1"
+```
+
+Or set it permanently:
+```powershell
+[Environment]::SetEnvironmentVariable("OSUTIL_FORCE_POWERSHELL_SEPARATE", "1", "User")
 ```
 
 ## Usage
 
 Run the application:
-
 ```bash
-# If installed via script
 osutil
-
-# If built from source
-./target/release/osutil
 ```
 
-For development:
+Use arrow keys to navigate, Enter to select, and Esc to go back.
 
+## Development
+
+### Prerequisites
+- Rust 1.70+
+- Cargo
+
+### Build
+```bash
+cargo build --release
+```
+
+### Run in development mode
 ```bash
 cargo run
 ```
 
-## Features
-
-- Application setup and management
-- System configuration tools
-- Terminal-based user interface
-- Cross-platform support (Linux, macOS, Windows)
-
-## Supported Platforms
-
-- **Linux**: x86_64-unknown-linux-gnu
-- **macOS**: x86_64-apple-darwin and aarch64-apple-darwin (Apple Silicon)
-- **Windows**: x86_64-pc-windows-msvc
-
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

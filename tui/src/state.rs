@@ -208,7 +208,7 @@ impl AppState {
 
             Focus::List => {
                 let mut hints = Vec::new();
-                hints.push(Shortcut::new("Exit osutil", ["q", "CTRL-c"]));
+                hints.push(Shortcut::new("Exit OSutil", ["q", "CTRL-c"]));
 
                 if self.at_root() {
                     hints.push(Shortcut::new("Focus tab list", ["h", "Left"]));
@@ -245,7 +245,7 @@ impl AppState {
             Focus::TabList => (
                 "Tab list",
                 shortcuts!(
-                    ("Exit osutil", ["q", "CTRL-c"]),
+                    ("Exit OSutil", ["q", "CTRL-c"]),
                     ("Focus action list", ["l", "Right", "Enter"]),
                     ("Select item above", ["k", "Up"]),
                     ("Select item below", ["j", "Down"]),
@@ -307,7 +307,7 @@ impl AppState {
         });
 
         let label = Paragraph::new(Line::from(vec![
-            Span::styled("osutil ", Style::default().bold()),
+            Span::styled("OSutil ", Style::default().bold()),
 //            Span::styled("by Chris Titus", Style::default().italic()),
         ]))
         .block(label_block)
@@ -850,7 +850,13 @@ impl AppState {
             .map(|node| &node.command)
             .collect();
 
-        let command = RunningCommand::new(&commands);
+        let script_names: Vec<String> = self
+            .selected_commands
+            .iter()
+            .map(|node| node.name.clone())
+            .collect();
+
+        let command = RunningCommand::new_with_names(&commands, &script_names);
         self.spawn_float(command, FLOAT_SIZE, FLOAT_SIZE);
         self.selected_commands.clear();
     }
