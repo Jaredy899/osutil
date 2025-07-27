@@ -57,10 +57,9 @@ try {
 
     Write-Host "Downloading osutil from $url"
     try {
-        Invoke-WebRequest -Uri $url -OutFile $tempFile -TimeoutSec 30
-        if (-not $?) {
-            Test-Error 1 "Downloading osutil"
-        }
+        $response = Invoke-WebRequest -Uri $url -OutFile $tempFile -UseBasicParsing -TimeoutSec 30 -MaximumRedirection 5
+        Write-Host "✓ Download completed successfully"
+        Write-Host "File size: $((Get-Item $tempFile).Length) bytes"
     } catch {
         Write-Host "Network error: $($_.Exception.Message)"
         Write-Host "Please check your internet connection and try again."

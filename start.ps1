@@ -2,6 +2,9 @@
 
 $ErrorActionPreference = 'Stop'
 
+# Enable TLS 1.2 for PowerShell 5
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 try {
     # Check if running on Windows
     if ($IsWindows -ne $true) {
@@ -21,9 +24,11 @@ try {
 
     $url = Get-Url
     Write-Host "Downloading osutil from $url"
-    Invoke-WebRequest -Uri $url -OutFile $tempFile
-    if (-not $?) {
-        Write-Error "ERROR: Downloading osutil"
+    try {
+        $response = Invoke-WebRequest -Uri $url -OutFile $tempFile -UseBasicParsing -TimeoutSec 30 -MaximumRedirection 5
+        Write-Host "✓ Download completed successfully"
+    } catch {
+        Write-Error "ERROR: Downloading osutil - $($_.Exception.Message)"
         Remove-Item -Path $tempFile -Force
         exit 1
     }
