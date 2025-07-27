@@ -1,20 +1,11 @@
 #!/bin/bash
 
 # Multi-architecture build script
-# This script builds the project for Linux (x86_64, aarch64, armv7), macOS, and Windows
+# This script builds the project for Linux (musl), macOS, and Windows
 
 set -e
 
-echo "Building osutil for all platforms and architectures..."
-
-# Platform-specific notes
-if [[ "$PLATFORM" == "Darwin"* ]]; then
-    echo ""
-    echo "Note: Cross-compilation on macOS (especially Apple Silicon) may have limitations."
-    echo "If cross-compilation fails, you can still build macOS targets."
-    echo "For full cross-platform builds, consider using GitHub Actions."
-    echo ""
-fi
+echo "Building osutil for all platforms..."
 
 # Check if we're in the right directory
 if [ ! -f "Cargo.toml" ]; then
@@ -34,7 +25,7 @@ build_target() {
     echo "Building for $target..."
     
     # Build the target
-    cargo build --release --target "$target"
+    cargo build --release --target "$target" --all-features
     
     # Copy binary to build directory
     if [ -f "target/$target/release/$binary_name" ]; then
@@ -48,9 +39,8 @@ build_target() {
 
 # Detect current platform
 PLATFORM=$(uname -s)
-echo "Current platform: $PLATFORM"
 
-# Install required targets for Linux builds
+# Install required targets
 echo "Installing required targets..."
 rustup target add x86_64-unknown-linux-musl
 rustup target add aarch64-unknown-linux-musl
@@ -64,114 +54,97 @@ if [[ "$PLATFORM" == "Linux" ]]; then
     sudo apt-get install -y build-essential musl-tools musl-dev gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf libc6-dev-arm64-cross libc6-dev-armhf-cross gcc-mingw-w64
     
     # Install cross-rs for better cross-compilation
-    echo "Installing cross-rs..."
     cargo install cross
 fi
 
-# Build for Linux architectures
-echo "Building for Linux architectures..."
+# Build for Linux architectures (musl only)
+echo "Building for Linux architectures (musl)..."
 
-# Build x86_64 Linux (native or cross-compiled)
-echo "Building for Linux x86_64..."
+# Build x86_64 Linux (musl)
+echo "Building for Linux x86_64 (musl)..."
 if [[ "$PLATFORM" == "Linux" ]]; then
-    cargo build --target-dir=build --release --target=x86_64-unknown-linux-musl --all-features
-    cp ./build/x86_64-unknown-linux-musl/release/osutil "$BUILD_DIR/"
+    cargo build --release --target=x86_64-unknown-linux-musl --all-features
+    cp target/x86_64-unknown-linux-musl/release/osutil "$BUILD_DIR/"
+    echo "✓ Built Linux x86_64 (musl)"
 else
-    # On non-Linux platforms, use cross for Linux builds
     if command -v cross &> /dev/null; then
-        echo "Using cross for Linux x86_64 build..."
-        if [[ "$PLATFORM" == "Darwin"* ]]; then
-            echo "Note: Cross-compilation on macOS may have limitations on Apple Silicon"
-            echo "Consider using GitHub Actions for full cross-platform builds"
-        fi
-        if cross build --target-dir=build --release --target=x86_64-unknown-linux-musl --all-features; then
-            cp ./build/x86_64-unknown-linux-musl/release/osutil "$BUILD_DIR/"
-            echo "✓ Built Linux x86_64 binary using cross"
-        else
-            echo "✗ Cross-compilation failed. This is common on Apple Silicon Macs."
-            echo "  You can still build macOS targets, or use GitHub Actions for full builds."
-        fi
+        cross build --release --target=x86_64-unknown-linux-musl --all-features
+        cp target/x86_64-unknown-linux-musl/release/osutil "$BUILD_DIR/"
+        echo "✓ Built Linux x86_64 (musl) using cross"
     else
-        echo "cross not available, skipping Linux x86_64 build"
+        echo "✗ Cross-compilation failed for Linux x86_64"
     fi
 fi
 
-# Build aarch64 Linux (using cross-rs if available)
-echo "Building for Linux aarch64..."
+# Build aarch64 Linux (musl)
+echo "Building for Linux aarch64 (musl)..."
 if [[ "$PLATFORM" == "Linux" ]]; then
-    # On Linux, try direct build first, fallback to cross
-    if cargo build --target-dir=build --release --target=aarch64-unknown-linux-musl --all-features 2>/dev/null; then
-        cp ./build/aarch64-unknown-linux-musl/release/osutil "$BUILD_DIR/osutil-aarch64"
-        echo "✓ Built aarch64 Linux binary using direct cargo build"
+    if cargo build --release --target=aarch64-unknown-linux-musl --all-features 2>/dev/null; then
+        cp target/aarch64-unknown-linux-musl/release/osutil "$BUILD_DIR/osutil-aarch64"
+        echo "✓ Built Linux aarch64 (musl)"
     elif command -v cross &> /dev/null; then
-        cross build --target-dir=build --release --target=aarch64-unknown-linux-musl --all-features
-        cp ./build/aarch64-unknown-linux-musl/release/osutil "$BUILD_DIR/osutil-aarch64"
-        echo "✓ Built aarch64 Linux binary using cross"
+        cross build --release --target=aarch64-unknown-linux-musl --all-features
+        cp target/aarch64-unknown-linux-musl/release/osutil "$BUILD_DIR/osutil-aarch64"
+        echo "✓ Built Linux aarch64 (musl) using cross"
     else
-        echo "cross not available, skipping Linux aarch64 build"
+        echo "✗ Failed to build Linux aarch64"
     fi
 else
-    # On non-Linux platforms, use cross
     if command -v cross &> /dev/null; then
-        if cross build --target-dir=build --release --target=aarch64-unknown-linux-musl --all-features; then
-            cp ./build/aarch64-unknown-linux-musl/release/osutil "$BUILD_DIR/osutil-aarch64"
-            echo "✓ Built aarch64 Linux binary using cross"
+        if cross build --release --target=aarch64-unknown-linux-musl --all-features; then
+            cp target/aarch64-unknown-linux-musl/release/osutil "$BUILD_DIR/osutil-aarch64"
+            echo "✓ Built Linux aarch64 (musl) using cross"
         else
-            echo "✗ Cross-compilation failed for aarch64 Linux"
+            echo "✗ Cross-compilation failed for Linux aarch64"
         fi
     else
-        echo "cross not available, skipping Linux aarch64 build"
+        echo "✗ Cross-compilation tools not available"
     fi
 fi
 
-# Build armv7 Linux (using cross-rs if available)
-echo "Building for Linux armv7..."
+# Build armv7 Linux (musl)
+echo "Building for Linux armv7 (musl)..."
 if [[ "$PLATFORM" == "Linux" ]]; then
-    # On Linux, try direct build first, fallback to cross
-    if cargo build --target-dir=build --release --target=armv7-unknown-linux-musleabihf --all-features 2>/dev/null; then
-        cp ./build/armv7-unknown-linux-musleabihf/release/osutil "$BUILD_DIR/osutil-armv7l"
-        echo "✓ Built armv7 Linux binary using direct cargo build"
+    if cargo build --release --target=armv7-unknown-linux-musleabihf --all-features 2>/dev/null; then
+        cp target/armv7-unknown-linux-musleabihf/release/osutil "$BUILD_DIR/osutil-armv7l"
+        echo "✓ Built Linux armv7 (musl)"
     elif command -v cross &> /dev/null; then
-        cross build --target-dir=build --release --target=armv7-unknown-linux-musleabihf --all-features
-        cp ./build/armv7-unknown-linux-musleabihf/release/osutil "$BUILD_DIR/osutil-armv7l"
-        echo "✓ Built armv7 Linux binary using cross"
+        cross build --release --target=armv7-unknown-linux-musleabihf --all-features
+        cp target/armv7-unknown-linux-musleabihf/release/osutil "$BUILD_DIR/osutil-armv7l"
+        echo "✓ Built Linux armv7 (musl) using cross"
     else
-        echo "cross not available, skipping Linux armv7 build"
+        echo "✗ Failed to build Linux armv7"
     fi
 else
-    # On non-Linux platforms, use cross
     if command -v cross &> /dev/null; then
-        if cross build --target-dir=build --release --target=armv7-unknown-linux-musleabihf --all-features; then
-            cp ./build/armv7-unknown-linux-musleabihf/release/osutil "$BUILD_DIR/osutil-armv7l"
-            echo "✓ Built armv7 Linux binary using cross"
+        if cross build --release --target=armv7-unknown-linux-musleabihf --all-features; then
+            cp target/armv7-unknown-linux-musleabihf/release/osutil "$BUILD_DIR/osutil-armv7l"
+            echo "✓ Built Linux armv7 (musl) using cross"
         else
-            echo "✗ Cross-compilation failed for armv7 Linux"
+            echo "✗ Cross-compilation failed for Linux armv7"
         fi
     else
-        echo "cross not available, skipping Linux armv7 build"
+        echo "✗ Cross-compilation tools not available"
     fi
 fi
 
-# Build for Windows (cross-compiled from any platform)
+# Build for Windows
 echo "Building for Windows..."
 if [[ "$PLATFORM" == "Linux" ]]; then
-    # On Linux, try direct build first, fallback to cross
-    if cargo build --target-dir=build --release --target=x86_64-pc-windows-gnu --all-features 2>/dev/null; then
-        cp ./build/x86_64-pc-windows-gnu/release/osutil.exe "$BUILD_DIR/"
-        echo "✓ Built Windows binary using direct cargo build"
+    if cargo build --release --target=x86_64-pc-windows-gnu --all-features 2>/dev/null; then
+        cp target/x86_64-pc-windows-gnu/release/osutil.exe "$BUILD_DIR/"
+        echo "✓ Built Windows binary"
     elif command -v cross &> /dev/null; then
-        echo "Using cross for Windows build..."
-        cross build --target-dir=build --release --target=x86_64-pc-windows-gnu --all-features
-        cp ./build/x86_64-pc-windows-gnu/release/osutil.exe "$BUILD_DIR/"
+        cross build --release --target=x86_64-pc-windows-gnu --all-features
+        cp target/x86_64-pc-windows-gnu/release/osutil.exe "$BUILD_DIR/"
+        echo "✓ Built Windows binary using cross"
     else
-        echo "cross not available, skipping Windows build"
+        echo "✗ Failed to build Windows binary"
     fi
 else
-    # On non-Linux platforms, use cross
     if command -v cross &> /dev/null; then
-        echo "Using cross for Windows build..."
-        if cross build --target-dir=build --release --target=x86_64-pc-windows-gnu --all-features; then
-            cp ./build/x86_64-pc-windows-gnu/release/osutil.exe "$BUILD_DIR/"
+        if cross build --release --target=x86_64-pc-windows-gnu --all-features; then
+            cp target/x86_64-pc-windows-gnu/release/osutil.exe "$BUILD_DIR/"
             echo "✓ Built Windows binary using cross"
         else
             echo "✗ Cross-compilation failed for Windows"
@@ -201,24 +174,16 @@ if [[ "$PLATFORM" == "Darwin"* ]]; then
     fi
 else
     echo "Not on macOS, skipping macOS builds"
-    echo "Note: macOS builds require native macOS environment"
 fi
 
 echo ""
-echo "Build completed! Binaries are in the $BUILD_DIR directory:"
+echo "Build completed! Binaries in $BUILD_DIR/:"
 ls -la "$BUILD_DIR/"
 
 echo ""
 echo "Build Summary:"
-echo "- Linux x86_64: Built using musl target (native on Linux, cross on others)"
-echo "- Linux aarch64: Built using direct cargo or cross-rs with musl target"
-echo "- Linux armv7: Built using direct cargo or cross-rs with musl target"
-echo "- Windows: Built using direct cargo or cross-compilation"
-echo "- macOS: Built natively (requires macOS environment)"
-
-echo ""
-echo "To create a release:"
-echo "1. Update version in Cargo.toml"
-echo "2. Commit and push changes"
-echo "3. Create and push a tag: git tag v1.0.0 && git push origin v1.0.0"
-echo "4. GitHub Actions will automatically build and release for all platforms" 
+echo "- Linux x86_64: musl binary"
+echo "- Linux aarch64: musl binary"
+echo "- Linux armv7: musl binary"
+echo "- Windows: x86_64 binary"
+echo "- macOS: universal binary (Intel & ARM)" 
