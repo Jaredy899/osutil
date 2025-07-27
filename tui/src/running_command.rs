@@ -208,7 +208,7 @@ impl RunningCommand {
     pub fn new_with_names(commands: &[&Command], script_names: &[String]) -> Self {
         // For now, we'll handle only the first command since multiple commands with different executables would be complex
         let command = commands.first().expect("No commands provided");
-        let script_name = script_names.first().cloned();
+        let _script_name = script_names.first().cloned();
         
         // Check if this is an interactive PowerShell script on Windows
         #[cfg(windows)]
@@ -220,7 +220,7 @@ impl RunningCommand {
                     
                     if force_separate_terminal {
                         // Launch in separate terminal window
-                        return Self::launch_in_separate_terminal(command, script_name);
+                        return Self::launch_in_separate_terminal(command, _script_name);
                     }
                     
                     // Check if the script contains interactive elements
@@ -265,7 +265,7 @@ impl RunningCommand {
                         // Run in separate terminal if interactive OR if it's a heavy operation
                         if is_interactive || is_heavy_operation {
                             // Launch in separate terminal window
-                            return Self::launch_in_separate_terminal(command, script_name);
+                            return Self::launch_in_separate_terminal(command, _script_name);
                         }
                     }
                 }
