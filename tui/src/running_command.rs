@@ -44,6 +44,14 @@ impl portable_pty::MasterPty for DummyPty {
     fn try_clone_reader(&self) -> anyhow::Result<Box<dyn std::io::Read + Send>> {
         Ok(Box::new(std::io::empty()))
     }
+    
+    fn process_group_leader(&self) -> Option<i32> {
+        None
+    }
+    
+    fn as_raw_fd(&self) -> Option<i32> {
+        None
+    }
 }
 use time::{macros::format_description, OffsetDateTime};
 use tui_term::widget::PseudoTerminal;
