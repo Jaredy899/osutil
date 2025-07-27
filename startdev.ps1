@@ -26,14 +26,13 @@ try {
     function Get-LatestPreReleaseUrl {
         $latestRelease = Get-LatestRelease
         if ($latestRelease) {
-            $url = "https://github.com/Jaredy899/osutil/releases/download/$latestRelease/osutil.exe"
+            $url = "https://github.com/Jaredy899/osutil/releases/download/$latestRelease/osutil-windows.exe"
         }
         else {
             Write-Host 'Unable to determine latest pre-release version.'
             Write-Host "Using latest Full Release"
-            $url = "https://github.com/Jaredy899/osutil/releases/latest/download/osutil.exe"
+            $url = "https://github.com/Jaredy899/osutil/releases/latest/download/osutil-windows.exe"
         }
-        $url = Add-Arch -Url $url
         Write-Host "Using URL: $url"
         return $url
     }
@@ -49,18 +48,7 @@ try {
         }
     }
 
-    function Add-Arch {
-        param(
-            [string]$Url
-        )
-        # PowerShell doesn't have a direct equivalent of `uname -m`, but we can use other methods.
-        # For simplicity, we'll assume x86_64 for now.
-        $arch = "x86_64"
-        if ($arch -ne "x86_64") {
-            return "$Url-$arch"
-        }
-        return $Url
-    }
+
 
     $url = Get-LatestPreReleaseUrl
 
