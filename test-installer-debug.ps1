@@ -33,6 +33,9 @@ Write-Host "${Blue}Installing osutil for Windows...${Reset}"
 $tempFile = [System.IO.Path]::GetTempFileName()
 $exeFile = [System.IO.Path]::ChangeExtension($tempFile, ".exe")
 
+Write-Host "Temp file: $tempFile"
+Write-Host "Exe file: $exeFile"
+
 try {
     Write-Host "Downloading osutil..."
     $response = Invoke-WebRequest -Uri (Get-Url) -OutFile $tempFile -UseBasicParsing
@@ -42,10 +45,12 @@ try {
     # Rename to .exe extension
     Write-Host "Preparing executable..."
     Move-Item -Path $tempFile -Destination $exeFile -Force
+    Write-Host "${Green}✓ File renamed${Reset}"
 
     # Unblock the file to allow execution
     Write-Host "Unblocking downloaded file..."
     Unblock-File -Path $exeFile
+    Write-Host "${Green}✓ File unblocked${Reset}"
 
     Write-Host "${Green}✓ osutil downloaded successfully${Reset}"
     Write-Host "`n${Blue}Launching osutil...${Reset}"
@@ -53,7 +58,7 @@ try {
     # Launch the application
     try {
         Write-Host "Executing: $exeFile"
-        & $exeFile @args
+        & $exeFile --help
         $exitCode = $LASTEXITCODE
         Write-Host "${Green}✓ Execution completed with exit code: $exitCode${Reset}"
     } catch {
@@ -62,13 +67,17 @@ try {
     }
 
 } catch {
+    Write-Host "${Red}✗ Exception caught: $($_.Exception.Message)${Reset}"
     Test-Error 1 $_.Exception.Message
 } finally {
     # Clean up temporary files
+    Write-Host "Cleaning up..."
     if (Test-Path $tempFile) {
         Remove-Item $tempFile -Force
+        Write-Host "Removed temp file"
     }
     if (Test-Path $exeFile) {
         Remove-Item $exeFile -Force
+        Write-Host "Removed exe file"
     }
 } 
