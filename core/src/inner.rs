@@ -54,7 +54,7 @@ pub fn get_tabs(validate: bool) -> TabList {
         .map(|path| {
             let directory = path.parent().unwrap().to_owned();
             let data = std::fs::read_to_string(&path).unwrap_or_else(|e| {
-                panic!("Failed to read tab data at {:?}: {}", path, e);
+                panic!("Failed to read tab data at {path:?}: {e}");
             });
             let mut tab_data: TabEntry = toml::from_str(&data).expect("Failed to parse tab data");
 
