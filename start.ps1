@@ -17,6 +17,7 @@ try {
     }
 
     $tempFile = [System.IO.Path]::GetTempFileName()
+    $exeFile = [System.IO.Path]::ChangeExtension($tempFile, ".exe")
     if (-not $?) {
         Write-Error "ERROR: Creating the temporary file"
         exit 1
@@ -33,13 +34,15 @@ try {
         exit 1
     }
 
-    # On Windows, we don't need to make the file executable in the same way as with chmod.
-    # We also don't need to worry about the quarantine attribute.
+    # Rename to .exe extension and unblock
+    Write-Host "Preparing executable..."
+    Move-Item -Path $tempFile -Destination $exeFile -Force
+    Unblock-File -Path $exeFile
 
-    & $tempFile $args
+    & $exeFile $args
     $exitCode = $LASTEXITCODE
 
-    Remove-Item -Path $tempFile -Force
+    Remove-Item -Path $exeFile -Force
     if (-not $?) {
         Write-Error "ERROR: Deleting the temporary file"
     }

@@ -53,6 +53,7 @@ try {
     $url = Get-LatestPreReleaseUrl
 
     $tempFile = [System.IO.Path]::GetTempFileName()
+    $exeFile = [System.IO.Path]::ChangeExtension($tempFile, ".exe")
     Test-Error $? "Creating the temporary file"
 
     Write-Host "Downloading osutil from $url"
@@ -66,10 +67,15 @@ try {
         Test-Error 1 "Downloading osutil"
     }
 
-    & $tempFile $args
+    # Rename to .exe extension and unblock
+    Write-Host "Preparing executable..."
+    Move-Item -Path $tempFile -Destination $exeFile -Force
+    Unblock-File -Path $exeFile
+
+    & $exeFile $args
     Test-Error $LASTEXITCODE "Executing osutil"
 
-    Remove-Item -Path $tempFile -Force
+    Remove-Item -Path $exeFile -Force
     Test-Error $? "Deleting the temporary file"
 }
 catch {

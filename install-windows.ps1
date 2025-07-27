@@ -35,45 +35,54 @@ function Get-Url {
 
 Write-Host "Installing osutil for Windows..."
 
-# Download the binary
-$tempFile = [System.IO.Path]::GetTempFileName()
-try {
-    Write-Host "Downloading osutil..."
-    $url = Get-Url
-    Write-Host "Download URL: $url"
+    # Download the binary
+    $tempFile = [System.IO.Path]::GetTempFileName()
+    $exeFile = [System.IO.Path]::ChangeExtension($tempFile, ".exe")
     
-    # Add error handling for network issues
     try {
-        $response = Invoke-WebRequest -Uri $url -OutFile $tempFile -UseBasicParsing -TimeoutSec 30 -MaximumRedirection 5
-        Write-Host "✓ Download completed successfully"
-        Write-Host "File size: $((Get-Item $tempFile).Length) bytes"
-    } catch {
-        Write-Host "Network error: $($_.Exception.Message)"
-        Write-Host "Please check your internet connection and try again."
-        Test-Error 1 "Downloading osutil"
-    }
-    
-    # Unblock the file to allow execution
-    Write-Host "Unblocking downloaded file..."
-    Unblock-File -Path $tempFile
-    
-    Write-Host "✓ osutil downloaded successfully"
-    Write-Host "`nLaunching osutil..."
-    
-    # Launch the application and capture exit code
-    try {
-        & $tempFile @args
-        $exitCode = $LASTEXITCODE
-    } catch {
-        Test-Error 1 "Failed to launch osutil: $($_.Exception.Message)"
-    }
+        Write-Host "Downloading osutil..."
+        $url = Get-Url
+        Write-Host "Download URL: $url"
+        
+        # Add error handling for network issues
+        try {
+            $response = Invoke-WebRequest -Uri $url -OutFile $tempFile -UseBasicParsing -TimeoutSec 30 -MaximumRedirection 5
+            Write-Host "✓ Download completed successfully"
+            Write-Host "File size: $((Get-Item $tempFile).Length) bytes"
+        } catch {
+            Write-Host "Network error: $($_.Exception.Message)"
+            Write-Host "Please check your internet connection and try again."
+            Test-Error 1 "Downloading osutil"
+        }
+        
+        # Rename to .exe extension
+        Write-Host "Preparing executable..."
+        Move-Item -Path $tempFile -Destination $exeFile -Force
+        
+        # Unblock the file to allow execution
+        Write-Host "Unblocking downloaded file..."
+        Unblock-File -Path $exeFile
+        
+        Write-Host "✓ osutil downloaded successfully"
+        Write-Host "`nLaunching osutil..."
+        
+        # Launch the application and capture exit code
+        try {
+            & $exeFile @args
+            $exitCode = $LASTEXITCODE
+        } catch {
+            Test-Error 1 "Failed to launch osutil: $($_.Exception.Message)"
+        }
     
 } catch {
     Test-Error 1 $_.Exception.Message
 } finally {
-    # Clean up temporary file silently
+    # Clean up temporary files silently
     if (Test-Path $tempFile) {
         Remove-Item $tempFile -Force
+    }
+    if (Test-Path $exeFile) {
+        Remove-Item $exeFile -Force
     }
 }
 
