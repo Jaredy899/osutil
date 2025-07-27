@@ -14,7 +14,6 @@ A cross-platform system utility tool with a modern TUI interface.
 
 ### Windows
 ```powershell
-# Download and run the installer
 irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
 ```
 
