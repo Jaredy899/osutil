@@ -1,4 +1,4 @@
-# osutil
+# OSutil
 
 A cross-platform system utility tool with a modern TUI interface.
 
