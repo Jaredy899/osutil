@@ -20,7 +20,7 @@ task_list = "I SS"
 [[data.preconditions]]
 matches = true
 data = "file_exists"
-values = [ "/usr/lib/systemd/system/firewalld.service", "/etc/systemd/system/firewalld.service" ]
+values = [ "/usr/bin/firewall-cmd" ]
 
 [[data]]
 name = "Tailscale"
