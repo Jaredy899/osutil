@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 
 . ../common-script.sh
 
@@ -16,9 +16,9 @@ cleanup_system() {
     # Clean Homebrew cache and remove old versions
     if command_exists "brew"; then
         printf "%b\n" "${CYAN}Cleaning Homebrew cache and removing old versions...${RC}"
-        brew cleanup
-        brew autoremove
-        brew doctor
+        brew cleanup || true
+        brew autoremove || true
+        brew doctor || true
     fi
     
     # Clean macOS system caches
