@@ -38,13 +38,13 @@ getUrl() {
     arch=$1
     case "$arch" in
         x86_64)
-            echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil"
+            echo "https://github.com/Jaredy899/osutil/releases/latest/download/osutil"
             ;;
         aarch64)
-            echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil-aarch64"
+            echo "https://github.com/Jaredy899/osutil/releases/latest/download/osutil-aarch64"
             ;;
         armv7l)
-            echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil-armv7l"
+            echo "https://github.com/Jaredy899/osutil/releases/latest/download/osutil-armv7l"
             ;;
         *)
             printf '%sERROR: Invalid architecture: %s%s\n' "$red" "$arch" "$rc"
@@ -76,14 +76,13 @@ fi
 
 # Download the binary
 temp_file=$(mktemp)
-if [ $? -ne 0 ]; then
+if ! mktemp; then
     printf '%sERROR: Creating the temporary file%s\n' "$red" "$rc"
     exit 1
 fi
 
 printf 'Downloading osutil for %s...\n' "$ARCH"
-curl -fsL "$(getUrl "$ARCH")" -o "$temp_file"
-if [ $? -ne 0 ]; then
+if ! curl -fsL "$(getUrl "$ARCH")" -o "$temp_file"; then
     printf '%sERROR: Downloading osutil for %s%s\n' "$red" "$ARCH" "$rc"
     rm -f "$temp_file"
     exit 1
@@ -91,7 +90,7 @@ fi
 
 # Make it executable
 chmod +x "$temp_file"
-if [ $? -ne 0 ]; then
+if ! chmod +x "$temp_file"; then
     printf '%sERROR: Making osutil executable%s\n' "$red" "$rc"
     rm -f "$temp_file"
     exit 1
@@ -99,7 +98,7 @@ fi
 
 # Move to installation location
 mv "$temp_file" "$installPath"
-if [ $? -ne 0 ]; then
+if ! mv "$temp_file" "$installPath"; then
     printf '%sERROR: Installing osutil to %s%s\n' "$red" "$installPath" "$rc"
     rm -f "$temp_file"
     exit 1
@@ -112,7 +111,7 @@ if echo "$PATH" | grep -q "$installDir"; then
     printf '%s✓ osutil is ready to use!%s\n' "$green" "$rc"
 else
     printf '%s⚠  Please add %s to your PATH or restart your terminal%s\n' "$blue" "$installDir" "$rc"
-    printf '   You can run: export PATH="$PATH:%s"%s\n' "$installDir" "$rc"
+    printf "   You can run: export PATH=\"\$PATH:%s\"%s\n" "$installDir" "$rc"
 fi
 
 printf '\nUsage: osutil\n'

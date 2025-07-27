@@ -103,11 +103,14 @@ jobs:
       - name: Build for Windows
         run: cargo build --release --target x86_64-pc-windows-gnu --no-default-features
 
+      - name: Rename Windows binary
+        run: cp target/x86_64-pc-windows-gnu/release/osutil.exe target/x86_64-pc-windows-gnu/release/osutil-windows.exe
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-binary
-          path: target/x86_64-pc-windows-gnu/release/osutil.exe
+          path: target/x86_64-pc-windows-gnu/release/osutil-windows.exe
 
   build-macos:
     runs-on: macos-latest
@@ -153,11 +156,14 @@ jobs:
             target/aarch64-apple-darwin/release/osutil \
             -output target/release/osutil
 
+      - name: Rename macOS binary
+        run: cp target/release/osutil target/release/osutil-macos
+
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-binary
-          path: target/release/osutil
+          path: target/release/osutil-macos
 
   release:
     needs: [linux_build, windows_build, build-macos]
@@ -199,25 +205,25 @@ jobs:
             
             ### Linux
             ```bash
-            sh <(curl -fsSL https://raw.githubusercontent.com/ChrisTitusTech/osutil/main/install-linux.sh)
+            sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-linux.sh)
             ```
             
             ### macOS
             ```bash
-            bash <(curl -fsSL https://raw.githubusercontent.com/ChrisTitusTech/osutil/main/install-macos.sh)
+            bash <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-macos.sh)
             ```
             
             ### Windows
             ```powershell
-            irm https://raw.githubusercontent.com/ChrisTitusTech/osutil/main/install-windows.ps1 | iex
+            irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
             ```
 
           files: |
             linux-binaries/osutil
             linux-binaries/osutil-aarch64
             linux-binaries/osutil-armv7l
-            macos-binary/osutil
-            windows-binary/osutil.exe
+            macos-binary/osutil-macos
+            windows-binary/osutil-windows.exe
             install-linux.sh
             install-macos.sh
             install-windows.ps1

@@ -14,7 +14,7 @@ if [ "$(uname)" != "Darwin" ]; then
 fi
 
 getUrl() {
-    echo "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil-macos"
+    echo "https://github.com/Jaredy899/osutil/releases/latest/download/osutil-macos"
 }
 
 getInstallPath() {
