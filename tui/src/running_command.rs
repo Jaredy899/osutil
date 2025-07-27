@@ -108,7 +108,7 @@ impl FloatContent for RunningCommand {
             };
 
             let log_path = if let Some(log_path) = &self.log_path {
-                Line::from(format!(" Log saved: {} ", log_path))
+                Line::from(format!(" Log saved: {log_path} "))
             } else {
                 Line::from(" Press 'l' to save command log ")
             };
@@ -333,7 +333,7 @@ impl RunningCommand {
         }) {
             Ok(pair) => pair,
             Err(e) => {
-                eprintln!("Failed to open PTY: {}", e);
+                eprintln!("Failed to open PTY: {e}");
                 return Self {
                     buffer: Arc::new(Mutex::new(Vec::new())),
                     command_thread: None,
@@ -357,7 +357,7 @@ impl RunningCommand {
         }) {
             Ok(pair) => pair,
             Err(e) => {
-                eprintln!("Failed to open PTY: {}", e);
+                eprintln!("Failed to open PTY: {e}");
                 // Return a dummy RunningCommand that will show an error
                 return Self {
                     buffer: Arc::new(Mutex::new(Vec::new())),
@@ -383,7 +383,7 @@ impl RunningCommand {
                 pixel_width: 0,
                 pixel_height: 0,
             }) {
-                eprintln!("Failed to resize PTY after creation: {}", e);
+                eprintln!("Failed to resize PTY after creation: {e}");
             }
             
             // Add a small delay to let the PTY settle
@@ -397,18 +397,18 @@ impl RunningCommand {
                 Ok(mut child) => {
                     let killer = child.clone_killer();
                     if let Err(e) = tx.send(killer) {
-                        eprintln!("Failed to send killer: {}", e);
+                        eprintln!("Failed to send killer: {e}");
                     }
                     match child.wait() {
                         Ok(status) => status,
                         Err(e) => {
-                            eprintln!("Failed to wait for child: {}", e);
+                            eprintln!("Failed to wait for child: {e}");
                             ExitStatus::with_exit_code(1)
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("Failed to spawn command: {}", e);
+                    eprintln!("Failed to spawn command: {e}");
                     ExitStatus::with_exit_code(1)
                 }
             }
@@ -417,7 +417,7 @@ impl RunningCommand {
         let mut reader = match pair.master.try_clone_reader() {
             Ok(reader) => reader,
             Err(e) => {
-                eprintln!("Failed to clone reader: {}", e);
+                eprintln!("Failed to clone reader: {e}");
                 Box::new(std::io::empty())
             }
         }; // This is a reader, this is where we
@@ -445,7 +445,7 @@ impl RunningCommand {
                             }
                         }
                         Err(e) => {
-                            eprintln!("Failed to read from PTY: {}", e);
+                            eprintln!("Failed to read from PTY: {e}");
                             break;
                         }
                     }
@@ -457,7 +457,7 @@ impl RunningCommand {
         let writer = match pair.master.take_writer() {
             Ok(writer) => writer,
             Err(e) => {
-                eprintln!("Failed to take writer: {}", e);
+                eprintln!("Failed to take writer: {e}");
                 Box::new(std::io::sink())
             }
         };
@@ -483,7 +483,7 @@ impl RunningCommand {
             pixel_height: 0,
         }) {
             // Log the error but don't panic - this allows the TUI to continue
-            eprintln!("Failed to resize PTY: {}", e);
+            eprintln!("Failed to resize PTY: {e}");
         }
 
         // Process the buffer with a parser with the current screen size
@@ -520,7 +520,7 @@ impl RunningCommand {
             if let Some(rx) = self.child_killer.take() {
                 if let Ok(mut killer) = rx.recv() {
                     if let Err(e) = killer.kill() {
-                        eprintln!("Failed to kill child process: {}", e);
+                        eprintln!("Failed to kill child process: {e}");
                     }
                 }
             }
@@ -551,7 +551,7 @@ impl RunningCommand {
         if let Command::LocalFile { executable: _, args: _, file } = command {
             // Launch in a new PowerShell window with the script file
             let result = std::process::Command::new("cmd")
-                .args(&["/c", "start", "pwsh", "-ExecutionPolicy", "Bypass", "-File", &file.to_string_lossy()])
+                .args(["/c", "start", "pwsh", "-ExecutionPolicy", "Bypass", "-File", &file.to_string_lossy()])
                 .spawn();
             
             match result {
@@ -573,7 +573,7 @@ impl RunningCommand {
                     };
                     
                     // Create a properly formatted multi-line message
-                    let message = format!("SUCCESS!\r\n\r\nScript '{}' launched in separate terminal.\r\n\r\nPress Enter to continue...", display_name);
+                    let message = format!("SUCCESS!\r\n\r\nScript '{display_name}' launched in separate terminal.\r\n\r\nPress Enter to continue...");
                     
                     // Create a dummy RunningCommand that shows success
                     Self {
@@ -598,7 +598,7 @@ impl RunningCommand {
                     };
                     
                     // Create a properly formatted multi-line error message
-                    let message = format!("ERROR!\r\n\r\nFailed to launch script: {}.\r\n\r\nFalling back to TUI...", display_error);
+                    let message = format!("ERROR!\r\n\r\nFailed to launch script: {display_error}.\r\n\r\nFalling back to TUI...");
                     
                     // Create a dummy RunningCommand that shows error
                     Self {
@@ -675,12 +675,12 @@ impl RunningCommand {
         // Send the keycodes to the virtual terminal
         if let Err(e) = self.writer.write_all(&input_bytes) {
             // Log the error but don't panic - this allows the TUI to continue
-            eprintln!("Failed to write to PTY: {}", e);
+            eprintln!("Failed to write to PTY: {e}");
         }
         
         // Flush the writer to ensure the data is sent immediately
         if let Err(e) = self.writer.flush() {
-            eprintln!("Failed to flush PTY writer: {}", e);
+            eprintln!("Failed to flush PTY writer: {e}");
         }
     }
 }
