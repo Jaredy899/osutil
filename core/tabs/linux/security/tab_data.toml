@@ -18,9 +18,9 @@ script = "firewalld-baselines.sh"
 task_list = "I SS"
 
 [[data.preconditions]]
-matches = true
-data = "file_exists"
-values = [ "/usr/bin/firewall-cmd" ]
+matches = false
+data = "command_exists"
+values = [ "apt-get", "nala", "pacman", "apk", "xbps-install", "eopkg" ]
 
 [[data]]
 name = "Tailscale"
