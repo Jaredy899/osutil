@@ -10,7 +10,7 @@ try {
     }
 
     function Get-Url {
-        "https://github.com/Jaredy899/jaredmacutil/releases/latest/download/osutil.exe"
+        "https://github.com/Jaredy899/osutil/releases/latest/download/osutil.exe"
     }
 
     $tempFile = [System.IO.Path]::GetTempFileName()

@@ -3,6 +3,18 @@
 # Prevent execution if this script was only partially downloaded
 $ErrorActionPreference = "Stop"
 
+# Check PowerShell execution policy
+$executionPolicy = Get-ExecutionPolicy
+if ($executionPolicy -eq "Restricted") {
+    Write-Host "PowerShell execution policy is set to 'Restricted'."
+    Write-Host "Please run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser"
+    Write-Host "Then try running this script again."
+    exit 1
+}
+
+# Enable TLS 1.2 for PowerShell 5 (older versions default to TLS 1.0)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 function Test-Error {
     param($ExitCode, $Message)
     
@@ -27,8 +39,20 @@ Write-Host "Installing osutil for Windows..."
 $tempFile = [System.IO.Path]::GetTempFileName()
 try {
     Write-Host "Downloading osutil..."
-    Invoke-WebRequest -Uri (Get-Url) -OutFile $tempFile -UseBasicParsing
-    Test-Error $LASTEXITCODE "Downloading osutil"
+    $url = Get-Url
+    Write-Host "Download URL: $url"
+    
+    # Add error handling for network issues
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $tempFile -UseBasicParsing -TimeoutSec 30
+        if ($LASTEXITCODE -ne 0) {
+            Test-Error $LASTEXITCODE "Downloading osutil"
+        }
+    } catch {
+        Write-Host "Network error: $($_.Exception.Message)"
+        Write-Host "Please check your internet connection and try again."
+        Test-Error 1 "Downloading osutil"
+    }
     
     # Unblock the file to allow execution
     Write-Host "Unblocking downloaded file..."
