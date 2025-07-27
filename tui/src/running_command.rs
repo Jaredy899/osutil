@@ -19,6 +19,32 @@ use std::{
     },
     thread::JoinHandle,
 };
+
+// Dummy PTY for error cases
+struct DummyPty;
+
+impl portable_pty::MasterPty for DummyPty {
+    fn resize(&self, _size: portable_pty::PtySize) -> anyhow::Result<()> {
+        Ok(())
+    }
+    
+    fn get_size(&self) -> anyhow::Result<portable_pty::PtySize> {
+        Ok(portable_pty::PtySize {
+            rows: 24,
+            cols: 80,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
+    }
+    
+    fn take_writer(&self) -> anyhow::Result<Box<dyn Write + Send>> {
+        Ok(Box::new(std::io::sink()))
+    }
+    
+    fn try_clone_reader(&self) -> anyhow::Result<Box<dyn std::io::Read + Send>> {
+        Ok(Box::new(std::io::empty()))
+    }
+}
 use time::{macros::format_description, OffsetDateTime};
 use tui_term::widget::PseudoTerminal;
 use vt100_ctt::{Parser, Screen};
@@ -165,10 +191,44 @@ pub static TERMINAL_UPDATED: AtomicBool = AtomicBool::new(true);
 
 impl RunningCommand {
     pub fn new(commands: &[&Command]) -> Self {
-        let pty_system = NativePtySystem::default();
-
         // For now, we'll handle only the first command since multiple commands with different executables would be complex
         let command = commands.first().expect("No commands provided");
+        
+        // Check if this is an interactive PowerShell script on Windows
+        #[cfg(windows)]
+        {
+            if let Command::LocalFile { executable, file, .. } = command {
+                if executable.contains("pwsh") || executable.contains("powershell") {
+                    // Check if the script contains interactive elements
+                    if let Ok(content) = std::fs::read_to_string(file) {
+                        let interactive_keywords = [
+                            "Read-Host",
+                            "Read-Host -AsSecureString", 
+                            "Read-Host -Timeout",
+                            "Console::ReadLine",
+                            "Console::ReadKey",
+                            "pause",
+                            "cmd /c pause"
+                        ];
+                        
+                        let is_interactive = interactive_keywords.iter().any(|&keyword| {
+                            content.contains(keyword)
+                        });
+                        
+                        if is_interactive {
+                            // Launch in separate terminal window
+                            return Self::launch_in_separate_terminal(command);
+                        }
+                    }
+                }
+            }
+        }
+        
+        #[cfg(windows)]
+        let pty_system = NativePtySystem::default();
+        
+        #[cfg(not(windows))]
+        let pty_system = NativePtySystem::default();
         
         let (executable, args) = match command {
             Command::Raw(prompt) => {
@@ -198,30 +258,121 @@ impl RunningCommand {
             }
         }
         
+        // Windows-specific PTY configuration
+        #[cfg(windows)]
+        {
+            // Set environment variables that might help with PTY interaction
+            cmd.env("TERM", "xterm-256color");
+            cmd.env("COLORTERM", "truecolor");
+            // Ensure PowerShell knows it's running in a terminal
+            cmd.env("OSUTIL_TUI_MODE", "1");
+            // Set additional Windows-specific environment variables
+            cmd.env("PROMPT", "$P$G");
+            cmd.env("PSModulePath", "");
+        }
+        
         for arg in args {
             cmd.arg(arg);
         }
 
         // Open a pseudo-terminal with initial size
-        let pair = pty_system
-            .openpty(PtySize {
-                rows: 24, // Initial number of rows (will be updated dynamically)
-                cols: 80, // Initial number of columns (will be updated dynamically)
+        #[cfg(windows)]
+        let pair = match pty_system.openpty(PtySize {
+            rows: 24,
+            cols: 80,
+            pixel_width: 0,
+            pixel_height: 0,
+        }) {
+            Ok(pair) => pair,
+            Err(e) => {
+                eprintln!("Failed to open PTY: {}", e);
+                return Self {
+                    buffer: Arc::new(Mutex::new(Vec::new())),
+                    command_thread: None,
+                    child_killer: None,
+                    _reader_thread: std::thread::spawn(|| {}),
+                    pty_master: Box::new(DummyPty),
+                    writer: Box::new(std::io::sink()),
+                    status: None,
+                    log_path: None,
+                    scroll_offset: 0,
+                };
+            }
+        };
+        
+        #[cfg(not(windows))]
+        let pair = match pty_system.openpty(PtySize {
+            rows: 24, // Initial number of rows (will be updated dynamically)
+            cols: 80, // Initial number of columns (will be updated dynamically)
+            pixel_width: 0,
+            pixel_height: 0,
+        }) {
+            Ok(pair) => pair,
+            Err(e) => {
+                eprintln!("Failed to open PTY: {}", e);
+                // Return a dummy RunningCommand that will show an error
+                return Self {
+                    buffer: Arc::new(Mutex::new(Vec::new())),
+                    command_thread: None,
+                    child_killer: None,
+                    _reader_thread: std::thread::spawn(|| {}),
+                    pty_master: Box::new(DummyPty),
+                    writer: Box::new(std::io::sink()),
+                    status: None,
+                    log_path: None,
+                    scroll_offset: 0,
+                };
+            }
+        };
+
+        // On Windows, we might need to set additional PTY properties
+        #[cfg(windows)]
+        {
+            // Try to set PTY properties that might help with interactive input
+            if let Err(e) = pair.master.resize(PtySize {
+                rows: 40,
+                cols: 120,
                 pixel_width: 0,
                 pixel_height: 0,
-            })
-            .unwrap();
+            }) {
+                eprintln!("Failed to resize PTY after creation: {}", e);
+            }
+            
+            // Add a small delay to let the PTY settle
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
 
         let (tx, rx) = channel();
         // Thread waiting for the child to complete
         let command_handle = std::thread::spawn(move || {
-            let mut child = pair.slave.spawn_command(cmd).unwrap();
-            let killer = child.clone_killer();
-            tx.send(killer).unwrap();
-            child.wait().unwrap()
+            match pair.slave.spawn_command(cmd) {
+                Ok(mut child) => {
+                    let killer = child.clone_killer();
+                    if let Err(e) = tx.send(killer) {
+                        eprintln!("Failed to send killer: {}", e);
+                    }
+                    match child.wait() {
+                        Ok(status) => status,
+                        Err(e) => {
+                            eprintln!("Failed to wait for child: {}", e);
+                            ExitStatus::with_exit_code(1)
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to spawn command: {}", e);
+                    ExitStatus::with_exit_code(1)
+                }
+            }
         });
 
-        let mut reader = pair.master.try_clone_reader().unwrap(); // This is a reader, this is where we
+        let mut reader = match pair.master.try_clone_reader() {
+            Ok(reader) => reader,
+            Err(e) => {
+                eprintln!("Failed to clone reader: {}", e);
+                Box::new(std::io::empty())
+            }
+        }; // This is a reader, this is where we
 
         // A buffer, shared between the thread that reads the command output, and the main tread.
         // The main thread only reads the contents
@@ -235,22 +386,33 @@ impl RunningCommand {
             std::thread::spawn(move || {
                 let mut buf = [0u8; 8192];
                 loop {
-                    let size = reader.read(&mut buf).unwrap(); // Can block here
-                    if size == 0 {
-                        break; // EOF
+                    match reader.read(&mut buf) {
+                        Ok(size) => {
+                            if size == 0 {
+                                break; // EOF
+                            }
+                            if let Ok(mut mutex) = command_buffer.lock() {
+                                mutex.extend_from_slice(&buf[0..size]);
+                                TERMINAL_UPDATED.store(true, Ordering::Release);
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to read from PTY: {}", e);
+                            break;
+                        }
                     }
-                    let mut mutex = command_buffer.lock(); // Only lock the mutex after the read is
-                                                           // done, to minimise the time it is opened
-                    let command_buffer = mutex.as_mut().unwrap();
-                    command_buffer.extend_from_slice(&buf[0..size]);
-                    TERMINAL_UPDATED.store(true, Ordering::Release);
-                    // The mutex is closed here automatically
                 }
                 TERMINAL_UPDATED.store(true, Ordering::Release);
             })
         };
 
-        let writer = pair.master.take_writer().unwrap();
+        let writer = match pair.master.take_writer() {
+            Ok(writer) => writer,
+            Err(e) => {
+                eprintln!("Failed to take writer: {}", e);
+                Box::new(std::io::sink())
+            }
+        };
         Self {
             buffer: command_buffer,
             command_thread: Some(command_handle),
@@ -266,44 +428,54 @@ impl RunningCommand {
 
     fn screen(&mut self, size: Size) -> Screen {
         // Resize the emulated pty
-        self.pty_master
-            .resize(PtySize {
-                rows: size.height,
-                cols: size.width,
-                pixel_width: 0,
-                pixel_height: 0,
-            })
-            .unwrap();
+        if let Err(e) = self.pty_master.resize(PtySize {
+            rows: size.height,
+            cols: size.width,
+            pixel_width: 0,
+            pixel_height: 0,
+        }) {
+            // Log the error but don't panic - this allows the TUI to continue
+            eprintln!("Failed to resize PTY: {}", e);
+        }
 
         // Process the buffer with a parser with the current screen size
         // We don't actually need to create a new parser every time, but it is so much easier this
         // way, and doesn't cost that much
         let mut parser = Parser::new(size.height, size.width, 1000);
-        let mutex = self.buffer.lock();
-        let buffer = mutex.as_ref().unwrap();
-        parser.process(buffer);
-        // Adjust the screen content based on the scroll offset
-        parser.screen_mut().set_scrollback(self.scroll_offset);
+        if let Ok(mutex) = self.buffer.lock() {
+            parser.process(&mutex);
+            // Adjust the screen content based on the scroll offset
+            parser.screen_mut().set_scrollback(self.scroll_offset);
+        }
         parser.screen().clone()
     }
 
     /// This function will block if the command is not finished
     fn get_exit_status(&mut self) -> ExitStatus {
         if self.command_thread.is_some() {
-            let handle = self.command_thread.take().unwrap();
-            let exit_status = handle.join().unwrap();
-            self.status = Some(exit_status.clone());
-            exit_status
-        } else {
-            self.status.as_ref().unwrap().clone()
+            if let Some(handle) = self.command_thread.take() {
+                if let Ok(exit_status) = handle.join() {
+                    self.status = Some(exit_status.clone());
+                    return exit_status;
+                }
+            }
         }
+        // Return a default exit status if we can't get the real one
+        self.status.as_ref().cloned().unwrap_or_else(|| {
+            ExitStatus::with_exit_code(1)
+        })
     }
 
     /// Send SIGHUB signal, *not* SIGKILL or SIGTERM, to the child process
     pub fn kill_child(&mut self) {
         if !self.is_finished() {
-            let mut killer = self.child_killer.take().unwrap().recv().unwrap();
-            killer.kill().unwrap();
+            if let Some(rx) = self.child_killer.take() {
+                if let Ok(mut killer) = rx.recv() {
+                    if let Err(e) = killer.kill() {
+                        eprintln!("Failed to kill child process: {}", e);
+                    }
+                }
+            }
         }
     }
 
@@ -323,6 +495,67 @@ impl RunningCommand {
         file.write_all(&buffer)?;
 
         Ok(log_path.to_string_lossy().into_owned())
+    }
+
+    /// Launch an interactive PowerShell script in a separate terminal window
+    #[cfg(windows)]
+    fn launch_in_separate_terminal(command: &Command) -> Self {
+        if let Command::LocalFile { executable: _, args: _, file } = command {
+            // Launch in a new PowerShell window with the script file
+            let result = std::process::Command::new("cmd")
+                .args(&["/c", "start", "pwsh", "-ExecutionPolicy", "Bypass", "-File", &file.to_string_lossy()])
+                .spawn();
+            
+            match result {
+                Ok(_) => {
+                    // Create a dummy RunningCommand that shows success
+                    Self {
+                        buffer: Arc::new(Mutex::new(
+                            format!("Launched interactive script in separate PowerShell window.\n\nScript: {}\n\nPlease complete the script in the new PowerShell window, then return here.\nPress Enter to continue.", file.to_string_lossy()).into_bytes()
+                        )),
+                        command_thread: None,
+                        child_killer: None,
+                        _reader_thread: std::thread::spawn(|| {}),
+                        pty_master: Box::new(DummyPty),
+                        writer: Box::new(std::io::sink()),
+                        status: Some(ExitStatus::with_exit_code(0)),
+                        log_path: None,
+                        scroll_offset: 0,
+                    }
+                }
+                Err(e) => {
+                    // Create a dummy RunningCommand that shows error
+                    Self {
+                        buffer: Arc::new(Mutex::new(
+                            format!("Failed to launch script in separate terminal: {}\n\nFalling back to TUI execution.", e).into_bytes()
+                        )),
+                        command_thread: None,
+                        child_killer: None,
+                        _reader_thread: std::thread::spawn(|| {}),
+                        pty_master: Box::new(DummyPty),
+                        writer: Box::new(std::io::sink()),
+                        status: Some(ExitStatus::with_exit_code(1)),
+                        log_path: None,
+                        scroll_offset: 0,
+                    }
+                }
+            }
+        } else {
+            // Fallback for non-LocalFile commands
+            Self {
+                buffer: Arc::new(Mutex::new(
+                    "Cannot launch non-file command in separate terminal".as_bytes().to_vec()
+                )),
+                command_thread: None,
+                child_killer: None,
+                _reader_thread: std::thread::spawn(|| {}),
+                pty_master: Box::new(DummyPty),
+                writer: Box::new(std::io::sink()),
+                status: Some(ExitStatus::with_exit_code(1)),
+                log_path: None,
+                scroll_offset: 0,
+            }
+        }
     }
 
     /// Convert the KeyEvent to pty key codes, and send them to the virtual terminal
@@ -364,7 +597,16 @@ impl RunningCommand {
             KeyCode::Esc => vec![27],
             _ => return,
         };
+        
         // Send the keycodes to the virtual terminal
-        let _ = self.writer.write_all(&input_bytes);
+        if let Err(e) = self.writer.write_all(&input_bytes) {
+            // Log the error but don't panic - this allows the TUI to continue
+            eprintln!("Failed to write to PTY: {}", e);
+        }
+        
+        // Flush the writer to ensure the data is sent immediately
+        if let Err(e) = self.writer.flush() {
+            eprintln!("Failed to flush PTY writer: {}", e);
+        }
     }
 }

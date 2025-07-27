@@ -1,7 +1,31 @@
 name = "System Setup"
 
 [[data]]
+name = "First Setup Script"
+description = "Comprehensive initial Windows setup including password change, remote desktop, SSH, time settings, and system optimizations"
+script = "first-setup.ps1"
+task_list = "I"
+
+[[data]]
+name = "PowerShell Setup"
+description = "Downloads and installs development tools, fonts, profiles, and configurations for PowerShell"
+script = "powershell-setup.ps1"
+task_list = "I"
+
+[[data]]
 name = "Update Windows"
 description = "This script updates Windows"
 script = "update.ps1"
+task_list = "I"
+
+[[data]]
+name = "Windows Activation"
+description = "Activates Windows using the get.activated.win service"
+script = "windows-activation.ps1"
+task_list = "I"
+
+[[data]]
+name = "SSH Key Manager"
+description = "Interactive tool to manage SSH keys for Windows administrators, including GitHub import and manual entry"
+script = "ssh-key-manager.ps1"
 task_list = "I"

@@ -582,6 +582,7 @@ dependencies = [
 name = "osutil_tui"
 version = "0.1.2"
 dependencies = [
+ "anyhow",
  "clap",
  "nix 0.29.0",
  "oneshot",

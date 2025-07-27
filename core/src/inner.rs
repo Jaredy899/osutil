@@ -249,11 +249,25 @@ fn create_directory(
 #[cfg(windows)]
 fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String>)> {
     if script_path.extension() == Some(std::ffi::OsStr::new("ps1")) {
-        let executable = "powershell.exe".to_string();
-        let is_valid = !validate || which::which(&executable).is_ok();
-        if is_valid {
+        // Prefer pwsh.exe (PowerShell 7+) if available
+        let pwsh = "pwsh.exe";
+        let powershell = "powershell.exe";
+        let pwsh_valid = !validate || which::which(pwsh).is_ok();
+        let powershell_valid = !validate || which::which(powershell).is_ok();
+        if pwsh_valid {
             Some((
-                executable,
+                pwsh.to_string(),
+                vec![
+                    "-NoProfile".to_string(),
+                    "-ExecutionPolicy".to_string(),
+                    "Bypass".to_string(),
+                    "-File".to_string(),
+                    script_path.to_string_lossy().to_string(),
+                ],
+            ))
+        } else if powershell_valid {
+            Some((
+                powershell.to_string(),
                 vec![
                     "-NoProfile".to_string(),
                     "-ExecutionPolicy".to_string(),
