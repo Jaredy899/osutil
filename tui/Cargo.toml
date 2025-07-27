@@ -10,8 +10,10 @@ version.workspace = true
 include = ["src/*.rs", "Cargo.toml", "cool_tips.txt", "../man/osutil.1"]
 
 [features]
-default = ["tips"]
+default = ["tips", "unix"]
 tips = ["rand"]
+unix = ["nix"]
+syntax-highlighting = ["tree-sitter-highlight", "tree-sitter-bash", "unix"]
 
 [dependencies]
 clap = { version = "4.5.20", features = ["derive"] }
@@ -23,9 +25,9 @@ time = { version = "0.3.36", features = ["formatting", "local-offset", "macros"]
 unicode-width = { version = "0.2.0", default-features = false }
 rand = { version = "0.8.5", optional = true }
 osutil_core = { path = "../core" }
-tree-sitter-highlight = "0.24.4"
-tree-sitter-bash = "0.23.3"
-nix = { version = "0.29.0", features = [ "user" ] }
+tree-sitter-highlight = { version = "0.24.4", optional = true }
+tree-sitter-bash = { version = "0.23.3", optional = true }
+nix = { version = "0.29.0", features = [ "user" ], optional = true }
 vt100-ctt = "0.16.0"
 anyhow = "1.0"
 

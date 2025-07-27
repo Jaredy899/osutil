@@ -47,26 +47,26 @@ jobs:
         run: cargo install cross
 
       - name: Build x86_64 binary
-        run: cargo build --target-dir=build --release --verbose --target=x86_64-unknown-linux-musl --all-features
+        run: cargo build --target-dir=build --release --verbose --target=x86_64-unknown-linux-musl --features "syntax-highlighting"
 
       - name: Build aarch64 binary
         run: |
-          cross build --target-dir=build --release --verbose --target=aarch64-unknown-linux-musl --all-features
-          mv ./build/aarch64-unknown-linux-musl/release/macutil ./build/aarch64-unknown-linux-musl/release/macutil-aarch64
+          cross build --target-dir=build --release --verbose --target=aarch64-unknown-linux-musl --features "syntax-highlighting"
+          mv ./build/aarch64-unknown-linux-musl/release/osutil ./build/aarch64-unknown-linux-musl/release/osutil-aarch64
 
       - name: Build armv7 binary
         run: |
-          cross build --target-dir=build --release --verbose --target=armv7-unknown-linux-musleabihf --all-features
-          mv ./build/armv7-unknown-linux-musleabihf/release/macutil ./build/armv7-unknown-linux-musleabihf/release/macutil-armv7l
+          cross build --target-dir=build --release --verbose --target=armv7-unknown-linux-musleabihf --features "syntax-highlighting"
+          mv ./build/armv7-unknown-linux-musleabihf/release/osutil ./build/armv7-unknown-linux-musleabihf/release/osutil-armv7l
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-binaries
           path: |
-            ./build/x86_64-unknown-linux-musl/release/macutil
-            ./build/aarch64-unknown-linux-musl/release/macutil-aarch64
-            ./build/armv7-unknown-linux-musleabihf/release/macutil-armv7l
+            ./build/x86_64-unknown-linux-musl/release/osutil
+            ./build/aarch64-unknown-linux-musl/release/osutil-aarch64
+            ./build/armv7-unknown-linux-musleabihf/release/osutil-armv7l
 
   windows_build:
     runs-on: ubuntu-latest
@@ -101,13 +101,13 @@ jobs:
           sudo apt-get install -y gcc-mingw-w64
 
       - name: Build for Windows
-        run: cargo build --release --target x86_64-pc-windows-gnu
+        run: cargo build --release --target x86_64-pc-windows-gnu --no-default-features
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-binary
-          path: target/x86_64-pc-windows-gnu/release/macutil.exe
+          path: target/x86_64-pc-windows-gnu/release/osutil.exe
 
   build-macos:
     runs-on: macos-latest
@@ -138,24 +138,26 @@ jobs:
           rustup target add aarch64-apple-darwin
 
       - name: Build for macOS (x86_64)
-        run: cargo build --release --target x86_64-apple-darwin
+        run: cargo build --release --target x86_64-apple-darwin --features "syntax-highlighting"
 
       - name: Build for macOS (ARM)
-        run: cargo build --release --target aarch64-apple-darwin
+        run: cargo build --release --target aarch64-apple-darwin --features "syntax-highlighting"
+
+
 
       - name: Create universal macOS binary
         run: |
           # Create a universal binary that works on both Intel and ARM
           lipo -create \
-            target/x86_64-apple-darwin/release/macutil \
-            target/aarch64-apple-darwin/release/macutil \
-            -output target/release/macutil
+            target/x86_64-apple-darwin/release/osutil \
+            target/aarch64-apple-darwin/release/osutil \
+            -output target/release/osutil
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-binary
-          path: target/release/macutil
+          path: target/release/osutil
 
   release:
     needs: [linux_build, windows_build, build-macos]
@@ -183,39 +185,39 @@ jobs:
             ## Downloads
             
             ### Linux (Multiple Architectures)
-            - **x86_64**: `macutil` (x86_64 Linux)
-            - **aarch64**: `macutil-aarch64` (ARM64 Linux)
-            - **armv7l**: `macutil-armv7l` (ARMv7 Linux)
+            - **x86_64**: `osutil` (x86_64 Linux)
+            - **aarch64**: `osutil-aarch64` (ARM64 Linux)
+            - **armv7l**: `osutil-armv7l` (ARMv7 Linux)
             
             ### macOS
-            - **Universal**: `macutil-macos` (Intel & ARM)
+            - **Universal**: `osutil-macos` (Intel & ARM)
             
             ### Windows
-            - **x86_64**: `macutil-windows.exe` (Windows)
+            - **x86_64**: `osutil-windows.exe` (Windows)
             
             ## Installation
             
             ### Linux
             ```bash
-            sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/install-linux.sh)
+            sh <(curl -fsSL https://raw.githubusercontent.com/ChrisTitusTech/osutil/main/install-linux.sh)
             ```
             
             ### macOS
             ```bash
-            bash <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/install-macos.sh)
+            bash <(curl -fsSL https://raw.githubusercontent.com/ChrisTitusTech/osutil/main/install-macos.sh)
             ```
             
             ### Windows
             ```powershell
-            irm https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/install-windows.ps1 | iex
+            irm https://raw.githubusercontent.com/ChrisTitusTech/osutil/main/install-windows.ps1 | iex
             ```
 
           files: |
-            linux-binaries/macutil
-            linux-binaries/macutil-aarch64
-            linux-binaries/macutil-armv7l
-            macos-binary/macutil
-            windows-binary/macutil.exe
+            linux-binaries/osutil
+            linux-binaries/osutil-aarch64
+            linux-binaries/osutil-armv7l
+            macos-binary/osutil
+            windows-binary/osutil.exe
             install-linux.sh
             install-macos.sh
             install-windows.ps1

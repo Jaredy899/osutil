@@ -6,15 +6,19 @@ use ratatui::{
     symbols::border,
     widgets::{Block, Borders, Clear, Paragraph, Wrap},
 };
+#[cfg(feature = "syntax-highlighting")]
 use tree_sitter_bash as hl_bash;
+#[cfg(feature = "syntax-highlighting")]
 use tree_sitter_highlight::{self as hl, HighlightEvent};
 
+#[cfg(feature = "syntax-highlighting")]
 macro_rules! style {
     ($r:literal, $g:literal, $b:literal) => {{
         Style::new().fg(Color::Rgb($r, $g, $b))
     }};
 }
 
+#[cfg(feature = "syntax-highlighting")]
 const SYNTAX_HIGHLIGHT_STYLES: [(&str, Style); 8] = [
     ("function", style!(220, 220, 170)), // yellow
     ("string", style!(206, 145, 120)),   // brown
@@ -88,6 +92,7 @@ impl<'a> FloatingText<'a> {
         }
     }
 
+    #[cfg(feature = "syntax-highlighting")]
     fn get_highlighted_string(s: &str) -> Option<Text<'a>> {
         let matched_tokens = SYNTAX_HIGHLIGHT_STYLES
             .iter()
@@ -152,6 +157,11 @@ impl<'a> FloatingText<'a> {
         }
 
         Some(Text::from(lines))
+    }
+
+    #[cfg(not(feature = "syntax-highlighting"))]
+    fn get_highlighted_string(_s: &str) -> Option<Text<'a>> {
+        None
     }
 
     fn scroll_down(&mut self) {
