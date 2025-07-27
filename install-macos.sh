@@ -39,14 +39,13 @@ fi
 
 # Download the binary
 temp_file=$(mktemp)
-if [ $? -ne 0 ]; then
+if ! mktemp; then
     printf '%sERROR: Creating the temporary file%s\n' "$red" "$rc"
     exit 1
 fi
 
 printf 'Downloading osutil...\n'
-curl -fsL "$(getUrl)" -o "$temp_file"
-if [ $? -ne 0 ]; then
+if ! curl -fsL "$(getUrl)" -o "$temp_file"; then
     printf '%sERROR: Downloading osutil%s\n' "$red" "$rc"
     rm -f "$temp_file"
     exit 1
@@ -54,7 +53,7 @@ fi
 
 # Make it executable
 chmod +x "$temp_file"
-if [ $? -ne 0 ]; then
+if ! chmod +x "$temp_file"; then
     printf '%sERROR: Making osutil executable%s\n' "$red" "$rc"
     rm -f "$temp_file"
     exit 1
@@ -65,7 +64,7 @@ xattr -d com.apple.quarantine "$temp_file" 2>/dev/null || true
 
 # Move to installation location
 mv "$temp_file" "$installPath"
-if [ $? -ne 0 ]; then
+if ! mv "$temp_file" "$installPath"; then
     printf '%sERROR: Installing osutil to %s%s\n' "$red" "$installPath" "$rc"
     rm -f "$temp_file"
     exit 1
@@ -81,9 +80,10 @@ if echo "$PATH" | grep -q "$installDir"; then
     printf '%s✓ osutil is ready to use!%s\n' "$green" "$rc"
 else
     printf '%s⚠  Please add %s to your PATH or restart your terminal%s\n' "$blue" "$installDir" "$rc"
-    printf '   You can run: export PATH="$PATH:%s"%s\n' "$installDir" "$rc"
+    printf "   You can run: export PATH=\"\$PATH:%s\"%s\n" "$installDir" "$rc"
 fi
 
-printf '\nUsage: osutil\n'
+printf '\nRunning osutil...\n'
+exec "$installPath"
 
 } # End of wrapping 

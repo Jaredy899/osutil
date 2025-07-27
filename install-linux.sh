@@ -114,6 +114,7 @@ else
     printf "   You can run: export PATH=\"\$PATH:%s\"%s\n" "$installDir" "$rc"
 fi
 
-printf '\nUsage: osutil\n'
+printf '\nRunning osutil...\n'
+exec "$installPath"
 
 } # End of wrapping 

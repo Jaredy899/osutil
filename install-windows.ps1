@@ -71,7 +71,8 @@
             Write-Host "   You can run: `$env:PATH += `";$installDir`""
         }
         
-        Write-Host "`nUsage: osutil"
+        Write-Host "`nRunning osutil..."
+        & $installPath
         
     } catch {
         Write-Host "${Red}ERROR: $($_.Exception.Message)${Reset}"
