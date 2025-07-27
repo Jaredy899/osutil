@@ -1,7 +1,6 @@
 #!/bin/sh -e
 
 # Prevent execution if this script was only partially downloaded
-{
 rc='\033[0m'
 red='\033[0;31m'
 green='\033[0;32m'
@@ -81,6 +80,7 @@ if [ -z "$temp_file" ]; then
     exit 1
 fi
 
+
 printf 'Downloading osutil for %s...\n' "$ARCH"
 if ! curl -fsL "$(getUrl "$ARCH")" -o "$temp_file"; then
     printf '%sERROR: Downloading osutil for %s%s\n' "$red" "$ARCH" "$rc"
@@ -113,6 +113,4 @@ else
 fi
 
 printf '\nRunning osutil...\n'
-exec "$installPath"
-
-} # End of wrapping 
+exec "$installPath" 
