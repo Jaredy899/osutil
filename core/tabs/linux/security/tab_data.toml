@@ -19,8 +19,8 @@ task_list = "I SS"
 
 [[data.preconditions]]
 matches = true
-data = "command_exists"
-values = [ "dnf", "zypper", "firewall-cmd" ]
+data = "file_exists"
+values = [ "/usr/lib/systemd/system/firewalld.service", "/etc/systemd/system/firewalld.service" ]
 
 [[data]]
 name = "Tailscale"
