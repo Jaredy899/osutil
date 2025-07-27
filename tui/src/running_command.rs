@@ -48,7 +48,7 @@ impl portable_pty::MasterPty for DummyPty {
         Ok(Box::new(std::io::empty()))
     }
 
-    #[cfg(target_os = "macos")]
+    #[cfg(unix)]
     fn tty_name(&self) -> Option<std::path::PathBuf> {
         None
     }
