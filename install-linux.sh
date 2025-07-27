@@ -2,17 +2,12 @@
 
 # Prevent execution if this script was only partially downloaded
 {
-rc='\033[0m'
-red='\033[0;31m'
-green='\033[0;32m'
-blue='\033[0;34m'
-
 check() {
     exit_code=$1
     message=$2
 
     if [ "$exit_code" -ne 0 ]; then
-        printf '%sERROR: %s%s\n' "$red" "$message" "$rc"
+        printf 'ERROR: %s\n' "$message"
         exit 1
     fi
 
@@ -42,7 +37,7 @@ getUrl() {
 }
 
 findArch
-printf '%sInstalling osutil for Linux (%s)...%s\n' "$blue" "$arch" "$rc"
+printf 'Installing osutil for Linux (%s)...\n' "$arch"
 
 temp_file=$(mktemp)
 check $? "Creating the temporary file"
@@ -54,12 +49,16 @@ check $? "Downloading osutil"
 chmod +x "$temp_file"
 check $? "Making osutil executable"
 
-printf '%s✓ osutil downloaded successfully%s\n' "$green" "$rc"
+printf '✓ osutil downloaded successfully\n'
 printf '\nRunning osutil...\n'
 
+# Run the binary and capture its exit code
 "$temp_file" "$@"
-check $? "Executing osutil"
+exit_code=$?
 
+# Clean up silently
 rm -f "$temp_file"
-check $? "Deleting the temporary file"
+
+# Exit with the same code as the binary
+exit $exit_code
 } # End of wrapping 

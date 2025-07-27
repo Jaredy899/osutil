@@ -53,7 +53,6 @@ pub fn get_tabs(validate: bool) -> TabList {
         .into_iter()
         .map(|path| {
             let directory = path.parent().unwrap().to_owned();
-            println!("Trying to read: {:?}", path);
             let data = std::fs::read_to_string(&path).unwrap_or_else(|e| {
                 panic!("Failed to read tab data at {:?}: {}", path, e);
             });

@@ -3,17 +3,11 @@
 # Prevent execution if this script was only partially downloaded
 $ErrorActionPreference = "Stop"
 
-# Colors for output
-$Red = "`e[31m"
-$Green = "`e[32m"
-$Blue = "`e[34m"
-$Reset = "`e[0m"
-
 function Test-Error {
     param($ExitCode, $Message)
     
     if ($ExitCode -ne 0) {
-        Write-Host "${Red}ERROR: ${Message}${Reset}"
+        Write-Host "ERROR: ${Message}"
         exit 1
     }
 }
@@ -27,7 +21,7 @@ function Get-Url {
     return "https://github.com/Jaredy899/osutil/releases/latest/download/osutil-windows.exe"
 }
 
-Write-Host "${Blue}Installing osutil for Windows...${Reset}"
+Write-Host "Installing osutil for Windows..."
 
 # Download the binary
 $tempFile = [System.IO.Path]::GetTempFileName()
@@ -40,13 +34,13 @@ try {
     Write-Host "Unblocking downloaded file..."
     Unblock-File -Path $tempFile
     
-    Write-Host "${Green}✓ osutil downloaded successfully${Reset}"
-    Write-Host "`n${Blue}Launching osutil...${Reset}"
+    Write-Host "✓ osutil downloaded successfully"
+    Write-Host "`nLaunching osutil..."
     
-    # Launch the application
+    # Launch the application and capture exit code
     try {
         & $tempFile @args
-        Test-Error $LASTEXITCODE "Executing osutil"
+        $exitCode = $LASTEXITCODE
     } catch {
         Test-Error 1 "Failed to launch osutil: $($_.Exception.Message)"
     }
@@ -54,8 +48,11 @@ try {
 } catch {
     Test-Error 1 $_.Exception.Message
 } finally {
-    # Clean up temporary file
+    # Clean up temporary file silently
     if (Test-Path $tempFile) {
         Remove-Item $tempFile -Force
     }
-} 
+}
+
+# Exit with the same code as the binary
+exit $exitCode 

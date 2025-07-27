@@ -2,18 +2,12 @@
 
 # Prevent execution if this script was only partially downloaded
 {
-# Define color codes using echo -e to avoid shell interpretation issues
-rc='\033[0m'
-red='\033[0;31m'
-green='\033[0;32m'
-blue='\033[0;34m'
-
 check() {
     exit_code=$1
     message=$2
 
     if [ "$exit_code" -ne 0 ]; then
-        echo -e "${red}ERROR: ${message}${rc}"
+        echo "ERROR: ${message}"
         exit 1
     fi
 
@@ -30,7 +24,7 @@ getUrl() {
     echo "https://github.com/Jaredy899/osutil/releases/latest/download/osutil-macos"
 }
 
-echo -e "${blue}Installing osutil for macOS...${rc}"
+echo "Installing osutil for macOS..."
 
 temp_file=$(mktemp)
 check $? "Creating the temporary file"
@@ -45,13 +39,17 @@ check $? "Making osutil executable"
 # Remove quarantine attribute to avoid Gatekeeper warning
 xattr -d com.apple.quarantine "$temp_file" 2>/dev/null || true
 
-echo -e "${green}✓ osutil downloaded successfully${rc}"
+echo "✓ osutil downloaded successfully"
 echo ""
 echo "Running osutil..."
 
+# Run the binary and capture its exit code
 "$temp_file" "$@"
-check $? "Executing osutil"
+exit_code=$?
 
+# Clean up silently
 rm -f "$temp_file"
-check $? "Deleting the temporary file"
+
+# Exit with the same code as the binary
+exit $exit_code
 } # End of wrapping 
