@@ -104,11 +104,6 @@ linkConfig() {
         printf "%b\n" "${RED}Failed to create symbolic link for .bashrc${RC}"
         exit 1
     }
-    mkdir -p "$HOME/.config"
-    ln -svf "$HOME/.config/starship.toml" "$HOME/.config/starship.toml" || {
-        printf "%b\n" "${RED}Failed to create symbolic link for starship.toml${RC}"
-        exit 1
-    }
     printf "%b\n" "${GREEN}Done! restart your shell to see the changes.${RC}"
 }
 
