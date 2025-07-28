@@ -25,8 +25,8 @@ time = { version = "0.3.36", features = ["formatting", "local-offset", "macros"]
 unicode-width = { version = "0.2.0", default-features = false }
 rand = { version = "0.9.2", optional = true }
 osutil_core = { path = "../core" }
+tree-sitter-bash = { version = "0.25.0", optional = true }
 tree-sitter-highlight = { version = "0.25.8", optional = true }
-tree-sitter-bash = { version = "0.23.3", optional = true }
 nix = { version = "0.30.1", features = [ "user" ], optional = true }
 vt100-ctt = "0.16.0"
 anyhow = "1.0"
