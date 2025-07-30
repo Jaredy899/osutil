@@ -205,6 +205,12 @@ script = "fastfetch.sh"
 task_list = "I FM"
 
 [[data]]
+name = "Ghostty"
+description = "Ghostty is a fast, feature-rich, and cross-platform terminal emulator that uses platform-native UI and GPU acceleration."
+script = "ghostty.sh"
+task_list = "I"
+
+[[data]]
 name = "GrandPerspective"
 description = "Graphically shows disk usage within a file system"
 script = "grandperspective.sh"

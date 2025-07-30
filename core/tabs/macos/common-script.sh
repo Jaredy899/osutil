@@ -22,21 +22,16 @@ brewprogram_exists() {
     return 0
 }
 
-setup_askpass() {
-    # Create a temporary askpass helper script
-    ASKPASS_SCRIPT="/tmp/osutil_askpass_$$"
-    cat > "$ASKPASS_SCRIPT" << 'EOF'
-#!/bin/sh
-osascript -e 'display dialog "Administrator password required for OSutil setup:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null
-EOF
-    chmod +x "$ASKPASS_SCRIPT"
-    export SUDO_ASKPASS="$ASKPASS_SCRIPT"
-}
-
-cleanup_askpass() {
-    # Clean up the temporary askpass script
-    if [ -n "$ASKPASS_SCRIPT" ] && [ -f "$ASKPASS_SCRIPT" ]; then
-        rm -f "$ASKPASS_SCRIPT"
+checkEscalationTool() {
+    if [ "$(id -u)" = "0" ]; then
+        ESCALATION_TOOL="eval"
+        printf "%b\n" "${CYAN}Running as root, no escalation needed${RC}"
+    elif command_exists "sudo"; then
+        ESCALATION_TOOL="sudo"
+        printf "%b\n" "${CYAN}Using sudo for privilege escalation${RC}"
+    else
+        printf "%b\n" "${RED}No escalation tool found${RC}"
+        exit 1
     fi
 }
 
@@ -46,36 +41,43 @@ checkPackageManager() {
     else
         printf "%b\n" "${RED}Homebrew is not installed${RC}"
         printf "%b\n" "${YELLOW}Installing Homebrew...${RC}"
-
-        setup_askpass
-        trap cleanup_askpass EXIT INT TERM
-
-        NONINTERACTIVE=1 sudo -A /bin/bash -c \
-            "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        install_result=$?
-
-        if [ $install_result -ne 0 ]; then
-            printf "%b\n" "${RED}Failed to install Homebrew${RC}"
-            exit 1
-        fi
-
-        # Add Homebrew to PATH for the current session
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        
+        # Add Homebrew to PATH for current session
         if [ -f "/opt/homebrew/bin/brew" ]; then
             eval "$(/opt/homebrew/bin/brew shellenv)"
+            export PATH="/opt/homebrew/bin:$PATH"
         elif [ -f "/usr/local/bin/brew" ]; then
             eval "$(/usr/local/bin/brew shellenv)"
+            export PATH="/usr/local/bin:$PATH"
+        fi
+        
+        # Verify brew is now available
+        if command_exists "brew"; then
+            printf "%b\n" "${GREEN}Homebrew installed successfully!${RC}"
+        else
+            printf "%b\n" "${RED}Homebrew installed but not found in PATH${RC}"
+            printf "%b\n" "${YELLOW}Please restart your terminal or run: eval \"\$(/opt/homebrew/bin/brew shellenv)\"${RC}"
+            exit 1
         fi
     fi
 }
 
-checkCurrentDirectoryWritable() {
-    GITPATH="$(dirname "$(realpath "$0")")"
-    if [ ! -w "$GITPATH" ]; then
-        printf "%b\n" "${RED}Can't write to $GITPATH${RC}"
-        exit 1
+ensureHomebrewAvailable() {
+    # Ensure Homebrew is available in current session
+    if ! command_exists "brew"; then
+        if [ -f "/opt/homebrew/bin/brew" ]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+            export PATH="/opt/homebrew/bin:$PATH"
+        elif [ -f "/usr/local/bin/brew" ]; then
+            eval "$(/usr/local/bin/brew shellenv)"
+            export PATH="/usr/local/bin:$PATH"
+        fi
     fi
 }
 
 checkEnv() {
+    checkEscalationTool
     checkPackageManager
+    ensureHomebrewAvailable
 }
