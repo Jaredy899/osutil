@@ -27,11 +27,14 @@ body:
       multiple: false
       description: Select the Linux distribution you are using (if applicable).
       options:
+        - Alpine
         - Arch
         - Ubuntu
         - Fedora
         - Debian
         - openSUSE
+        - Solus
+        - Void
         - Other
         - Not applicable
   - type: input
