@@ -12,61 +12,22 @@ A cross-platform system utility tool with a modern TUI interface.
 
 ## Installation
 
+### macOS & Linux
+
+```bash
+sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh)
+```
+
 ### Windows
+
 ```powershell
 irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
-```
-
-### macOS
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-macos.sh)
-```
-
-### Linux
-```bash
-sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-linux.sh)
-```
-
-## PowerShell Script Performance
-
-On Windows, osutil automatically detects PowerShell scripts that would benefit from running in separate terminal windows:
-
-### Automatic Detection
-
-Scripts are automatically launched in separate terminals if they contain:
-
-**Interactive elements:**
-- `Read-Host` commands
-- `Console::ReadLine` or `Console::ReadKey`
-- `pause` commands
-
-**Heavy operations:**
-- `Invoke-WebRequest` or `Start-BitsTransfer` (downloads)
-- `Install-Module` or `Install-PackageProvider` (package installations)
-- `Add-WindowsCapability` (Windows features)
-- `Get-WindowsUpdate` or `Install-WindowsUpdate` (system updates)
-- `winget install`, `choco install`, `scoop install` (package managers)
-- `Expand-Archive` (file extraction)
-- `Start-Process` (process launching)
-- `Invoke-RestMethod` or `Invoke-Expression` (API calls)
-- Script execution with `& $localPath` or `& $scriptPath`
-
-### Force All PowerShell Scripts to Run in Separate Terminals
-
-If you want all PowerShell scripts to run in separate terminals for maximum performance, set the environment variable:
-
-```powershell
-$env:OSUTIL_FORCE_POWERSHELL_SEPARATE = "1"
-```
-
-Or set it permanently:
-```powershell
-[Environment]::SetEnvironmentVariable("OSUTIL_FORCE_POWERSHELL_SEPARATE", "1", "User")
 ```
 
 ## Usage
 
 Run the application:
+
 ```bash
 osutil
 ```
@@ -76,18 +37,23 @@ Use arrow keys to navigate, Enter to select, and Esc to go back.
 ## Development
 
 ### Prerequisites
+
 - Rust 1.70+
 - Cargo
 
 ### Build
+
 ```bash
 cargo build --release
 ```
 
 ### Run in development mode
+
 ```bash
 cargo run
 ```
+
+For detailed build instructions and multi-platform setup, see [MULTI_PLATFORM_SETUP.md](MULTI_PLATFORM_SETUP.md).
 
 ## License
 
