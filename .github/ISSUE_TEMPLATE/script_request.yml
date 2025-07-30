@@ -1,0 +1,144 @@
+name: Script Request
+description: Request a new utility script to be added to OSUtil.
+title: "[Script]: "
+labels: ["script", "enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for requesting a new script for OSUtil! Please provide detailed information about the script you'd like to see added.
+  - type: input
+    id: script-name
+    attributes:
+      label: Script Name
+      description: What should this script be called?
+      placeholder: e.g., docker-setup, system-cleanup, network-config
+    validations:
+      required: true
+  - type: textarea
+    id: script-description
+    attributes:
+      label: Script Description
+      description: |
+        Provide a clear and concise description of what this script does.
+      placeholder: This script installs and configures Docker on the system...
+    validations:
+      required: true
+  - type: dropdown
+    id: target-platform
+    attributes:
+      label: Target Platform
+      multiple: true
+      description: Select which operating systems this script should support.
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    id: script-category
+    attributes:
+      label: Script Category
+      multiple: false
+      description: Which category should this script belong to?
+      options:
+        - Applications Setup
+        - System Setup
+        - Gaming
+        - Security
+        - Utilities
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: specify-category
+    attributes:
+      label: Specify Category (if "Other" selected)
+      description: Enter the category name.
+      placeholder: e.g., Networking, Development Tools
+  - type: textarea
+    id: functionality
+    attributes:
+      label: Functionality
+      description: |
+        Describe what the script should do in detail.
+      placeholder: |
+        - Install Docker from official repositories
+        - Configure Docker daemon settings
+        - Add user to docker group
+        - Test Docker installation
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: |
+        List any dependencies or prerequisites the script might need.
+      placeholder: |
+        - curl (for downloading)
+        - sudo/administrator privileges
+        - Internet connection
+  - type: textarea
+    id: similar-tools
+    attributes:
+      label: Similar Tools
+      description: |
+        Are there existing tools or scripts that do something similar? Please mention them.
+      placeholder: |
+        - Docker's official install script
+        - Package manager installations
+        - Manual setup guides
+  - type: dropdown
+    id: script-type
+    attributes:
+      label: Script Type
+      multiple: false
+      description: What type of script is this?
+      options:
+        - Installation script
+        - Configuration script
+        - Maintenance script
+        - Utility script
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: specify-script-type
+    attributes:
+      label: Specify Script Type (if "Other" selected)
+      description: Enter the script type.
+      placeholder: e.g., Backup script, Monitoring script
+  - type: textarea
+    id: implementation-notes
+    attributes:
+      label: Implementation Notes
+      description: |
+        Any specific implementation details, considerations, or requirements.
+      placeholder: |
+        - Should it be interactive?
+        - Does it need elevated privileges?
+        - Any specific file paths or configurations?
+        - Error handling requirements
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: |
+        Add any other context, examples, or references about the script request here.
+      placeholder: |
+        - Links to official documentation
+        - Examples of similar implementations
+        - User scenarios
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing scripts to avoid duplicates.
+        - label: This script would be useful to other users.
+        - label: I have provided clear functionality requirements.
+        - label: I understand this is a cross-platform utility.
+          required: true 

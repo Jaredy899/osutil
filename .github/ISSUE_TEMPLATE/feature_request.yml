@@ -1,0 +1,94 @@
+name: Feature Request
+description: Suggest a new feature or improvement to help us enhance OSUtil.
+title: "[Feature Request]: "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature or enhancement for OSUtil! Please provide as much detail as possible to help us understand your request. Note that submitting a feature request does not guarantee implementation.
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Target Operating System
+      multiple: true
+      description: Select which operating systems this feature should support.
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    id: feature-category
+    attributes:
+      label: Feature Category
+      multiple: false
+      description: Select the category this feature belongs to.
+      options:
+        - Applications Setup
+        - System Setup
+        - Gaming
+        - Security
+        - Utilities
+        - TUI Interface
+        - Script Management
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: specify-category
+    attributes:
+      label: Specify Category (if "Other" selected)
+      description: Enter the category name.
+      placeholder: e.g., Networking, Development Tools
+  - type: textarea
+    id: related-problem
+    attributes:
+      label: Is your feature request related to a problem? Please describe.
+      description: |
+        Provide a clear and concise description of the problem, if applicable.
+      placeholder: I'm always frustrated when ...
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Describe the solution you'd like
+      description: |
+        Provide a clear and concise description of what you want to happen.
+      placeholder: Explain your proposed feature or enhancement in detail.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: |
+        Provide a clear and concise description of any alternative solutions or features you've considered.
+      placeholder: Explain any other approaches or solutions you've thought about.
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases
+      description: |
+        Describe specific scenarios where this feature would be useful.
+      placeholder: |
+        - Use case 1: When users want to...
+        - Use case 2: For system administrators who need to...
+        - Use case 3: During development when...
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: |
+        Add any other context or screenshots about the feature request here.
+      placeholder: Provide additional information, screenshots, or references to explain your request further.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked for duplicate issues.
+        - label: I checked already existing discussions.
+        - label: This feature is not included in the roadmap.
+          required: true 

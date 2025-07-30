@@ -1,0 +1,147 @@
+name: Installation Issue
+description: Report problems with installing OSUtil.
+title: "[Install]: "
+labels: ["installation", "bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an installation issue with OSUtil! Please provide detailed information to help us resolve the problem.
+  - type: dropdown
+    id: installation-method
+    attributes:
+      label: Installation Method
+      multiple: false
+      description: Which installation method did you use?
+      options:
+        - macOS/Linux install script (install.sh)
+        - Windows PowerShell script (install-windows.ps1)
+        - Manual build from source
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: specify-method
+    attributes:
+      label: Specify Method (if "Other" selected)
+      description: Enter the installation method you used.
+      placeholder: e.g., Package manager, Docker, etc.
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating System
+      multiple: false
+      description: Select your operating system.
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS Version
+      description: Your operating system version.
+      placeholder: e.g., Windows 11, macOS 14.0, Ubuntu 22.04
+    validations:
+      required: true
+  - type: input
+    id: architecture
+    attributes:
+      label: Architecture
+      description: Your system architecture.
+      placeholder: e.g., x86_64, arm64, aarch64
+    validations:
+      required: true
+  - type: input
+    id: shell
+    attributes:
+      label: Shell
+      description: The shell you're using.
+      placeholder: e.g., PowerShell, zsh, bash
+    validations:
+      required: true
+  - type: input
+    id: rust-version
+    attributes:
+      label: Rust Version (if applicable)
+      description: Rust version (run 'rustc --version').
+      placeholder: e.g., rustc 1.88.0
+  - type: textarea
+    id: error-message
+    attributes:
+      label: Error Message
+      description: |
+        Paste the exact error message you received.
+      placeholder: |
+        ```
+        Error: [paste error here]
+        ```
+    validations:
+      required: true
+  - type: textarea
+    id: command-output
+    attributes:
+      label: Full Command Output
+      description: |
+        Paste the complete command output from your installation attempt.
+      placeholder: |
+        ```
+        [paste full output here]
+        ```
+    validations:
+      required: true
+  - type: textarea
+    id: steps-taken
+    attributes:
+      label: Steps Taken
+      description: |
+        Describe the exact steps you followed.
+      placeholder: |
+        1. Downloaded install.sh
+        2. Made it executable with chmod +x
+        3. Ran ./install.sh
+        4. Received error...
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: |
+        What should have happened during installation?
+      placeholder: |
+        The script should have downloaded and installed osutil successfully...
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: |
+        Any other relevant information.
+      placeholder: |
+        - Are you behind a corporate firewall/proxy?
+        - Do you have any antivirus software that might interfere?
+        - Any previous installation attempts?
+        - System permissions or restrictions?
+  - type: checkboxes
+    id: troubleshooting
+    attributes:
+      label: Troubleshooting Attempted
+      options:
+        - label: Checked internet connectivity
+        - label: Verified Rust installation (if applicable)
+        - label: Ran with elevated privileges
+        - label: Disabled antivirus temporarily
+        - label: Checked system requirements
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have provided the exact error message
+        - label: I have included my system information
+        - label: I have tried basic troubleshooting steps
+        - label: I have searched existing issues for similar problems
+          required: true 
