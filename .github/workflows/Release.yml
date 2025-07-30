@@ -206,14 +206,9 @@ jobs:
             
             ## Installation
             
-            ### Linux
+            ### macOS & Linux
             ```bash
-            sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-linux.sh)
-            ```
-            
-            ### macOS
-            ```bash
-            bash <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install-macos.sh)
+            sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh)
             ```
             
             ### Windows
@@ -227,11 +222,6 @@ jobs:
             linux-binaries/osutil-armv7l
             macos-binary/osutil-macos
             windows-binary/osutil-windows.exe
-            install-linux.sh
-            install-macos.sh
-            install-windows.ps1
-            start.sh
-            startdev.sh
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

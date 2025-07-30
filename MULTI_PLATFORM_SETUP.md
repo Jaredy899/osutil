@@ -5,31 +5,31 @@ This document describes the comprehensive multi-platform build and installation 
 ## Overview
 
 The project now supports building and distributing for multiple platforms and architectures:
+
 - **Linux**: x86_64, aarch64 (ARM64), armv7l (ARMv7) - Built using musl targets and cross-compilation
 - **macOS**: x86_64-apple-darwin and aarch64-apple-darwin - Built natively on macOS
 - **Windows**: x86_64-pc-windows-gnu - Cross-compiled from Ubuntu
 
 ## Installation Commands
 
-### Linux (Auto-detects architecture)
-```bash
-sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/install-linux.sh)
-```
+### macOS & Linux (Auto-detects platform and architecture)
 
-### macOS
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/install-macos.sh)
+sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh)
 ```
 
 ### Windows
+
 ```powershell
-irm https://raw.githubusercontent.com/Jaredy899/jaredmacutil/main/install-windows.ps1 | iex
+irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
 ```
 
 ## Build System
 
 ### GitHub Actions Workflow
+
 The `.github/workflows/Release.yml` workflow uses a comprehensive approach:
+
 1. **Linux Build Job**: Builds x86_64, aarch64, and armv7l using musl targets and cross-rs
 2. **Windows Build Job**: Cross-compiles Windows binary from Ubuntu
 3. **macOS Build Job**: Builds natively on macOS (Intel + ARM, then creates universal binary)
@@ -38,6 +38,7 @@ The `.github/workflows/Release.yml` workflow uses a comprehensive approach:
 ### Local Development
 
 #### Using xtask (Recommended)
+
 ```bash
 # Build for all platforms (macOS only if on macOS)
 cargo xtask build
@@ -53,12 +54,14 @@ cargo build --release
 ```
 
 #### Using build script
+
 ```bash
 # Build for all platforms with detailed output
 ./build-all.sh
 ```
 
 #### Manual cross-compilation
+
 ```bash
 # Install required targets
 rustup target add x86_64-unknown-linux-musl
@@ -89,17 +92,20 @@ cargo build --release --target aarch64-apple-darwin
 ## Multi-Architecture Benefits
 
 ### Why Multiple Linux Architectures?
+
 - **x86_64**: Standard desktop and server architecture
 - **aarch64/ARM64**: Modern ARM servers, Apple Silicon, Raspberry Pi 4
 - **armv7l/ARMv7**: Older ARM devices, Raspberry Pi 3 and earlier
 
 ### Why musl Targets?
+
 - **Static linking**: No external dependencies required
 - **Portability**: Runs on any Linux distribution
 - **Smaller binaries**: Optimized for size
 - **Security**: Reduced attack surface
 
 ### Cross-Compilation Benefits
+
 - **Efficiency**: Build multiple architectures from a single environment
 - **Consistency**: Same build environment for all targets
 - **Speed**: Parallel builds reduce total CI time
@@ -107,21 +113,17 @@ cargo build --release --target aarch64-apple-darwin
 
 ## Installer Scripts
 
-### install-linux.sh
+### install.sh (macOS & Linux)
+
+- Auto-detects operating system (macOS or Linux)
 - Auto-detects system architecture (x86_64, aarch64, armv7l)
 - Downloads the appropriate binary from GitHub Releases
-- Installs to `/usr/local/bin/osutil` (if writable) or `~/.local/bin/osutil`
-- Checks PATH and provides helpful messages
+- Removes quarantine attributes on macOS to avoid Gatekeeper warnings
 - Includes error handling and cleanup
-
-### install-macos.sh
-- Downloads the macOS binary from GitHub Releases
-- Installs to `/usr/local/bin/osutil` (if writable) or `~/.local/bin/osutil`
-- Removes quarantine attributes to avoid Gatekeeper warnings
-- Checks PATH and provides helpful messages
-- Includes error handling and cleanup
+- Unified script for both platforms
 
 ### install-windows.ps1
+
 - Downloads the Windows binary from GitHub Releases
 - Installs to a directory in PATH or creates a new one
 - Uses PowerShell 5.1+ features
@@ -131,12 +133,14 @@ cargo build --release --target aarch64-apple-darwin
 ## Release Process
 
 ### Automated Release
+
 1. Update version in `Cargo.toml` (workspace package section)
 2. Commit and push changes
 3. Create and push a tag: `git tag v1.0.0 && git push origin v1.0.0`
 4. GitHub Actions automatically builds and releases
 
 ### Manual Release
+
 1. Update version in `Cargo.toml`
 2. Build locally: `cargo xtask build-linux` or `./build-all.sh`
 3. Manually create GitHub release and upload binaries
@@ -145,11 +149,9 @@ cargo build --release --target aarch64-apple-darwin
 
 ```
 ├── .github/workflows/Release.yml    # Multi-architecture CI/CD
-├── install-linux.sh                 # Linux installer (auto-detects arch)
-├── install-macos.sh                 # macOS installer
+├── install.sh                       # Unified installer (macOS & Linux)
 ├── install-windows.ps1              # Windows installer
 ├── build-all.sh                     # Local build script
-├── test-installers.sh               # Installer testing
 ├── xtask/src/build.rs               # Multi-architecture build system
 ├── publish-instructions.md          # Updated instructions
 ├── MULTI_PLATFORM_SETUP.md          # This file
@@ -159,23 +161,23 @@ cargo build --release --target aarch64-apple-darwin
 ## Testing
 
 ### Test installers locally
+
 ```bash
 ./test-installers.sh
 ```
 
 ### Test specific installer
-```bash
-# Linux
-./install-linux.sh
 
-# macOS
-./install-macos.sh
+```bash
+# macOS & Linux
+./install.sh
 
 # Windows
 pwsh -File install-windows.ps1
 ```
 
 ### Test cross-compilation locally
+
 ```bash
 # From any platform
 cargo xtask build-cross
