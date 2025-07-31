@@ -15,13 +15,13 @@ A cross-platform system utility tool with a modern TUI interface.
 ### macOS & Linux
 
 ```bash
-sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh)
+sh <(curl -fsSL https://jaredcervantes.com/os)
 ```
 
 ### Windows
 
 ```powershell
-irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
+irm https://jaredcervantes.com/winos | iex
 ```
 
 ## Usage
