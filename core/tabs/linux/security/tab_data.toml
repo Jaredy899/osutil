@@ -21,7 +21,6 @@ task_list = "I SS"
 matches = false
 data = "command_exists"
 values = [ "apt-get", "nala", "pacman", "apk", "xbps-install", "eopkg" ]
-# ^^^ firewalld will NOT show if any of these are present, including apk
 
 [[data]]
 name = "Tailscale"
