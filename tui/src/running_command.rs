@@ -552,6 +552,20 @@ impl RunningCommand {
         Ok(log_path.to_string_lossy().into_owned())
     }
 
+    /// Get the appropriate PowerShell executable (prefer pwsh.exe, fallback to powershell.exe)
+    #[cfg(windows)]
+    fn get_powershell_executable() -> String {
+        // Prefer pwsh.exe (PowerShell 7+) if available
+        let pwsh = "pwsh.exe";
+        let powershell = "powershell.exe";
+
+        if which::which(pwsh).is_ok() {
+            pwsh.to_string()
+        } else {
+            powershell.to_string()
+        }
+    }
+
     /// Launch an interactive PowerShell script in a separate terminal window
     #[cfg(windows)]
     fn launch_in_separate_terminal(command: &Command, script_name: Option<String>) -> Self {
@@ -561,12 +575,15 @@ impl RunningCommand {
             file,
         } = command
         {
+            // Get the appropriate PowerShell executable
+            let powershell_exe = Self::get_powershell_executable();
+
             // Launch in a new PowerShell window with the script file
             let result = std::process::Command::new("cmd")
                 .args([
                     "/c",
                     "start",
-                    "pwsh",
+                    &powershell_exe,
                     "-ExecutionPolicy",
                     "Bypass",
                     "-File",

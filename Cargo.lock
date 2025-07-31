@@ -361,6 +361,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "home"
+version = "0.5.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "589533453244b0995c858700322199b2becb13b627df2851f64a2775d024abcf"
+dependencies = [
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "ident_case"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -555,19 +564,19 @@ checksum = "b4ce411919553d3f9fa53a0880544cda985a112117a0444d5ff1e870a893d6ea"
 
 [[package]]
 name = "osutil_core"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "ego-tree",
  "include_dir",
  "serde",
  "temp-dir",
  "toml",
- "which",
+ "which 8.0.0",
 ]
 
 [[package]]
 name = "osutil_tui"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "anyhow",
  "clap",
@@ -583,6 +592,7 @@ dependencies = [
  "tui-term",
  "unicode-width 0.2.0",
  "vt100-ctt",
+ "which 6.0.3",
 ]
 
 [[package]]
@@ -1222,6 +1232,18 @@ dependencies = [
 
 [[package]]
 name = "which"
+version = "6.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4ee928febd44d98f2f459a4a79bd4d928591333a494a10a868418ac1b39cf1f"
+dependencies = [
+ "either",
+ "home",
+ "rustix 0.38.44",
+ "winsafe",
+]
+
+[[package]]
+name = "which"
 version = "8.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3fabb953106c3c8eea8306e4393700d7657561cb43122571b172bbfb7c7ba1d"
@@ -1431,7 +1453,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "osutil_core",
 ]
