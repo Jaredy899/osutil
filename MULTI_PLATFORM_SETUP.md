@@ -8,7 +8,7 @@ The project now supports building and distributing for multiple platforms and ar
 
 - **Linux**: x86_64, aarch64 (ARM64), armv7l (ARMv7) - Built using musl targets and cross-compilation
 - **macOS**: x86_64-apple-darwin and aarch64-apple-darwin - Built natively on macOS
-- **Windows**: x86_64-pc-windows-gnu - Cross-compiled from Ubuntu
+- **Windows**: x86_64-pc-windows-msvc (native, self-contained)
 
 ## Installation Commands
 
@@ -31,7 +31,7 @@ irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 
 The `.github/workflows/Release.yml` workflow uses a comprehensive approach:
 
 1. **Linux Build Job**: Builds x86_64, aarch64, and armv7l using musl targets and cross-rs
-2. **Windows Build Job**: Cross-compiles Windows binary from Ubuntu
+2. **Windows Build Job**: MSVC build on Windows (self-contained, no external dependencies)
 3. **macOS Build Job**: Builds natively on macOS (Intel + ARM, then creates universal binary)
 4. **Release Job**: Combines all artifacts and creates the release
 
@@ -67,11 +67,10 @@ cargo build --release
 rustup target add x86_64-unknown-linux-musl
 rustup target add aarch64-unknown-linux-musl
 rustup target add armv7-unknown-linux-musleabihf
-rustup target add x86_64-pc-windows-gnu
 
 # Install cross-compilation tools (on Linux)
 sudo apt-get update
-sudo apt-get install -y build-essential musl-tools musl-dev gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf libc6-dev-arm64-cross libc6-dev-armhf-cross gcc-mingw-w64
+sudo apt-get install -y build-essential musl-tools musl-dev gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf libc6-dev-arm64-cross libc6-dev-armhf-cross
 
 # Install cross-rs for better cross-compilation
 cargo install cross
@@ -80,7 +79,6 @@ cargo install cross
 cargo build --release --target x86_64-unknown-linux-musl
 cross build --release --target aarch64-unknown-linux-musl
 cross build --release --target armv7-unknown-linux-musleabihf
-cargo build --release --target x86_64-pc-windows-gnu
 
 # Build for macOS (only on macOS)
 rustup target add x86_64-apple-darwin
@@ -111,6 +109,16 @@ cargo build --release --target aarch64-apple-darwin
 - **Speed**: Parallel builds reduce total CI time
 - **Reliability**: Fewer moving parts and dependencies
 
+### Windows Build
+
+The project uses the MSVC toolchain for Windows builds:
+
+- **MSVC Build** (`x86_64-pc-windows-msvc`):
+  - Built natively on Windows
+  - Self-contained executable with no external dependencies
+  - No Visual C++ Redistributable required
+  - Works on all Windows systems without additional installations
+
 ## Installer Scripts
 
 ### install.sh (macOS & Linux)
@@ -124,7 +132,7 @@ cargo build --release --target aarch64-apple-darwin
 
 ### install-windows.ps1
 
-- Downloads the Windows binary from GitHub Releases
+- Downloads the Windows binary from GitHub Releases (no external dependencies)
 - Installs to a directory in PATH or creates a new one
 - Uses PowerShell 5.1+ features
 - Includes error handling and cleanup
