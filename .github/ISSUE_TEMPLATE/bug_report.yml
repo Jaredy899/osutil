@@ -1,160 +1,29 @@
 name: Bug Report
-description: Report a bug or issue to help us improve OSUtil.
+description: Report a bug or issue with OSUtil.
 title: "[Bug]: "
 labels: ["bug"]
-assignees: []
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Thank you for helping us improve OSUtil! Please provide as much detail as possible to ensure we can address the issue effectively.
   - type: dropdown
-    id: operating-system
+    id: os
     attributes:
       label: Operating System
-      multiple: false
-      description: Select your operating system.
       options:
         - Windows
         - macOS
         - Linux
     validations:
       required: true
-  - type: dropdown
-    id: distribution
-    attributes:
-      label: Distribution (Linux only)
-      multiple: false
-      description: Select the Linux distribution you are using (if applicable).
-      options:
-        - Alpine
-        - Arch
-        - Ubuntu
-        - Fedora
-        - Debian
-        - openSUSE
-        - Solus
-        - Void
-        - Other
-        - Not applicable
   - type: input
-    id: specify-distribution
+    id: distro
     attributes:
-      label: Specify Distribution (if "Other" selected)
-      description: Enter the name of your Linux distribution.
-      placeholder: e.g., Manjaro, Pop!_OS
-  - type: dropdown
-    id: de-wm
+      label: Linux Distribution (if applicable)
+      description: Only fill this out if you selected Linux above.
+      placeholder: e.g., Ubuntu, Arch, Fedora
+  - type: textarea
+    id: issue
     attributes:
-      label: Desktop Environment / Window Manager (Linux only)
-      multiple: false
-      description: Select your desktop environment or window manager (if applicable).
-      options:
-        - GNOME
-        - KDE Plasma
-        - XFCE
-        - Hyprland
-        - i3
-        - Other
-        - Not applicable
-  - type: input
-    id: specify-de-wm
-    attributes:
-      label: Specify Desktop Environment/Window Manager (if "Other" selected)
-      description: Enter the name of your desktop environment or window manager.
-      placeholder: e.g., LXQt, Openbox
-  - type: dropdown
-    id: windowing-system
-    attributes:
-      label: Windowing System (Linux only)
-      multiple: false
-      description: Specify whether you are using X11 or Wayland (if applicable).
-      options:
-        - X11
-        - Wayland
-        - Not applicable
-  - type: input
-    id: osutil-version
-    attributes:
-      label: OSutil Version
-      description: OSutil version (found in the application or by running 'osutil --version').
+      label: Describe the issue
+      description: What happened? Please provide details.
+      placeholder: What went wrong?
     validations:
       required: true
-  - type: input
-    id: rust-version
-    attributes:
-      label: Rust Version
-      description: Rust version (run 'rustc --version').
-      placeholder: e.g., rustc 1.88.0
-  - type: dropdown
-    id: branch
-    attributes:
-      label: Branch
-      multiple: false
-      description: Specify the branch of the project you are using.
-      options:
-        - main 
-        - prerelease
-        - stable 
-        - other
-    validations:
-      required: true
-  - type: input
-    id: specify-branch
-    attributes:
-      label: Specify Branch (if "Other" selected)
-      description: Enter the branch name.
-      placeholder: e.g., feature/new-feature
-  - type: textarea
-    id: describe-bug
-    attributes:
-      label: Describe the bug
-      description: |
-        Provide a clear and concise description of what the bug is.
-      placeholder: Describe the issue in detail.
-    validations:
-      required: true
-  - type: textarea
-    id: reproduce-steps
-    attributes:
-      label: Steps to reproduce
-      description: Steps to reproduce the behavior.
-      placeholder: |
-        1. Go to '...'
-        2. Click on '...'
-        3. Scroll down to '...'
-        4. See error
-    validations:
-      required: true
-  - type: textarea
-    id: expected-behavior
-    attributes:
-      label: Expected behavior
-      description: |
-        A clear and concise description of what you expected to happen.
-      placeholder: Explain the expected outcome.
-    validations:
-      required: true
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: Additional context
-      description: |
-        Add any other context or information about the problem here.
-      placeholder: Include any related logs, error messages, or configurations.
-  - type: textarea
-    id: screenshots
-    attributes:
-      label: Screenshots
-      description: |
-        If applicable, add screenshots to help explain your problem. Provide links or attach images in the comments after submitting the issue.
-  - type: checkboxes
-    id: checklist
-    attributes:
-      label: Checklist
-      options:
-        - label: I checked for duplicate issues.
-        - label: I checked existing discussions.
-        - label: This issue is not included in the roadmap.
-        - label: This issue is present on both stable and development branches.
-          required: true 
