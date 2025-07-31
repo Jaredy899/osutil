@@ -21,9 +21,21 @@ task_list = "I SS"
 matches = false
 data = "command_exists"
 values = [ "apt-get", "nala", "pacman", "apk", "xbps-install", "eopkg" ]
+# ^^^ firewalld will NOT show if any of these are present, including apk
 
 [[data]]
 name = "Tailscale"
 description = "Tailscale is a zero-trust network overlay that utilizes the WireGuard protocol for secure connectivity across resources."
 script = "tailscale.sh"
 task_list = "I SS"
+
+[[data]]
+name = "iptables Firewall Baselines (CTT)"
+description = "Applies CTT's recommended iptables firewall rules for Alpine Linux (apk). For more information visit: https://christitus.com/linux-security-mistakes"
+script = "iptables.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = false
+data = "command_exists"
+values = [ "apt-get", "nala", "pacman", "dnf", "zypper", "xbps-install", "eopkg" ]
