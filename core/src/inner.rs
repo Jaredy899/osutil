@@ -248,12 +248,12 @@ fn create_directory(
 #[cfg(windows)]
 fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String>)> {
     if script_path.extension() == Some(std::ffi::OsStr::new("ps1")) {
-        // Only use pwsh.exe (PowerShell 7+)
+        // Prefer PowerShell 7 (pwsh.exe), fallback to PowerShell 5 (powershell.exe)
         let pwsh = "pwsh.exe";
+        let powershell = "powershell.exe";
 
-        // More robust PowerShell 7 detection for Windows
+        // Check for PowerShell 7 first
         let pwsh_valid = if validate {
-            // Try multiple methods to find PowerShell 7
             which::which(pwsh).is_ok()
                 || std::path::Path::new("C:\\Program Files\\PowerShell\\7\\pwsh.exe").exists()
                 || std::path::Path::new("C:\\Program Files (x86)\\PowerShell\\7\\pwsh.exe").exists()
@@ -262,8 +262,29 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
         };
 
         if pwsh_valid {
-            Some((
+            return Some((
                 pwsh.to_string(),
+                vec![
+                    "-NoProfile".to_string(),
+                    "-ExecutionPolicy".to_string(),
+                    "Bypass".to_string(),
+                    "-File".to_string(),
+                    script_path.to_string_lossy().to_string(),
+                ],
+            ));
+        }
+
+        // Fallback to PowerShell 5
+        let powershell_valid = if validate {
+            which::which(powershell).is_ok()
+                || std::path::Path::new("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe").exists()
+        } else {
+            true
+        };
+
+        if powershell_valid {
+            Some((
+                powershell.to_string(),
                 vec![
                     "-NoProfile".to_string(),
                     "-ExecutionPolicy".to_string(),
@@ -273,7 +294,7 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
                 ],
             ))
         } else {
-            // PowerShell 7 not found - return None
+            // No PowerShell found - return None
             None
         }
     } else {

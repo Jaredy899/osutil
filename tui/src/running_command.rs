@@ -231,7 +231,7 @@ impl RunningCommand {
             Command::Raw(prompt) => {
                 // For raw commands, use the default shell
                 #[cfg(windows)]
-                let shell = "powershell.exe";
+                let shell = Self::get_powershell_executable().unwrap_or_else(|| "powershell.exe".to_string());
                 #[cfg(not(windows))]
                 let shell = "sh";
 
@@ -497,19 +497,26 @@ impl RunningCommand {
         Ok(log_path.to_string_lossy().into_owned())
     }
 
-    /// Get PowerShell 7 executable (pwsh.exe only)
+    /// Get PowerShell executable (prefer PowerShell 7, fallback to PowerShell 5)
     #[cfg(windows)]
     fn get_powershell_executable() -> Option<String> {
-        // Only use pwsh.exe (PowerShell 7+)
+        // First try PowerShell 7 (pwsh.exe)
         let pwsh = "pwsh.exe";
-
-        // Try multiple methods to find PowerShell 7
         let pwsh_valid = which::which(pwsh).is_ok()
             || std::path::Path::new("C:\\Program Files\\PowerShell\\7\\pwsh.exe").exists()
             || std::path::Path::new("C:\\Program Files (x86)\\PowerShell\\7\\pwsh.exe").exists();
 
         if pwsh_valid {
-            Some(pwsh.to_string())
+            return Some(pwsh.to_string());
+        }
+
+        // Fallback to PowerShell 5 (powershell.exe)
+        let powershell = "powershell.exe";
+        let powershell_valid = which::which(powershell).is_ok()
+            || std::path::Path::new("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe").exists();
+
+        if powershell_valid {
+            Some(powershell.to_string())
         } else {
             None
         }
@@ -524,12 +531,12 @@ impl RunningCommand {
             file,
         } = command
         {
-            // Get PowerShell 7 executable (pwsh.exe only)
+            // Get PowerShell executable (prefer 7, fallback to 5)
             let powershell_exe = match Self::get_powershell_executable() {
                 Some(exe) => exe,
                 None => {
-                    // PowerShell 7 not found - show error
-                    let message = "ERROR!\r\n\r\nPowerShell 7 (pwsh.exe) is required but not found.\r\n\r\nPlease install PowerShell 7 from: https://github.com/PowerShell/PowerShell/releases\r\n\r\nPress Enter to continue...";
+                    // No PowerShell found - show error
+                    let message = "ERROR!\r\n\r\nNo PowerShell installation found.\r\n\r\nPlease install PowerShell 7 from: https://github.com/PowerShell/PowerShell/releases\r\n\r\nOr ensure PowerShell 5 is available in the system PATH.\r\n\r\nPress Enter to continue...";
 
                     return Self {
                         buffer: Arc::new(Mutex::new(message.as_bytes().to_vec())),
@@ -545,7 +552,7 @@ impl RunningCommand {
                 }
             };
 
-            // Launch in a new PowerShell 7 window with the script file
+            // Launch in a new PowerShell window with the script file
             let result = std::process::Command::new("cmd")
                 .args([
                     "/c",
