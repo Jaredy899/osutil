@@ -248,11 +248,19 @@ fn create_directory(
 #[cfg(windows)]
 fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String>)> {
     if script_path.extension() == Some(std::ffi::OsStr::new("ps1")) {
-        // Prefer pwsh.exe (PowerShell 7+) if available
+        // Only use pwsh.exe (PowerShell 7+)
         let pwsh = "pwsh.exe";
-        let powershell = "powershell.exe";
-        let pwsh_valid = !validate || which::which(pwsh).is_ok();
-        let powershell_valid = !validate || which::which(powershell).is_ok();
+
+        // More robust PowerShell 7 detection for Windows
+        let pwsh_valid = if validate {
+            // Try multiple methods to find PowerShell 7
+            which::which(pwsh).is_ok()
+                || std::path::Path::new("C:\\Program Files\\PowerShell\\7\\pwsh.exe").exists()
+                || std::path::Path::new("C:\\Program Files (x86)\\PowerShell\\7\\pwsh.exe").exists()
+        } else {
+            true
+        };
+
         if pwsh_valid {
             Some((
                 pwsh.to_string(),
@@ -264,18 +272,8 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
                     script_path.to_string_lossy().to_string(),
                 ],
             ))
-        } else if powershell_valid {
-            Some((
-                powershell.to_string(),
-                vec![
-                    "-NoProfile".to_string(),
-                    "-ExecutionPolicy".to_string(),
-                    "Bypass".to_string(),
-                    "-File".to_string(),
-                    script_path.to_string_lossy().to_string(),
-                ],
-            ))
         } else {
+            // PowerShell 7 not found - return None
             None
         }
     } else {

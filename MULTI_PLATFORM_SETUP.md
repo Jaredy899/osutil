@@ -80,6 +80,11 @@ cargo build --release --target x86_64-unknown-linux-musl
 cross build --release --target aarch64-unknown-linux-musl
 cross build --release --target armv7-unknown-linux-musleabihf
 
+# Build for Windows (MSVC)
+echo '[target.x86_64-pc-windows-msvc]' >> .cargo/config.toml
+echo 'rustflags = ["-C", "target-feature=+crt-static"]' >> .cargo/config.toml
+cargo build --release --target x86_64-pc-windows-msvc --no-default-features
+
 # Build for macOS (only on macOS)
 rustup target add x86_64-apple-darwin
 rustup target add aarch64-apple-darwin
@@ -118,6 +123,9 @@ The project uses the MSVC toolchain for Windows builds:
   - Self-contained executable with no external dependencies
   - No Visual C++ Redistributable required
   - Works on all Windows systems without additional installations
+  - Built with `--no-default-features` to exclude Unix-specific dependencies
+  - Uses static linking (`+crt-static`) to include all runtime dependencies
+  - Optimized with LTO and stripping for smaller file size
 
 ## Installer Scripts
 

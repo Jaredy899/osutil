@@ -210,68 +210,13 @@ impl RunningCommand {
         let command = commands.first().expect("No commands provided");
         let _script_name = script_names.first().cloned();
 
-        // Check if this is an interactive PowerShell script on Windows
+        // All PowerShell scripts run in separate terminal windows on Windows
         #[cfg(windows)]
         {
-            if let Command::LocalFile {
-                executable, file, ..
-            } = command
-            {
+            if let Command::LocalFile { executable, .. } = command {
                 if executable.contains("pwsh") || executable.contains("powershell") {
-                    // Check if user wants to force all PowerShell scripts to run in separate terminals
-                    let force_separate_terminal =
-                        std::env::var("OSUTIL_FORCE_POWERSHELL_SEPARATE").is_ok();
-
-                    if force_separate_terminal {
-                        // Launch in separate terminal window
-                        return Self::launch_in_separate_terminal(command, _script_name);
-                    }
-
-                    // Check if the script contains interactive elements
-                    if let Ok(content) = std::fs::read_to_string(file) {
-                        let interactive_keywords = [
-                            "Read-Host",
-                            "Read-Host -AsSecureString",
-                            "Read-Host -Timeout",
-                            "Console::ReadLine",
-                            "Console::ReadKey",
-                            "pause",
-                            "cmd /c pause",
-                        ];
-
-                        let heavy_operation_keywords = [
-                            "Invoke-WebRequest",
-                            "Start-BitsTransfer",
-                            "Install-Module",
-                            "Install-PackageProvider",
-                            "Add-WindowsCapability",
-                            "Get-WindowsUpdate",
-                            "Install-WindowsUpdate",
-                            "winget install",
-                            "choco install",
-                            "scoop install",
-                            "Expand-Archive",
-                            "Start-Process",
-                            "Invoke-RestMethod",
-                            "Invoke-Expression",
-                            "& $localPath",
-                            "& $scriptPath",
-                        ];
-
-                        let is_interactive = interactive_keywords
-                            .iter()
-                            .any(|&keyword| content.contains(keyword));
-
-                        let is_heavy_operation = heavy_operation_keywords
-                            .iter()
-                            .any(|&keyword| content.contains(keyword));
-
-                        // Run in separate terminal if interactive OR if it's a heavy operation
-                        if is_interactive || is_heavy_operation {
-                            // Launch in separate terminal window
-                            return Self::launch_in_separate_terminal(command, _script_name);
-                        }
-                    }
+                    // Always launch PowerShell scripts in separate terminal windows
+                    return Self::launch_in_separate_terminal(command, _script_name);
                 }
             }
         }
@@ -552,17 +497,21 @@ impl RunningCommand {
         Ok(log_path.to_string_lossy().into_owned())
     }
 
-    /// Get the appropriate PowerShell executable (prefer pwsh.exe, fallback to powershell.exe)
+    /// Get PowerShell 7 executable (pwsh.exe only)
     #[cfg(windows)]
-    fn get_powershell_executable() -> String {
-        // Prefer pwsh.exe (PowerShell 7+) if available
+    fn get_powershell_executable() -> Option<String> {
+        // Only use pwsh.exe (PowerShell 7+)
         let pwsh = "pwsh.exe";
-        let powershell = "powershell.exe";
 
-        if which::which(pwsh).is_ok() {
-            pwsh.to_string()
+        // Try multiple methods to find PowerShell 7
+        let pwsh_valid = which::which(pwsh).is_ok()
+            || std::path::Path::new("C:\\Program Files\\PowerShell\\7\\pwsh.exe").exists()
+            || std::path::Path::new("C:\\Program Files (x86)\\PowerShell\\7\\pwsh.exe").exists();
+
+        if pwsh_valid {
+            Some(pwsh.to_string())
         } else {
-            powershell.to_string()
+            None
         }
     }
 
@@ -575,10 +524,28 @@ impl RunningCommand {
             file,
         } = command
         {
-            // Get the appropriate PowerShell executable
-            let powershell_exe = Self::get_powershell_executable();
+            // Get PowerShell 7 executable (pwsh.exe only)
+            let powershell_exe = match Self::get_powershell_executable() {
+                Some(exe) => exe,
+                None => {
+                    // PowerShell 7 not found - show error
+                    let message = "ERROR!\r\n\r\nPowerShell 7 (pwsh.exe) is required but not found.\r\n\r\nPlease install PowerShell 7 from: https://github.com/PowerShell/PowerShell/releases\r\n\r\nPress Enter to continue...";
 
-            // Launch in a new PowerShell window with the script file
+                    return Self {
+                        buffer: Arc::new(Mutex::new(message.as_bytes().to_vec())),
+                        command_thread: None,
+                        child_killer: None,
+                        _reader_thread: std::thread::spawn(|| {}),
+                        pty_master: Box::new(DummyPty),
+                        writer: Box::new(std::io::sink()),
+                        status: Some(ExitStatus::with_exit_code(1)),
+                        log_path: None,
+                        scroll_offset: 0,
+                    };
+                }
+            };
+
+            // Launch in a new PowerShell 7 window with the script file
             let result = std::process::Command::new("cmd")
                 .args([
                     "/c",

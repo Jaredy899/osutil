@@ -98,7 +98,10 @@ jobs:
           targets: x86_64-pc-windows-msvc
 
       - name: Build for Windows (MSVC)
-        run: cargo build --release --target x86_64-pc-windows-msvc --all-features
+        run: |
+          echo '[target.x86_64-pc-windows-msvc]' >> .cargo/config.toml
+          echo 'rustflags = ["-C", "target-feature=+crt-static"]' >> .cargo/config.toml
+          cargo build --release --target x86_64-pc-windows-msvc --no-default-features
 
       - name: Prepare Windows binaries for upload
         run: |
