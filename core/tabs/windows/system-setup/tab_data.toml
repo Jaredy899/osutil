@@ -1,9 +1,21 @@
 name = "System Setup"
 
 [[data]]
-name = "First Setup Script"
-description = "Comprehensive initial Windows setup including password change, remote desktop, SSH, time settings, and system optimizations"
-script = "first-setup.ps1"
+name = "Remote & SSH Setup"
+description = "Core Windows system setup including remote desktop, SSH, and firewall configuration"
+script = "remote-ssh-setup.ps1"
+task_list = "I"
+
+[[data]]
+name = "Password Setup"
+description = "Interactive password change utility for the currently logged-in user"
+script = "password-setup.ps1"
+task_list = "I"
+
+[[data]]
+name = "Time Setup"
+description = "Automatic timezone detection and time synchronization configuration"
+script = "time-setup.ps1"
 task_list = "I"
 
 [[data]]
