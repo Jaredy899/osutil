@@ -5,9 +5,9 @@
 
 # Set desktop environment name and display manager preferences
 DE_NAME="GNOME"
-DEFAULT_DM="gdm"
-DM_OPTIONS="gdm lightdm sddm none"
-DM_LABELS="GDM|LightDM|SDDM|None (Start GNOME manually)"
+export DEFAULT_DM="gdm"
+export DM_OPTIONS="gdm lightdm sddm none"
+export DM_LABELS="GDM|LightDM|SDDM|None (Start GNOME manually)"
 
 # Source the common display manager script
 . ./common-dm-script.sh

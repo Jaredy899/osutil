@@ -5,9 +5,9 @@
 
 # Set desktop environment name and display manager preferences
 DE_NAME="LXQt"
-DEFAULT_DM="sddm"
-DM_OPTIONS="sddm lightdm gdm none"
-DM_LABELS="SDDM|LightDM|GDM|None (Start LXQt manually)"
+export DEFAULT_DM="sddm"
+export DM_OPTIONS="sddm lightdm gdm none"
+export DM_LABELS="SDDM|LightDM|GDM|None (Start LXQt manually)"
 
 # Source the common display manager script
 . ./common-dm-script.sh
