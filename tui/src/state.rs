@@ -11,6 +11,7 @@ use crate::{
     theme::Theme,
     Args,
 };
+#[allow(unused_imports)]
 use osutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind},
@@ -68,6 +69,8 @@ pub struct AppState {
     size_bypass: bool,
     skip_confirmation: bool,
     mouse_enabled: bool,
+    #[allow(dead_code)]
+    pending_commands: Vec<Rc<ListNode>>,
 }
 
 pub enum Focus {
@@ -135,6 +138,7 @@ impl AppState {
             size_bypass: args.size_bypass,
             skip_confirmation: args.skip_confirmation,
             mouse_enabled: args.mouse,
+            pending_commands: Vec::new(),
         };
 
         #[cfg(unix)]
@@ -556,6 +560,11 @@ impl AppState {
             Focus::FloatingWindow(command) => {
                 if command.handle_key_event(key) {
                     self.focus = Focus::List;
+                    // Check if we have pending commands to execute (Windows sequential execution)
+                    #[cfg(windows)]
+                    if !self.pending_commands.is_empty() {
+                        self.execute_next_pending_command();
+                    }
                 }
             }
 
@@ -843,22 +852,36 @@ impl AppState {
         }
     }
 
+    #[cfg(windows)]
     fn handle_confirm_command(&mut self) {
-        let commands: Vec<&Command> = self
-            .selected_commands
-            .iter()
-            .map(|node| &node.command)
-            .collect();
+        let selected_commands = std::mem::take(&mut self.selected_commands);
 
-        let script_names: Vec<String> = self
-            .selected_commands
+        // For sequential execution, we need to handle one command at a time
+        // and wait for it to finish before starting the next
+        if selected_commands.len() == 1 {
+            // Single command - execute normally
+            let node = selected_commands.into_iter().next().unwrap();
+            let running_command =
+                RunningCommand::launch_in_separate_terminal(&node.command, Some(node.name.clone()));
+            self.spawn_float(running_command, FLOAT_SIZE, FLOAT_SIZE);
+        } else {
+            // Multiple commands - store them for sequential execution
+            // We'll need to modify the state to track pending commands
+            self.pending_commands = selected_commands;
+            self.execute_next_pending_command();
+        }
+    }
+
+    #[cfg(not(windows))]
+    fn handle_confirm_command(&mut self) {
+        let selected_commands = std::mem::take(&mut self.selected_commands);
+        let commands: Vec<&Command> = selected_commands.iter().map(|node| &node.command).collect();
+        let script_names: Vec<String> = selected_commands
             .iter()
             .map(|node| node.name.clone())
             .collect();
-
-        let command = RunningCommand::new_with_names(&commands, &script_names);
-        self.spawn_float(command, FLOAT_SIZE, FLOAT_SIZE);
-        self.selected_commands.clear();
+        let running_command = RunningCommand::new_with_names(&commands, &script_names);
+        self.spawn_float(running_command, FLOAT_SIZE, FLOAT_SIZE);
     }
 
     fn spawn_float<T: FloatContent + 'static>(&mut self, float: T, width: u16, height: u16) {
@@ -907,5 +930,24 @@ impl AppState {
             self.current_tab.select_previous();
         }
         self.refresh_tab();
+    }
+
+    #[cfg(windows)]
+    fn execute_next_pending_command(&mut self) {
+        if self.pending_commands.is_empty() {
+            return;
+        }
+
+        let node = self.pending_commands.remove(0);
+        let running_command =
+            RunningCommand::launch_in_separate_terminal(&node.command, Some(node.name.clone()));
+        self.spawn_float(running_command, FLOAT_SIZE, FLOAT_SIZE);
+    }
+
+    #[cfg(not(windows))]
+    #[allow(dead_code)]
+    fn execute_next_pending_command(&mut self) {
+        // This method is only used on Windows for sequential execution
+        // On other platforms, it's a no-op
     }
 }
