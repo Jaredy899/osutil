@@ -107,7 +107,7 @@ jobs:
       - name: Prepare Windows binaries for upload
         run: |
           mkdir -p windows-binaries
-          cp target/x86_64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows.exe
+          cp target/x86_64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil.exe
 
       - name: Upload Windows MSVC artifact
         uses: actions/upload-artifact@v4
@@ -203,7 +203,7 @@ jobs:
             - **Universal**: `osutil-macos` (Intel & ARM)
             
             ### Windows
-            - **x86_64**: `osutil-windows.exe` (Windows - No external dependencies)
+            - **x86_64**: `osutil.exe` (Windows - No external dependencies)
             
             ## Installation
             
@@ -222,7 +222,7 @@ jobs:
             linux-binaries/osutil-aarch64
             linux-binaries/osutil-armv7l
             macos-binary/osutil-macos
-            windows-msvc-binary/osutil-windows.exe
+            windows-msvc-binary/osutil.exe
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

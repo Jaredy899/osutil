@@ -1,4 +1,4 @@
-$url = "https://github.com/Jaredy899/osutil/releases/latest/download/osutil-windows.exe"
+$url = "https://github.com/Jaredy899/osutil/releases/latest/download/osutil.exe"
 $temp = [System.IO.Path]::GetTempFileName()
 $exe = [System.IO.Path]::ChangeExtension($temp, ".exe")
 Invoke-WebRequest -Uri $url -OutFile $temp -UseBasicParsing
