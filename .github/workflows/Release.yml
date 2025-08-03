@@ -3,7 +3,7 @@ name: Multi-Platform Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -22,7 +22,10 @@ jobs:
       - name: Install required packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential musl-tools musl-dev gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf libc6-dev-arm64-cross libc6-dev-armhf-cross
+          sudo apt-get install -y \
+            build-essential musl-tools musl-dev \
+            gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf \
+            libc6-dev-arm64-cross libc6-dev-armhf-cross
 
       - name: Cache Cargo registry
         uses: actions/cache@v4
@@ -47,16 +50,16 @@ jobs:
         run: cargo install cross
 
       - name: Build x86_64 binary (musl)
-        run: cargo build --release --target=x86_64-unknown-linux-musl --all-features
+        run: cargo build --release --target x86_64-unknown-linux-musl --all-features
 
       - name: Build aarch64 binary (musl)
         run: |
-          cross build --release --target=aarch64-unknown-linux-musl --all-features
+          cross build --release --target aarch64-unknown-linux-musl --all-features
           mv target/aarch64-unknown-linux-musl/release/osutil target/aarch64-unknown-linux-musl/release/osutil-aarch64
 
       - name: Build armv7 binary (musl)
         run: |
-          cross build --release --target=armv7-unknown-linux-musleabihf --all-features
+          cross build --release --target armv7-unknown-linux-musleabihf --all-features
           mv target/armv7-unknown-linux-musleabihf/release/osutil target/armv7-unknown-linux-musleabihf/release/osutil-armv7l
 
       - name: Prepare Linux binaries for upload
@@ -74,7 +77,7 @@ jobs:
 
   windows_build:
     runs-on: windows-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -96,58 +99,56 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: x86_64-pc-windows-msvc
+          target: x86_64-pc-windows-msvc,aarch64-pc-windows-msvc
+          profile: minimal
           override: true
-
-      - name: Add ARM64 target
-        run: rustup target add aarch64-pc-windows-msvc
 
       - name: Configure Rust flags
         shell: pwsh
         run: |
-            if (!(Test-Path .cargo)) { New-Item -ItemType Directory -Path .cargo | Out-Null }
-            @"
-            [target.x86_64-pc-windows-msvc]
-            rustflags = ["-C","target-feature=+crt-static"]
-        
-            [target.aarch64-pc-windows-msvc]
-            rustflags = ["-C","target-feature=+crt-static"]
-            "@ | Set-Content .cargo/config.toml -Encoding utf8
+          if (!(Test-Path .cargo)) { New-Item -ItemType Directory -Path .cargo | Out-Null }
+          @"
+          [target.x86_64-pc-windows-msvc]
+          rustflags = ["-C","target-feature=+crt-static"]
+
+          [target.aarch64-pc-windows-msvc]
+          rustflags = ["-C","target-feature=+crt-static"]
+          "@ | Set-Content .cargo/config.toml -Encoding utf8
 
       - name: MSVC env for x64
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
-          
+
       - name: Build x64
         run: cargo build --release --target x86_64-pc-windows-msvc --all-features
-  
+
       - name: MSVC env for ARM64 cross
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64_arm64
-          
+
       - name: Build ARM64
         run: cargo build --release --target aarch64-pc-windows-msvc --all-features
-          
+
       - name: Prepare Windows binaries for upload
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path windows-binaries -Force | Out-Null
-          Copy-Item target/x86_64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows-x64.exe
-          Copy-Item target/aarch64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows-arm64.exe
-          
+          Copy-Item target/x86_64-pc-windows-msvc/release/osutil.exe `
+            windows-binaries/osutil-windows-x64.exe -Force
+          Copy-Item target/aarch64-pc-windows-msvc/release/osutil.exe `
+            windows-binaries/osutil-windows-arm64.exe -Force
+
       - name: Upload Windows MSVC artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-msvc-binary
           path: windows-binaries/
 
-
-
   build-macos:
     runs-on: macos-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -167,11 +168,8 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Install macOS targets
-        run: |
-          rustup target add x86_64-apple-darwin
-          rustup target add aarch64-apple-darwin
+        with:
+          targets: x86_64-apple-darwin,aarch64-apple-darwin
 
       - name: Build for macOS (x86_64)
         run: cargo build --release --target x86_64-apple-darwin --all-features
@@ -200,7 +198,7 @@ jobs:
   release:
     needs: [linux_build, windows_build, build-macos]
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -209,10 +207,10 @@ jobs:
 
       - name: Extract version from tag
         id: extract_version
+        shell: bash
         run: |
           version=${GITHUB_REF#refs/tags/v}
-          echo "version=$version" >> $GITHUB_OUTPUT
-        shell: bash
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -221,31 +219,26 @@ jobs:
           name: Release ${{ steps.extract_version.outputs.version }}
           body: |
             ## Downloads
-            
-            ### Linux (musl binaries)
-            - **x86_64**: `osutil` (x86_64 Linux)
-            - **aarch64**: `osutil-aarch64` (ARM64 Linux)
-            - **armv7l**: `osutil-armv7l` (ARMv7 Linux)
-            
-            ### macOS
-            - **Universal**: `osutil-macos` (Intel & ARM)
-            
-            ### Windows
-            - **x86_64**: `osutil-windows-x64.exe` (Windows x64 - No external dependencies)
-            - **ARM64**: `osutil-windows-arm64.exe` (Windows ARM64 - No external dependencies)
-            
-            ## Installation
-            
-            ### macOS & Linux
-            ```bash
-            sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh)
-            ```
-            
-            ### Windows
-            ```powershell
-            irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
-            ```
 
+            ### Linux (musl binaries)
+            - x86_64: osutil
+            - aarch64: osutil-aarch64
+            - armv7l: osutil-armv7l
+
+            ### macOS
+            - Universal: osutil-macos
+
+            ### Windows
+            - x86_64: osutil-windows-x64.exe
+            - ARM64: osutil-windows-arm64.exe
+
+            ## Installation
+
+            macOS & Linux:
+            sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh)
+
+            Windows (PowerShell):
+            irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
           files: |
             linux-binaries/osutil
             linux-binaries/osutil-aarch64
