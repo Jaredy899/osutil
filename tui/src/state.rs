@@ -855,13 +855,14 @@ impl AppState {
     #[cfg(windows)]
     fn handle_confirm_command(&mut self) {
         let selected_commands = std::mem::take(&mut self.selected_commands);
-        
+
         // For sequential execution, we need to handle one command at a time
         // and wait for it to finish before starting the next
         if selected_commands.len() == 1 {
             // Single command - execute normally
             let node = selected_commands.into_iter().next().unwrap();
-            let running_command = RunningCommand::launch_in_separate_terminal(&node.command, Some(node.name.clone()));
+            let running_command =
+                RunningCommand::launch_in_separate_terminal(&node.command, Some(node.name.clone()));
             self.spawn_float(running_command, FLOAT_SIZE, FLOAT_SIZE);
         } else {
             // Multiple commands - store them for sequential execution
@@ -875,7 +876,10 @@ impl AppState {
     fn handle_confirm_command(&mut self) {
         let selected_commands = std::mem::take(&mut self.selected_commands);
         let commands: Vec<&Command> = selected_commands.iter().map(|node| &node.command).collect();
-        let script_names: Vec<String> = selected_commands.iter().map(|node| node.name.clone()).collect();
+        let script_names: Vec<String> = selected_commands
+            .iter()
+            .map(|node| node.name.clone())
+            .collect();
         let running_command = RunningCommand::new_with_names(&commands, &script_names);
         self.spawn_float(running_command, FLOAT_SIZE, FLOAT_SIZE);
     }
@@ -935,7 +939,8 @@ impl AppState {
         }
 
         let node = self.pending_commands.remove(0);
-        let running_command = RunningCommand::launch_in_separate_terminal(&node.command, Some(node.name.clone()));
+        let running_command =
+            RunningCommand::launch_in_separate_terminal(&node.command, Some(node.name.clone()));
         self.spawn_float(running_command, FLOAT_SIZE, FLOAT_SIZE);
     }
 

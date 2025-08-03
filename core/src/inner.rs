@@ -277,7 +277,10 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
         // Fallback to PowerShell 5
         let powershell_valid = if validate {
             which::which(powershell).is_ok()
-                || std::path::Path::new("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe").exists()
+                || std::path::Path::new(
+                    "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                )
+                .exists()
         } else {
             true
         };
