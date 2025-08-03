@@ -1,5 +1,7 @@
 #!/bin/sh -e
 
+# shellcheck disable=SC2034
+
 # shellcheck source=/dev/null
 . ../common-script.sh
 . ../common-service-script.sh
