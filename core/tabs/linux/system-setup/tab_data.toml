@@ -55,6 +55,13 @@ script = "arch/nvidia-drivers.sh"
 task_list = "I FM SS"
 
 [[data.entries]]
+name = "Omarchy"
+description = "An opinionated Arch + Hyprland Setup by DHH"
+script = "arch/omarchy.sh"
+task_list = "I MP"
+multi_select = false
+
+[[data.entries]]
 name = "Paru AUR Helper"
 description = "Paru is your standard pacman wrapping AUR helper with lots of features and minimal interaction. To know more about AUR helpers visit: https://wiki.archlinux.org/title/AUR_helpers"
 script = "arch/paru-setup.sh"
@@ -191,6 +198,13 @@ name = "Hyprland JaKooLit"
 description = "Install JaKooLit's Hyprland configuration"
 script = "ubuntu/hyprland-kool-ubuntu24.sh"
 task_list = "I MP"
+
+[[data.entries]]
+name = "Omakub"
+dependencies = "An Omakase Developer Setup for Ubuntu 24.04+ by DHH"
+script = "ubuntu/omakub.sh"
+task_list = "I MP"
+multi_select = "false"
 
 [[data.preconditions]]
 matches = true
