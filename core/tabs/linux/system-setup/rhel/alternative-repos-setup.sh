@@ -98,7 +98,7 @@ installEPELNext() {
     printf "%b\n" "${YELLOW}Installing EPEL Next repository...${RC}"
     
     # Install EPEL Next
-    "$ESCALATION_TOOL" "$PACKAGER" install -y "https://dl.fedoraproject.org/pub/epel/epel-next-latest-${rhel_version}.noarch.rpm"
+    "$ESCALATION_TOOL" "$PACKAGER" install -y "https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-${rhel_version}.noarch.rpm"
     
     printf "%b\n" "${GREEN}EPEL Next repository installed${RC}"
     printf "%b\n" "${CYAN}Note: EPEL Next contains newer packages but may be less stable${RC}"

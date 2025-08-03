@@ -12,6 +12,7 @@ installRPMFusion() {
                 return 0
             fi
             
+            # Check if RPM Fusion repositories are already installed
             if [ ! -e /etc/yum.repos.d/rpmfusion-free.repo ] || [ ! -e /etc/yum.repos.d/rpmfusion-nonfree.repo ]; then
                 printf "%b\n" "${YELLOW}Installing RPM Fusion for RHEL...${RC}"
                 
@@ -32,26 +33,34 @@ installRPMFusion() {
                     fi
                 fi
                 
-                "$ESCALATION_TOOL" "$PACKAGER" install -y rpmfusion-\*-appstream-data
+                # Try to install appstream-data packages (may not be available on all architectures)
+                if "$ESCALATION_TOOL" "$PACKAGER" search rpmfusion-\*-appstream-data 2>/dev/null | grep -q "rpmfusion"; then
+                    "$ESCALATION_TOOL" "$PACKAGER" install -y rpmfusion-\*-appstream-data
+                else
+                    printf "%b\n" "${BLUE}Appstream-data packages not available for this architecture, skipping...${RC}"
+                fi
                 
-                printf "%b\n" "${YELLOW}Do you want to install tainted repositories? [y/N]: ${RC}"
-                read -r install_tainted
-                case "$install_tainted" in
-                    [Yy]*)
-                        printf "%b\n" "${YELLOW}Installing RPM Fusion tainted repositories...${RC}"
-                        "$ESCALATION_TOOL" "$PACKAGER" install -y rpmfusion-free-release-tainted rpmfusion-nonfree-release-tainted
-                        "$ESCALATION_TOOL" "$PACKAGER" config-manager --set-enabled rpmfusion-free-tainted
-                        "$ESCALATION_TOOL" "$PACKAGER" config-manager --set-enabled rpmfusion-nonfree-tainted
-                        printf "%b\n" "${GREEN}RPM Fusion (including tainted repositories) installed and enabled${RC}"
-                        ;;
-                    *)
-                        printf "%b\n" "${BLUE}Skipping tainted repositories${RC}"
-                        printf "%b\n" "${GREEN}RPM Fusion installed and enabled${RC}"
-                        ;;
-                esac
+                printf "%b\n" "${GREEN}RPM Fusion repositories installed successfully${RC}"
             else
-                printf "%b\n" "${GREEN}RPM Fusion already installed${RC}"
+                printf "%b\n" "${GREEN}RPM Fusion repositories already installed${RC}"
             fi
+            
+            # Always offer tainted repositories option
+            printf "%b\n" "${YELLOW}Do you want to install tainted repositories? [y/N]: ${RC}"
+            read -r install_tainted
+            case "$install_tainted" in
+                [Yy]*)
+                    printf "%b\n" "${YELLOW}Installing RPM Fusion tainted repositories...${RC}"
+                    "$ESCALATION_TOOL" "$PACKAGER" install -y rpmfusion-free-release-tainted rpmfusion-nonfree-release-tainted
+                    "$ESCALATION_TOOL" "$PACKAGER" config-manager --set-enabled rpmfusion-free-tainted
+                    "$ESCALATION_TOOL" "$PACKAGER" config-manager --set-enabled rpmfusion-nonfree-tainted
+                    printf "%b\n" "${GREEN}RPM Fusion (including tainted repositories) installed and enabled${RC}"
+                    ;;
+                *)
+                    printf "%b\n" "${BLUE}Skipping tainted repositories${RC}"
+                    printf "%b\n" "${GREEN}RPM Fusion setup complete${RC}"
+                    ;;
+            esac
             ;;
         *)
             printf "%b\n" "${RED}Unsupported distribution: $DTYPE${RC}"

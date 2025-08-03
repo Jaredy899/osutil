@@ -173,12 +173,6 @@ script = "rhel/rpm-fusion-setup.sh"
 task_list = "MP"
 
 [[data.entries]]
-name = "SELinux Configuration"
-description = "Configure SELinux policies and modes for RHEL-based systems"
-script = "rhel/selinux-setup.sh"
-task_list = "SS"
-
-[[data.entries]]
 name = "Alternative Repositories"
 description = "Install additional repositories like PowerTools, Remi (PHP), and EPEL Next for RHEL-based systems"
 script = "rhel/alternative-repos-setup.sh"
