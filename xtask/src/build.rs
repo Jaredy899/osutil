@@ -17,7 +17,7 @@ pub fn build_all() -> Result<(), DynError> {
     // Build for Windows (cross-compiled from any platform)
     println!("Building for Windows x86_64...");
     build_target("x86_64-pc-windows-msvc")?;
-    
+
     println!("Building for Windows ARM64...");
     build_target("aarch64-pc-windows-msvc")?;
 

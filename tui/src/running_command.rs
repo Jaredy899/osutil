@@ -231,7 +231,8 @@ impl RunningCommand {
             Command::Raw(prompt) => {
                 // For raw commands, use the default shell
                 #[cfg(windows)]
-                let shell = Self::get_powershell_executable().unwrap_or_else(|| "powershell.exe".to_string());
+                let shell = Self::get_powershell_executable()
+                    .unwrap_or_else(|| "powershell.exe".to_string());
                 #[cfg(not(windows))]
                 let shell = "sh";
 
@@ -513,7 +514,10 @@ impl RunningCommand {
         // Fallback to PowerShell 5 (powershell.exe)
         let powershell = "powershell.exe";
         let powershell_valid = which::which(powershell).is_ok()
-            || std::path::Path::new("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe").exists();
+            || std::path::Path::new(
+                "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+            )
+            .exists();
 
         if powershell_valid {
             Some(powershell.to_string())
