@@ -24,6 +24,7 @@ use tui_term::widget::PseudoTerminal;
 use vt100_ctt::{Parser, Screen};
 
 // Dummy PTY for error cases
+#[allow(dead_code)]
 struct DummyPty;
 
 impl portable_pty::MasterPty for DummyPty {
@@ -205,10 +206,113 @@ impl FloatContent for RunningCommand {
 pub static TERMINAL_UPDATED: AtomicBool = AtomicBool::new(true);
 
 impl RunningCommand {
-    pub fn new_with_names(commands: &[&Command], script_names: &[String]) -> Self {
-        // For now, we'll handle only the first command since multiple commands with different executables would be complex
-        let command = commands.first().expect("No commands provided");
-        let _script_name = script_names.first().cloned();
+    #[cfg(not(windows))]
+    pub fn new(commands: &[&Command]) -> Self {
+        let pty_system = NativePtySystem::default();
+
+        // Build the command based on the provided Command enum variant
+        let mut cmd: CommandBuilder = CommandBuilder::new("sh");
+        cmd.arg("-c");
+
+        // All the merged commands are passed as a single argument to reduce the overhead of rebuilding the command arguments for each and every command
+        let mut script = String::new();
+        for command in commands {
+            match command {
+                Command::Raw(prompt) => script.push_str(&format!("{prompt}\n")),
+                Command::LocalFile {
+                    executable,
+                    args,
+                    file,
+                } => {
+                    if let Some(parent_directory) = file.parent() {
+                        script.push_str(&format!("cd {}\n", parent_directory.display()));
+                    }
+                    script.push_str(executable);
+                    for arg in args {
+                        script.push(' ');
+                        script.push_str(arg);
+                    }
+                    script.push('\n'); // Ensures that each command is properly separated for execution preventing directory errors
+                }
+                Command::None => panic!("Command::None was treated as a command"),
+            }
+        }
+
+        cmd.arg(script);
+
+        // Open a pseudo-terminal with initial size
+        let pair = pty_system
+            .openpty(PtySize {
+                rows: 24, // Initial number of rows (will be updated dynamically)
+                cols: 80, // Initial number of columns (will be updated dynamically)
+                pixel_width: 0,
+                pixel_height: 0,
+            })
+            .unwrap();
+
+        let (tx, rx) = channel();
+        // Thread waiting for the child to complete
+        let command_handle = std::thread::spawn(move || {
+            let mut child = pair.slave.spawn_command(cmd).unwrap();
+            let killer = child.clone_killer();
+            tx.send(killer).unwrap();
+            child.wait().unwrap()
+        });
+
+        let mut reader = pair.master.try_clone_reader().unwrap(); // This is a reader, this is where we
+
+        // A buffer, shared between the thread that reads the command output, and the main tread.
+        // The main thread only reads the contents
+        let command_buffer: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
+        TERMINAL_UPDATED.store(true, Ordering::Release);
+        let reader_handle = {
+            // Arc is just a reference, so we can create an owned copy without any problem
+            let command_buffer = command_buffer.clone();
+            // The closure below moves all variables used into it, so we can no longer use them,
+            // that's why command_buffer.clone(), because we need to use command_buffer later
+            std::thread::spawn(move || {
+                let mut buf = [0u8; 8192];
+                loop {
+                    let size = reader.read(&mut buf).unwrap(); // Can block here
+                    if size == 0 {
+                        break; // EOF
+                    }
+                    let mut mutex = command_buffer.lock(); // Only lock the mutex after the read is
+                                                           // done, to minimise the time it is opened
+                    let command_buffer = mutex.as_mut().unwrap();
+                    command_buffer.extend_from_slice(&buf[0..size]);
+                    TERMINAL_UPDATED.store(true, Ordering::Release);
+                    // The mutex is closed here automatically
+                }
+                TERMINAL_UPDATED.store(true, Ordering::Release);
+            })
+        };
+
+        let writer = pair.master.take_writer().unwrap();
+        Self {
+            buffer: command_buffer,
+            command_thread: Some(command_handle),
+            child_killer: Some(rx),
+            _reader_thread: reader_handle,
+            pty_master: pair.master,
+            writer,
+            status: None,
+            log_path: None,
+            scroll_offset: 0,
+        }
+    }
+
+    pub fn new_with_names(commands: &[&Command], _script_names: &[String]) -> Self {
+        #[cfg(not(windows))]
+        {
+            return Self::new(commands);
+        }
+
+        #[cfg(windows)]
+        {
+            // On Windows, handle only the first command (sequential execution is handled in state.rs)
+            let command = commands.first().expect("No commands provided");
+            let _script_name = _script_names.first().cloned();
 
         // All PowerShell scripts run in separate terminal windows on Windows
         #[cfg(windows)]
@@ -422,6 +526,7 @@ impl RunningCommand {
             status: None,
             log_path: None,
             scroll_offset: 0,
+        }
         }
     }
 
