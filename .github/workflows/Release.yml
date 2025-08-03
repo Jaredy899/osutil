@@ -97,22 +97,41 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc,aarch64-pc-windows-msvc
 
-      - name: Build for Windows (MSVC)
+      - name: Configure Rust flags
+        shell: pwsh
         run: |
-          if (!(Test-Path .cargo)) { New-Item -ItemType Directory -Path .cargo }
-          echo '[target.x86_64-pc-windows-msvc]' > .cargo/config.toml
-          echo 'rustflags = ["-C", "target-feature=+crt-static"]' >> .cargo/config.toml
-          echo '[target.aarch64-pc-windows-msvc]' >> .cargo/config.toml
-          echo 'rustflags = ["-C", "target-feature=+crt-static"]' >> .cargo/config.toml
-          cargo build --release --target x86_64-pc-windows-msvc --all-features
-          cargo build --release --target aarch64-pc-windows-msvc --all-features
+            if (!(Test-Path .cargo)) { New-Item -ItemType Directory -Path .cargo | Out-Null }
+            @"
+            [target.x86_64-pc-windows-msvc]
+            rustflags = ["-C","target-feature=+crt-static"]
+        
+            [target.aarch64-pc-windows-msvc]
+            rustflags = ["-C","target-feature=+crt-static"]
+            "@ | Set-Content .cargo/config.toml -Encoding utf8
 
+      - name: MSVC env for x64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          
+      - name: Build x64
+        run: cargo build --release --target x86_64-pc-windows-msvc --all-features
+  
+      - name: MSVC env for ARM64 cross
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64_arm64
+          
+      - name: Build ARM64
+        run: cargo build --release --target aarch64-pc-windows-msvc --all-features
+          
       - name: Prepare Windows binaries for upload
+        shell: bash
         run: |
           mkdir -p windows-binaries
           cp target/x86_64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows-x64.exe
           cp target/aarch64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows-arm64.exe
-
+          
       - name: Upload Windows MSVC artifact
         uses: actions/upload-artifact@v4
         with:
