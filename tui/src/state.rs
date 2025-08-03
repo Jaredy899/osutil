@@ -843,22 +843,22 @@ impl AppState {
         }
     }
 
+    #[cfg(windows)]
     fn handle_confirm_command(&mut self) {
-        let commands: Vec<&Command> = self
-            .selected_commands
-            .iter()
-            .map(|node| &node.command)
-            .collect();
+        let selected_commands = std::mem::take(&mut self.selected_commands);
+        for node in selected_commands {
+            let running_command = RunningCommand::launch_in_separate_terminal(&node.command, Some(node.name.clone()));
+            self.spawn_float(running_command, FLOAT_SIZE, FLOAT_SIZE);
+        }
+    }
 
-        let script_names: Vec<String> = self
-            .selected_commands
-            .iter()
-            .map(|node| node.name.clone())
-            .collect();
-
-        let command = RunningCommand::new_with_names(&commands, &script_names);
-        self.spawn_float(command, FLOAT_SIZE, FLOAT_SIZE);
-        self.selected_commands.clear();
+    #[cfg(not(windows))]
+    fn handle_confirm_command(&mut self) {
+        let selected_commands = std::mem::take(&mut self.selected_commands);
+        let commands: Vec<&Command> = selected_commands.iter().map(|node| &node.command).collect();
+        let script_names: Vec<String> = selected_commands.iter().map(|node| node.name.clone()).collect();
+        let running_command = RunningCommand::new_with_names(&commands, &script_names);
+        self.spawn_float(running_command, FLOAT_SIZE, FLOAT_SIZE);
     }
 
     fn spawn_float<T: FloatContent + 'static>(&mut self, float: T, width: u16, height: u16) {
