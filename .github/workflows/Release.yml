@@ -93,9 +93,14 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-index-
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: actions-rs/toolchain@v1
         with:
-          targets: x86_64-pc-windows-msvc,aarch64-pc-windows-msvc
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
+          override: true
+
+      - name: Add ARM64 target
+        run: rustup target add aarch64-pc-windows-msvc
 
       - name: Configure Rust flags
         shell: pwsh
@@ -126,11 +131,11 @@ jobs:
         run: cargo build --release --target aarch64-pc-windows-msvc --all-features
           
       - name: Prepare Windows binaries for upload
-        shell: bash
+        shell: pwsh
         run: |
-          mkdir -p windows-binaries
-          cp target/x86_64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows-x64.exe
-          cp target/aarch64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows-arm64.exe
+          New-Item -ItemType Directory -Path windows-binaries -Force | Out-Null
+          Copy-Item target/x86_64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows-x64.exe
+          Copy-Item target/aarch64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows-arm64.exe
           
       - name: Upload Windows MSVC artifact
         uses: actions/upload-artifact@v4
