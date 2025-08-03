@@ -302,6 +302,7 @@ impl RunningCommand {
         }
     }
 
+    #[allow(dead_code)]
     pub fn new_with_names(commands: &[&Command], _script_names: &[String]) -> Self {
         #[cfg(not(windows))]
         {

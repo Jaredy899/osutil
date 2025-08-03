@@ -11,6 +11,7 @@ use crate::{
     theme::Theme,
     Args,
 };
+#[allow(unused_imports)]
 use osutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind},
