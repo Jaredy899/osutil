@@ -242,6 +242,12 @@ script = "remove-snaps.sh"
 task_list = "RP"
 
 [[data]]
+name = "Jared's Configuration Replacement"
+description = "Downloads and replaces various configuration files (bashrc, fastfetch, starship) from a remote repository"
+script = "config-replacement.sh"
+task_list = "MP"
+
+[[data]]
 name = "TTY Fonts"
 description = "This Script will set the default TTY font to Terminus size 32 Bold"
 script = "terminus-tty.sh"
