@@ -45,6 +45,17 @@ install_rust() {
     fi
 }
 
+# Function to ensure we're using rustup-managed Rust
+ensure_rustup_rust() {
+    # Check if we're using rustup-managed Rust
+    if [[ "$(which rustc)" != *".cargo/bin"* ]]; then
+        echo "Warning: Using Homebrew Rust instead of rustup-managed Rust"
+        echo "This may cause cross-compilation issues. Switching to rustup-managed Rust..."
+        export PATH="$HOME/.cargo/bin:$PATH"
+        echo "Now using: $(which rustc)"
+    fi
+}
+
 # Function to update Rust
 update_rust() {
     echo "Updating Rust toolchain..."
@@ -59,6 +70,7 @@ install_xcode_tools
 
 # Install/update Rust
 install_rust
+ensure_rustup_rust
 update_rust
 
 # Create build directory
