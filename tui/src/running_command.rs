@@ -524,7 +524,7 @@ impl RunningCommand {
 
     /// Launch an interactive PowerShell script in a separate terminal window
     #[cfg(windows)]
-    fn launch_in_separate_terminal(command: &Command, script_name: Option<String>) -> Self {
+    pub fn launch_in_separate_terminal(command: &Command, script_name: Option<String>) -> Self {
         if let Command::LocalFile {
             executable: _,
             args: _,
