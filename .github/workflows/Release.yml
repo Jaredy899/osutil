@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref (branch, tag, or commit) to run against (optional)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -17,7 +23,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Install required packages
         run: |
@@ -41,13 +50,26 @@ jobs:
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-index-
 
-      - name: Install Rust
+      - name: Cache Cargo bin tools
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin
+          key: ${{ runner.os }}-cargo-bin-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-bin-
+
+      - name: Install Rust (musl targets)
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-unknown-linux-musl,aarch64-unknown-linux-musl,armv7-unknown-linux-musleabihf
 
-      - name: Install cross-rs for cross-compilation
-        run: cargo install cross
+      - name: Ensure cargo-binstall
+        run: |
+          if ! command -v cargo-binstall >/dev/null 2>&1; then
+            curl -fsSL https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+          fi
+
+      - name: Install cross quickly
+        run: cargo binstall -y cross
 
       - name: Build x86_64 binary (musl)
         run: cargo build --release --target x86_64-unknown-linux-musl --all-features
@@ -79,7 +101,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Cache Cargo registry
         uses: actions/cache@v4
@@ -95,15 +120,13 @@ jobs:
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-index-
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+      # Use dtolnay on GH runners; switch to dtolnay/rustup for act host-mode if needed
+      - name: Install Rust (x64 + ARM64)
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: x86_64-pc-windows-msvc,aarch64-pc-windows-msvc
-          profile: minimal
-          override: true
+          targets: x86_64-pc-windows-msvc,aarch64-pc-windows-msvc
 
-      - name: Configure Rust flags
+      - name: Configure Rust flags (static CRT)
         shell: pwsh
         run: |
           if (!(Test-Path .cargo)) { New-Item -ItemType Directory -Path .cargo | Out-Null }
@@ -150,7 +173,10 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Cache Cargo registry
         uses: actions/cache@v4
@@ -166,7 +192,7 @@ jobs:
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-index-
 
-      - name: Install Rust
+      - name: Install Rust (Darwin targets)
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-apple-darwin,aarch64-apple-darwin
@@ -201,6 +227,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
