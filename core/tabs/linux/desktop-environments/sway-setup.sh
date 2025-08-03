@@ -5,9 +5,9 @@
 
 # Set desktop environment name and display manager preferences
 DE_NAME="Sway"
-DEFAULT_DM="gdm"
-DM_OPTIONS="gdm sddm lightdm none"
-DM_LABELS="GDM|SDDM|LightDM|None (Start Sway manually)"
+export DEFAULT_DM="gdm"
+export DM_OPTIONS="gdm sddm lightdm none"
+export DM_LABELS="GDM|SDDM|LightDM|None (Start Sway manually)"
 
 # Source the common display manager script
 . ./common-dm-script.sh

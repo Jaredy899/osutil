@@ -6,9 +6,9 @@
 
 # Set desktop environment name and display manager preferences
 DE_NAME="MATE"
-DEFAULT_DM="lightdm"
-DM_OPTIONS="lightdm gdm sddm none"
-DM_LABELS="LightDM|GDM|SDDM|None (Start MATE manually)"
+export DEFAULT_DM="lightdm"
+export DM_OPTIONS="lightdm gdm sddm none"
+export DM_LABELS="LightDM|GDM|SDDM|None (Start MATE manually)"
 
 # Source the common display manager script
 . ./common-dm-script.sh

@@ -135,8 +135,8 @@ installDisplayManager() {
 
 # Function to print post-installation message based on DM and DE
 printDMMessage() {
-    local DE_NAME="$1"
-    local DE_START_CMD="$2"
+    DE_NAME="$1"
+    DE_START_CMD="$2"
     
     if [ "$DM" = "none" ]; then
         printf "%b\n" "${GREEN}$DE_NAME Desktop Environment has been installed successfully!${RC}"
