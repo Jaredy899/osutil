@@ -1,11 +1,11 @@
 [package]
 name = "osutil_tui"
-description = "Chris Titus Tech's Cross-Platform System Utility Toolbox - OSutil is a toolbox for system utilities across all operating systems."
-documentation = "https://christitustech.github.io/osutil"
+description = "Jared's Cross-Platform System Utility Toolbox - OSutil is a toolbox for system utilities across all operating systems."
+documentation = "https://github.com/Jaredy899/osutil#osutil"
 readme = "../README.md"
 edition = "2021"
 license.workspace = true
-repository = "https://github.com/ChrisTitusTech/osutil/tree/main/tui"
+repository = "https://github.com/Jaredy899/osutil"
 version.workspace = true
 include = ["src/*.rs", "Cargo.toml", "cool_tips.txt", "../man/osutil.1"]
 

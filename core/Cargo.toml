@@ -1,7 +1,7 @@
 [package]
 name = "osutil_core"
 description = "The backend of OSutil."
-repository = "https://github.com/ChrisTitusTech/osutil/tree/main/core"
+repository = "https://github.com/Jaredy899/osutil"
 edition = "2021"
 version.workspace = true
 license.workspace = true
