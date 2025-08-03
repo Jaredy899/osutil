@@ -148,6 +148,43 @@ data = "command_exists"
 values = ["btrfs"]
 
 [[data]]
+name = "RHEL-based"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["dnf"]
+
+[[data.preconditions]]
+matches = true
+data = { containing_file = "/etc/os-release" }
+values = ["ID=rhel", "ID=centos", "ID=rocky", "ID=almalinux"]
+
+[[data.entries]]
+name = "EPEL Repository"
+description = "Installs the Extra Packages for Enterprise Linux (EPEL) repository, which provides additional packages for RHEL-based systems"
+script = "rhel/epel-setup.sh"
+task_list = "MP"
+
+[[data.entries]]
+name = "RPM Fusion"
+description = "Installs RPM Fusion repositories for multimedia codecs, gaming packages, and other software not available in standard repositories"
+script = "rhel/rpm-fusion-setup.sh"
+task_list = "MP"
+
+[[data.entries]]
+name = "SELinux Configuration"
+description = "Configure SELinux policies and modes for RHEL-based systems"
+script = "rhel/selinux-setup.sh"
+task_list = "SS"
+
+[[data.entries]]
+name = "Alternative Repositories"
+description = "Install additional repositories like PowerTools, Remi (PHP), and EPEL Next for RHEL-based systems"
+script = "rhel/alternative-repos-setup.sh"
+task_list = "MP"
+
+[[data]]
 name = "Ubuntu"
 
 [[data.preconditions]]
