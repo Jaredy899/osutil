@@ -19,29 +19,51 @@ if [ ! -f "Cargo.toml" ]; then
     exit 1
 fi
 
+# Function to install Xcode Command Line Tools
+install_xcode_tools() {
+    if ! xcode-select -p >/dev/null 2>&1; then
+        echo "Xcode Command Line Tools not found. Installing..."
+        xcode-select --install
+        echo "Please complete the Xcode Command Line Tools installation in the popup window."
+        echo "After installation completes, run this script again."
+        exit 1
+    else
+        echo "Xcode Command Line Tools are already installed"
+    fi
+}
+
+# Function to install Rust
+install_rust() {
+    if ! command -v rustc >/dev/null 2>&1; then
+        echo "Rust not found. Installing Rust..."
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        # shellcheck disable=SC1090
+        source ~/.cargo/env
+        echo "Rust installed successfully!"
+    else
+        echo "Rust is already installed: $(rustc --version)"
+    fi
+}
+
+# Function to update Rust
+update_rust() {
+    echo "Updating Rust toolchain..."
+    rustup update
+}
+
+# Check and install prerequisites
+echo "Checking prerequisites..."
+
+# Install Xcode Command Line Tools
+install_xcode_tools
+
+# Install/update Rust
+install_rust
+update_rust
+
 # Create build directory
 BUILD_DIR="build"
 mkdir -p "$BUILD_DIR"
-
-# Function to build for a specific target
-build_target() {
-    local target=$1
-    local binary_name=$2
-    
-    echo "Building for $target..."
-    
-    # Build the target
-    cargo build --release --target "$target" --all-features
-    
-    # Copy binary to build directory
-    if [ -f "target/$target/release/$binary_name" ]; then
-        cp "target/$target/release/$binary_name" "$BUILD_DIR/"
-        echo "✓ Built $binary_name for $target"
-    else
-        echo "✗ Failed to build for $target"
-        return 1
-    fi
-}
 
 # Install required targets
 echo "Installing required targets..."
@@ -50,30 +72,27 @@ rustup target add aarch64-apple-darwin
 
 # Build for Intel Macs (x86_64)
 echo "Building for macOS Intel (x86_64)..."
-build_target "x86_64-apple-darwin" "osutil" || echo "macOS Intel build failed"
+cargo build --release --target x86_64-apple-darwin --all-features
 
 # Build for Apple Silicon (ARM64)
 echo "Building for macOS ARM (aarch64)..."
-build_target "aarch64-apple-darwin" "osutil" || echo "macOS ARM build failed"
+cargo build --release --target aarch64-apple-darwin --all-features
 
-# Create universal binary if both builds succeeded
-if [ -f "target/x86_64-apple-darwin/release/osutil" ] && [ -f "target/aarch64-apple-darwin/release/osutil" ]; then
-    echo "Creating universal macOS binary..."
-    lipo -create \
-        target/x86_64-apple-darwin/release/osutil \
-        target/aarch64-apple-darwin/release/osutil \
-        -output "$BUILD_DIR/osutil-macos"
-    echo "✓ Created universal macOS binary"
-else
-    echo "⚠ Could not create universal binary - one or both architectures failed"
-fi
+# Create universal binary
+echo "Creating universal macOS binary..."
+lipo -create \
+    target/x86_64-apple-darwin/release/osutil \
+    target/aarch64-apple-darwin/release/osutil \
+    -output "$BUILD_DIR/osutil-macos"
+echo "✓ Created universal macOS binary"
 
 echo ""
-echo "Build completed! Binaries in $BUILD_DIR/:"
+echo "Build completed! Binary in $BUILD_DIR/:"
 ls -la "$BUILD_DIR/"
 
 echo ""
 echo "Build Summary:"
-echo "- macOS Intel: target/x86_64-apple-darwin/release/osutil"
-echo "- macOS ARM: target/aarch64-apple-darwin/release/osutil"
-echo "- Universal: $BUILD_DIR/osutil-macos (if both builds succeeded)" 
+echo "- macOS Universal: $BUILD_DIR/osutil-macos"
+echo ""
+echo "To install system-wide, run:"
+echo "sudo cp $BUILD_DIR/osutil-macos /usr/local/bin/osutil" 
