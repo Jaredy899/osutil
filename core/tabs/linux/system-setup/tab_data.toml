@@ -158,7 +158,7 @@ values = ["dnf"]
 [[data.preconditions]]
 matches = true
 data = { containing_file = "/etc/os-release" }
-values = ["ID=rhel", "ID=centos", "ID=rocky", "ID=almalinux"]
+values = ["PLATFORM_ID=\"platform:el"]
 
 [[data.entries]]
 name = "EPEL Repository"

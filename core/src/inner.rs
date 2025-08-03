@@ -142,7 +142,7 @@ impl Entry {
                             .is_ok_and(|data| {
                                 values
                                     .iter()
-                                    .all(|matching| data.contains(matching) == *matches)
+                                    .any(|matching| data.contains(matching) == *matches)
                             }),
                         SystemDataType::CommandExists => values
                             .iter()
