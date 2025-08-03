@@ -204,7 +204,7 @@ name = "Omakub"
 description = "An Omakase Developer Setup for Ubuntu 24.04+ by DHH"
 script = "ubuntu/omakub.sh"
 task_list = "I MP"
-multi_select = "false"
+multi_select = false
 
 [[data.preconditions]]
 matches = true
