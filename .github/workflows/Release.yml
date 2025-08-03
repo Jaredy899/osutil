@@ -95,19 +95,23 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc
+          targets: x86_64-pc-windows-msvc,aarch64-pc-windows-msvc
 
       - name: Build for Windows (MSVC)
         run: |
           if (!(Test-Path .cargo)) { New-Item -ItemType Directory -Path .cargo }
           echo '[target.x86_64-pc-windows-msvc]' > .cargo/config.toml
           echo 'rustflags = ["-C", "target-feature=+crt-static"]' >> .cargo/config.toml
-          cargo build --release --target x86_64-pc-windows-msvc --no-default-features
+          echo '[target.aarch64-pc-windows-msvc]' >> .cargo/config.toml
+          echo 'rustflags = ["-C", "target-feature=+crt-static"]' >> .cargo/config.toml
+          cargo build --release --target x86_64-pc-windows-msvc --all-features
+          cargo build --release --target aarch64-pc-windows-msvc --all-features
 
       - name: Prepare Windows binaries for upload
         run: |
           mkdir -p windows-binaries
-          cp target/x86_64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows.exe
+          cp target/x86_64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows-x64.exe
+          cp target/aarch64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil-windows-arm64.exe
 
       - name: Upload Windows MSVC artifact
         uses: actions/upload-artifact@v4
@@ -203,7 +207,8 @@ jobs:
             - **Universal**: `osutil-macos` (Intel & ARM)
             
             ### Windows
-            - **x86_64**: `osutil-windows.exe` (Windows - No external dependencies)
+            - **x86_64**: `osutil-windows-x64.exe` (Windows x64 - No external dependencies)
+            - **ARM64**: `osutil-windows-arm64.exe` (Windows ARM64 - No external dependencies)
             
             ## Installation
             
@@ -222,7 +227,8 @@ jobs:
             linux-binaries/osutil-aarch64
             linux-binaries/osutil-armv7l
             macos-binary/osutil-macos
-            windows-msvc-binary/osutil-windows.exe
+            windows-msvc-binary/osutil-windows-x64.exe
+            windows-msvc-binary/osutil-windows-arm64.exe
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

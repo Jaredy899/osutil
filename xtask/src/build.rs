@@ -15,8 +15,11 @@ pub fn build_all() -> Result<(), DynError> {
     build_linux_targets()?;
 
     // Build for Windows (cross-compiled from any platform)
-    println!("Building for Windows...");
-    build_target("x86_64-pc-windows-gnu")?;
+    println!("Building for Windows x86_64...");
+    build_target("x86_64-pc-windows-msvc")?;
+    
+    println!("Building for Windows ARM64...");
+    build_target("aarch64-pc-windows-msvc")?;
 
     // Build for macOS (only if on macOS)
     if platform == "macos" {

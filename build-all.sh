@@ -46,6 +46,9 @@ rustup target add x86_64-unknown-linux-musl
 rustup target add aarch64-unknown-linux-musl
 rustup target add armv7-unknown-linux-musleabihf
 rustup target add x86_64-pc-windows-gnu
+rustup target add x86_64-pc-windows-msvc
+# Note: aarch64-pc-windows-msvc may require Windows environment for full support
+rustup target add aarch64-pc-windows-msvc || echo "Warning: aarch64-pc-windows-msvc target may not be fully supported on this platform"
 
 # Install cross-compilation tools if on Linux
 if [[ "$PLATFORM" == "Linux" ]]; then
@@ -130,27 +133,56 @@ fi
 
 # Build for Windows
 echo "Building for Windows..."
+
+# Build Windows x86_64
+echo "Building for Windows x86_64..."
 if [[ "$PLATFORM" == "Linux" ]]; then
-    if cargo build --release --target=x86_64-pc-windows-gnu --all-features 2>/dev/null; then
-        cp target/x86_64-pc-windows-gnu/release/osutil.exe "$BUILD_DIR/"
-        echo "✓ Built Windows binary"
+    if cargo build --release --target=x86_64-pc-windows-msvc --all-features 2>/dev/null; then
+        cp target/x86_64-pc-windows-msvc/release/osutil.exe "$BUILD_DIR/osutil-windows-x64.exe"
+        echo "✓ Built Windows x86_64 binary"
     elif command -v cross &> /dev/null; then
-        cross build --release --target=x86_64-pc-windows-gnu --all-features
-        cp target/x86_64-pc-windows-gnu/release/osutil.exe "$BUILD_DIR/"
-        echo "✓ Built Windows binary using cross"
+        cross build --release --target=x86_64-pc-windows-msvc --all-features
+        cp target/x86_64-pc-windows-msvc/release/osutil.exe "$BUILD_DIR/osutil-windows-x64.exe"
+        echo "✓ Built Windows x86_64 binary using cross"
     else
-        echo "✗ Failed to build Windows binary"
+        echo "✗ Failed to build Windows x86_64 binary"
     fi
 else
     if command -v cross &> /dev/null; then
-        if cross build --release --target=x86_64-pc-windows-gnu --all-features; then
-            cp target/x86_64-pc-windows-gnu/release/osutil.exe "$BUILD_DIR/"
-            echo "✓ Built Windows binary using cross"
+        if cross build --release --target=x86_64-pc-windows-msvc --all-features; then
+            cp target/x86_64-pc-windows-msvc/release/osutil.exe "$BUILD_DIR/osutil-windows-x64.exe"
+            echo "✓ Built Windows x86_64 binary using cross"
         else
-            echo "✗ Cross-compilation failed for Windows"
+            echo "✗ Cross-compilation failed for Windows x86_64"
         fi
     else
-        build_target "x86_64-pc-windows-gnu" "osutil.exe" || echo "Windows build failed"
+        build_target "x86_64-pc-windows-msvc" "osutil.exe" && mv "$BUILD_DIR/osutil.exe" "$BUILD_DIR/osutil-windows-x64.exe" || echo "Windows x86_64 build failed"
+    fi
+fi
+
+# Build Windows ARM64
+echo "Building for Windows ARM64..."
+if [[ "$PLATFORM" == "Linux" ]]; then
+    if cargo build --release --target=aarch64-pc-windows-msvc --all-features 2>/dev/null; then
+        cp target/aarch64-pc-windows-msvc/release/osutil.exe "$BUILD_DIR/osutil-windows-arm64.exe"
+        echo "✓ Built Windows ARM64 binary"
+    elif command -v cross &> /dev/null; then
+        cross build --release --target=aarch64-pc-windows-msvc --all-features
+        cp target/aarch64-pc-windows-msvc/release/osutil.exe "$BUILD_DIR/osutil-windows-arm64.exe"
+        echo "✓ Built Windows ARM64 binary using cross"
+    else
+        echo "✗ Failed to build Windows ARM64 binary"
+    fi
+else
+    if command -v cross &> /dev/null; then
+        if cross build --release --target=aarch64-pc-windows-msvc --all-features; then
+            cp target/aarch64-pc-windows-msvc/release/osutil.exe "$BUILD_DIR/osutil-windows-arm64.exe"
+            echo "✓ Built Windows ARM64 binary using cross"
+        else
+            echo "✗ Cross-compilation failed for Windows ARM64"
+        fi
+    else
+        build_target "aarch64-pc-windows-msvc" "osutil.exe" && mv "$BUILD_DIR/osutil.exe" "$BUILD_DIR/osutil-windows-arm64.exe" || echo "Windows ARM64 build failed"
     fi
 fi
 
@@ -185,5 +217,6 @@ echo "Build Summary:"
 echo "- Linux x86_64: musl binary"
 echo "- Linux aarch64: musl binary"
 echo "- Linux armv7: musl binary"
-echo "- Windows: x86_64 binary"
+echo "- Windows x86_64: MSVC binary"
+echo "- Windows ARM64: MSVC binary"
 echo "- macOS: universal binary (Intel & ARM)" 
