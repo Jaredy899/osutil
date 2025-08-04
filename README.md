@@ -1,60 +1,103 @@
 # OSutil
 
-A cross-platform system utility tool with a modern TUI interface.
+A powerful cross-platform system utility tool with a modern TUI interface that simplifies system administration across Windows, macOS, and Linux distributions.
 
-## Features
+## 🚀 How to Run
 
-- **Cross-platform support**: Windows, macOS, and Linux
-- **Modern TUI interface**: Built with Ratatui for a responsive and intuitive experience
-- **Extensible script system**: Easy to add new scripts and utilities
-- **Smart script execution**: Automatically detects interactive and heavy-operation scripts
-- **Performance optimized**: PowerShell scripts with heavy operations run in separate terminals
-
-## Installation
-
-### macOS & Linux
-
+### **macOS & Linux**
 ```bash
 sh <(curl -fsSL https://jaredcervantes.com/os)
 ```
 
-### Windows
-
+### **Windows**
 ```powershell
 irm https://jaredcervantes.com/winos | iex
 ```
 
-## Usage
+## 📖 Usage
 
-Run the application:
+**Navigation:**
+- **Arrow Keys**: Navigate through menus and options
+- **Enter**: Select/execute scripts
+- **Esc**: Go back to previous menu
+- **Space**: Multi-select (where available)
 
-```bash
-osutil
+## 🌟 Features
+
+OSutil is a modern TUI-based system utility that simplifies system administration tasks across multiple platforms. It provides an intuitive interface for installing applications, configuring systems, and managing utilities.
+
+### **Supported Platforms**
+- **Windows**: PowerShell-based system optimization and application management
+- **macOS**: Homebrew-based development tools and system utilities
+- **Linux**: Multi-distribution support with intelligent package manager detection
+
+### **Supported Linux Distributions**
+- **Arch Linux** (pacman)
+- **Debian/Ubuntu** (apt)
+- **Fedora** (dnf)
+- **openSUSE** (zypper)
+- **Alpine Linux** (apk)
+- **Void Linux** (xbps)
+- **Solus** (eopkg)
+
+## 📸 Screenshots
+
+### Linux
+![Linux Interface](.github/Linux.png)
+
+### macOS  
+![macOS Interface](.github/Mac.png)
+
+### Windows
+![Windows Interface](.github/Windows.png)
+
+## ⚙️ Configuration
+
+Create a `config.toml` file in your home directory for personalized settings:
+
+```toml
+# Auto-execute specific scripts on startup
+auto_execute = [
+    "System Update",
+    "Fastfetch Setup"
+]
+
+# Skip confirmation dialogs
+skip_confirmation = true
+
+# Bypass size restrictions for large outputs
+size_bypass = true
 ```
 
-Use arrow keys to navigate, Enter to select, and Esc to go back.
+## 🛠️ Development
 
-## Development
-
-### Prerequisites
-
+### **Prerequisites**
 - Rust 1.70+
 - Cargo
 
-### Build
-
+### **Build**
 ```bash
 cargo build --release
 ```
 
-### Run in development mode
-
+### **Development Mode**
 ```bash
 cargo run
 ```
 
 For detailed build instructions and multi-platform setup, see [MULTI_PLATFORM_SETUP.md](MULTI_PLATFORM_SETUP.md).
 
-## License
+## 🤝 Contributing
+
+OSutil is designed to be easily extensible. Add new scripts by:
+1. Creating scripts in the appropriate platform directory
+2. Adding entries to the corresponding `tab_data.toml` file
+3. Following the common script patterns for cross-distribution compatibility
+
+## 🙏 Acknowledgments
+
+OSutil is built upon the foundation of [Chris Titus Tech's linutil](https://github.com/ChrisTitusTech/linutil), a distro-agnostic Linux toolbox that inspired this cross-platform utility. The original linutil project, with its 3.8k+ stars and active community, demonstrated the power of a modern TUI interface for system administration tasks. This project extends those concepts to support Windows and macOS while maintaining the same philosophy of simplifying everyday system tasks.
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
