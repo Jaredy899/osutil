@@ -5,9 +5,9 @@
 
 # Set desktop environment name and display manager preferences
 DE_NAME="Cinnamon"
-DEFAULT_DM="lightdm"
-DM_OPTIONS="lightdm gdm sddm none"
-DM_LABELS="LightDM|GDM|SDDM|None (Start Cinnamon manually)"
+export DEFAULT_DM="lightdm"
+export DM_OPTIONS="lightdm gdm sddm none"
+export DM_LABELS="LightDM|GDM|SDDM|None (Start Cinnamon manually)"
 
 # Source the common display manager script
 . ./common-dm-script.sh
