@@ -1,4 +1,16 @@
-name = "System Setup"
+name = "Windows Utilities"
+
+[[data]]
+name = "Chris Titus Tech Windows Utility"
+description = "Invokes Chris Titus Tech's Windows Utility directly from URL"
+script = "chris-titus-utility.ps1"
+task_list = "I"
+
+[[data]]
+name = "Nord Backgrounds"
+description = "Downloads and extracts Nord theme backgrounds to Documents folder"
+script = "nord-backgrounds.ps1"
+task_list = "I"
 
 [[data]]
 name = "Remote & SSH Setup"
@@ -41,3 +53,9 @@ name = "SSH Key Manager"
 description = "Interactive tool to manage SSH keys for Windows administrators, including GitHub import and manual entry"
 script = "ssh-key-manager.ps1"
 task_list = "I"
+
+[[data]]
+name = "First Setup"
+description = "Initial Windows system setup and configuration"
+script = "first-setup.ps1"
+task_list = "I" 
