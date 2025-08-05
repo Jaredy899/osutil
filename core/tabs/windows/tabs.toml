@@ -1,4 +1,3 @@
 directories = [
-    "applications-setup",
-    "system-setup",
+    "utilities",
 ] 
