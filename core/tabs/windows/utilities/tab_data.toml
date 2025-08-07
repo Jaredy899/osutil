@@ -1,6 +1,12 @@
 name = "Windows Utilities"
 
 [[data]]
+name = "Enable Sudo (Inline)"
+description = "Enables Windows sudo and configures it to run inline in the current console"
+script = "enable-sudo.ps1"
+task_list = "I"
+
+[[data]]
 name = "Chris Titus Tech Windows Utility"
 description = "Invokes Chris Titus Tech's Windows Utility directly from URL"
 script = "chris-titus-utility.ps1"

@@ -315,17 +315,6 @@ impl RunningCommand {
             let command = commands.first().expect("No commands provided");
             let _script_name = _script_names.first().cloned();
 
-            // All PowerShell scripts run in separate terminal windows on Windows
-            #[cfg(windows)]
-            {
-                if let Command::LocalFile { executable, .. } = command {
-                    if executable.contains("pwsh") || executable.contains("powershell") {
-                        // Always launch PowerShell scripts in separate terminal windows
-                        return Self::launch_in_separate_terminal(command, _script_name);
-                    }
-                }
-            }
-
             #[cfg(windows)]
             let pty_system = NativePtySystem::default();
 

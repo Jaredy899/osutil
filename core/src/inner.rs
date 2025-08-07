@@ -261,8 +261,8 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
             true
         };
 
-        if pwsh_valid {
-            return Some((
+        let (base_exe, mut base_args) = if pwsh_valid {
+            (
                 pwsh.to_string(),
                 vec![
                     "-NoProfile".to_string(),
@@ -271,37 +271,64 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
                     "-File".to_string(),
                     script_path.to_string_lossy().to_string(),
                 ],
-            ));
-        }
-
-        // Fallback to PowerShell 5
-        let powershell_valid = if validate {
-            which::which(powershell).is_ok()
-                || std::path::Path::new(
-                    "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-                )
-                .exists()
+            )
         } else {
-            true
+            // Fallback to PowerShell 5
+            let powershell_valid = if validate {
+                which::which(powershell).is_ok()
+                    || std::path::Path::new(
+                        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    )
+                    .exists()
+            } else {
+                true
+            };
+
+            if powershell_valid {
+                (
+                    powershell.to_string(),
+                    vec![
+                        "-NoProfile".to_string(),
+                        "-ExecutionPolicy".to_string(),
+                        "Bypass".to_string(),
+                        "-File".to_string(),
+                        script_path.to_string_lossy().to_string(),
+                    ],
+                )
+            } else {
+                // No PowerShell found - return None
+                return None;
+            }
         };
 
-        if powershell_valid {
-            Some((
-                powershell.to_string(),
-                vec![
-                    "-NoProfile".to_string(),
-                    "-ExecutionPolicy".to_string(),
-                    "Bypass".to_string(),
-                    "-File".to_string(),
-                    script_path.to_string_lossy().to_string(),
-                ],
-            ))
-        } else {
-            // No PowerShell found - return None
-            None
+        // If sudo is available and the script appears to require elevation,
+        // wrap the invocation in sudo to keep it within the same console (inline) when possible
+        let sudo_available = if validate { which::which("sudo.exe").is_ok() } else { true };
+        if sudo_available && script_requires_admin(script_path) {
+            let mut sudo_args = Vec::with_capacity(2 + base_args.len());
+            // Force inline mode when supported to avoid opening a new window
+            sudo_args.push("--inline".to_string());
+            sudo_args.push(base_exe);
+            sudo_args.append(&mut base_args);
+            return Some(("sudo.exe".to_string(), sudo_args));
         }
+
+        Some((base_exe, base_args))
     } else {
         None
+    }
+}
+
+#[cfg(windows)]
+fn script_requires_admin(script_path: &Path) -> bool {
+    match std::fs::read_to_string(script_path) {
+        Ok(content) => {
+            let lower = content.to_lowercase();
+            lower.contains("-verb runas")
+                || lower.contains("test-administrator")
+                || lower.contains("#requires -runasadministrator")
+        }
+        Err(_) => false,
     }
 }
 

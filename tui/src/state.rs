@@ -861,8 +861,9 @@ impl AppState {
         if selected_commands.len() == 1 {
             // Single command - execute normally
             let node = selected_commands.into_iter().next().unwrap();
-            let running_command =
-                RunningCommand::launch_in_separate_terminal(&node.command, Some(node.name.clone()));
+            let cmds: Vec<&Command> = vec![&node.command];
+            let names: Vec<String> = vec![node.name.clone()];
+            let running_command = RunningCommand::new_with_names(&cmds, &names);
             self.spawn_float(running_command, FLOAT_SIZE, FLOAT_SIZE);
         } else {
             // Multiple commands - store them for sequential execution
@@ -939,8 +940,9 @@ impl AppState {
         }
 
         let node = self.pending_commands.remove(0);
-        let running_command =
-            RunningCommand::launch_in_separate_terminal(&node.command, Some(node.name.clone()));
+        let cmds: Vec<&Command> = vec![&node.command];
+        let names: Vec<String> = vec![node.name.clone()];
+        let running_command = RunningCommand::new_with_names(&cmds, &names);
         self.spawn_float(running_command, FLOAT_SIZE, FLOAT_SIZE);
     }
 
