@@ -17,7 +17,7 @@ multi_select = false
 
 [[data.entries]]
 name = "Profile Setup"
-description = "Similar to MyBash, replaces the profile, and adds fastfetch, and zoxide for Ash. 
+description = "Similar to MyBash, replaces the profile, and adds fastfetch, and zoxide for Ash."
 script = "alpine/profile-setup.sh"
 task_list = "I SS"
 
