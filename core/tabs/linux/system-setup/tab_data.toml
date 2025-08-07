@@ -15,6 +15,12 @@ script = "alpine/alpine-upgrade.sh"
 task_list = "PFM"
 multi_select = false
 
+[[data.entries]]
+name = "Profile Setup"
+description = "Similar to MyBash, replaces the profile, and adds fastfetch, and zoxide for Ash. 
+script = "alpine/profile-setup.sh"
+task_list = "I SS"
+
 [[data]]
 name = "Arch Linux"
 
@@ -240,12 +246,6 @@ name = "Remove Snaps"
 description = "This script is designed to remove snap"
 script = "remove-snaps.sh"
 task_list = "RP"
-
-[[data]]
-name = "Jared's Configuration Replacement"
-description = "Downloads and replaces various configuration files (bashrc, fastfetch, starship) from a remote repository"
-script = "config-replacement.sh"
-task_list = "MP"
 
 [[data]]
 name = "TTY Fonts"
