@@ -17,6 +17,12 @@ installDepend() {
         printf "%b\n" "${YELLOW}Installing fastfetch...${RC}"
         "$ESCALATION_TOOL" apk add fastfetch
     fi
+
+    if ! command_exists bat; then
+        printf "%b\n" "${YELLOW}Installing bat...${RC}"
+        "$ESCALATION_TOOL" apk add bat
+    fi
+
 }
 
 downloadProfile() {
