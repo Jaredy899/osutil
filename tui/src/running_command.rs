@@ -1,7 +1,11 @@
 use crate::{float::FloatContent, hint::Shortcut, shortcuts, theme::Theme};
+#[cfg(not(windows))]
+use oneshot::channel;
 use oneshot::Receiver;
 use osutil_core::Command;
 use portable_pty::{ChildKiller, ExitStatus, MasterPty, PtySize};
+#[cfg(not(windows))]
+use portable_pty::{CommandBuilder, NativePtySystem, PtySystem};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind},
     prelude::*,
