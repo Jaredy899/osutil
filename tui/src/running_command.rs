@@ -21,6 +21,9 @@ use std::{
     },
     thread::JoinHandle,
 };
+
+#[cfg(not(windows))]
+use std::sync::atomic::Ordering;
 use time::{macros::format_description, OffsetDateTime};
 use tui_term::widget::PseudoTerminal;
 use vt100_ctt::{Parser, Screen};
