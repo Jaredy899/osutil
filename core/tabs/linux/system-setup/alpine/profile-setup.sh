@@ -28,10 +28,17 @@ installDepend() {
 downloadProfile() {
     printf "%b\n" "${YELLOW}Downloading your custom profile...${RC}"
     
-    # Download profile
+    # Download profile to a temporary location first
     printf "%b\n" "${YELLOW}Downloading profile...${RC}"
-    if ! curl -sSLo "/etc/profile" "https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes/profile"; then
+    TEMP_PROFILE="/tmp/profile.tmp"
+    if ! curl -sSLo "$TEMP_PROFILE" "https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes/profile"; then
         printf "%b\n" "${RED}Failed to download profile${RC}"
+        exit 1
+    fi
+    
+    # Move the downloaded profile to /etc/profile with proper permissions
+    if ! "$ESCALATION_TOOL" mv "$TEMP_PROFILE" "/etc/profile"; then
+        printf "%b\n" "${RED}Failed to install profile to /etc/profile${RC}"
         exit 1
     fi
     
@@ -50,7 +57,7 @@ backupExistingProfile() {
     OLD_PROFILE="/etc/profile"
     if [ -e "$OLD_PROFILE" ] && [ ! -e "/etc/profile.bak" ]; then
         printf "%b\n" "${YELLOW}Moving old profile to /etc/profile.bak${RC}"
-        if ! mv "$OLD_PROFILE" "/etc/profile.bak"; then
+        if ! "$ESCALATION_TOOL" mv "$OLD_PROFILE" "/etc/profile.bak"; then
             printf "%b\n" "${RED}Can't move the old profile file!${RC}"
             exit 1
         fi
