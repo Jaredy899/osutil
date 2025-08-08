@@ -341,6 +341,12 @@ script = "docker-setup.sh"
 task_list = "I SS"
 
 [[data]]
+name = "eza"
+description = "A modern replacement for ls."
+script = "eza.sh"
+task_list = "I SS"
+
+[[data]]
 name = "Podman"
 description = "Podman is a daemon-less open platform that uses OS-level virtualization to deliver software in packages called containers."
 script = "podman-setup.sh"

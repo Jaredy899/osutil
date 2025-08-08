@@ -2,7 +2,7 @@
 
 . ../common-script.sh
 
-gitpath="$HOME/.local/share/mybash"
+config_dir="$HOME/.config"
 
 installDepend() {
     if [ ! -f "/usr/share/bash-completion/bash_completion" ] || ! command_exists bash tar bat tree unzip fc-list git; then
@@ -24,13 +24,34 @@ installDepend() {
     fi
 }
 
-cloneMyBash() {
-    # Check if the dir exists before attempting to clone into it.
-    if [ -d "$gitpath" ]; then
-        rm -rf "$gitpath"
+downloadConfigs() {
+    printf "%b\n" "${YELLOW}Downloading your custom config files...${RC}"
+    
+    # Create config directory if it doesn't exist
+    mkdir -p "$config_dir" "$config_dir/fastfetch"
+    
+    # Download .bashrc
+    printf "%b\n" "${YELLOW}Downloading .bashrc...${RC}"
+    if ! curl -fsSLo "$HOME/.bashrc" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/.bashrc"; then
+        printf "%b\n" "${RED}Failed to download .bashrc${RC}"
+        exit 1
     fi
-    mkdir -p "$HOME/.local/share" # Only create the dir if it doesn't exist.
-    cd "$HOME" && git clone https://github.com/ChrisTitusTech/mybash.git "$gitpath"
+    
+    # Download starship.toml
+    printf "%b\n" "${YELLOW}Downloading starship.toml...${RC}"
+    if ! curl -fsSLo "$config_dir/starship.toml" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/starship.toml"; then
+        printf "%b\n" "${RED}Failed to download starship.toml${RC}"
+        exit 1
+    fi
+    
+    # Download config.jsonc
+    printf "%b\n" "${YELLOW}Downloading config.jsonc...${RC}"
+    if ! curl -fsSLo "$config_dir/fastfetch/config.jsonc" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/config.jsonc"; then
+        printf "%b\n" "${RED}Failed to download config.jsonc${RC}"
+        exit 1
+    fi
+    
+    printf "%b\n" "${GREEN}All config files downloaded successfully!${RC}"
 }
 
 installFont() {
@@ -89,10 +110,13 @@ installZoxide() {
     if ! curl -sSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh; then
         printf "%b\n" "${RED}Something went wrong during zoxide install!${RC}"
         exit 1
+    else
+        printf "%b\n" "${GREEN}Zoxide installed successfully!${RC}"
+        printf "%b\n" "${YELLOW}Please restart your shell to see the changes.${RC}"
     fi
 }
 
-linkConfig() {
+backupExistingConfigs() {
     OLD_BASHRC="$HOME/.bashrc"
     if [ -e "$OLD_BASHRC" ] && [ ! -e "$HOME/.bashrc.bak" ]; then
         printf "%b\n" "${YELLOW}Moving old bash config file to $HOME/.bashrc.bak${RC}"
@@ -101,26 +125,25 @@ linkConfig() {
             exit 1
         fi
     fi
-
-    printf "%b\n" "${YELLOW}Linking new bash config file...${RC}"
-    ln -svf "$gitpath/.bashrc" "$HOME/.bashrc" || {
-        printf "%b\n" "${RED}Failed to create symbolic link for .bashrc${RC}"
-        exit 1
-    }
-
-    mkdir -p "$HOME/.config"
-    ln -svf "$gitpath/starship.toml" "$HOME/.config/starship.toml" || {
-        printf "%b\n" "${RED}Failed to create symbolic link for starship.toml${RC}"
-        exit 1
-    }
-    printf "%b\n" "${GREEN}Done! restart your shell to see the changes.${RC}"
+    
+    # Backup existing starship config if it exists
+    if [ -e "$config_dir/starship.toml" ] && [ ! -e "$config_dir/starship.toml.bak" ]; then
+        printf "%b\n" "${YELLOW}Backing up existing starship.toml to $config_dir/starship.toml.bak${RC}"
+        mv "$config_dir/starship.toml" "$config_dir/starship.toml.bak"
+    fi
+    
+    # Backup existing config.jsonc if it exists
+    if [ -e "$config_dir/fastfetch/config.jsonc" ] && [ ! -e "$config_dir/fastfetch/config.jsonc.bak" ]; then
+        printf "%b\n" "${YELLOW}Backing up existing config.jsonc to $config_dir/fastfetch/config.jsonc.bak${RC}"
+        mv "$config_dir/fastfetch/config.jsonc" "$config_dir/fastfetch/config.jsonc.bak"
+    fi
 }
 
 checkEnv
 checkEscalationTool
 installDepend
-cloneMyBash
+backupExistingConfigs
+downloadConfigs
 installFont
 installStarshipAndFzf
 installZoxide
-linkConfig
