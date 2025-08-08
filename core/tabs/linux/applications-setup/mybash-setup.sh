@@ -32,55 +32,22 @@ downloadConfigs() {
     
     # Download .bashrc
     printf "%b\n" "${YELLOW}Downloading .bashrc...${RC}"
-    # Ensure target is not a directory and is writable (fix ownership if needed)
-    if [ -d "$HOME/.bashrc" ]; then
-        printf "%b\n" "${RED}$HOME/.bashrc exists and is a directory${RC}"
-        exit 1
-    fi
-    if [ -e "$HOME/.bashrc" ] && [ ! -w "$HOME/.bashrc" ]; then
-        printf "%b\n" "${YELLOW}Fixing ownership/permissions for $HOME/.bashrc${RC}"
-        if ! "$ESCALATION_TOOL" chown "$USER":"$USER" "$HOME/.bashrc"; then
-            printf "%b\n" "${RED}Unable to fix permissions for $HOME/.bashrc${RC}"
-            exit 1
-        fi
-    fi
-    tmp_bashrc="$(mktemp)"
-    if ! curl -fsSLo "$tmp_bashrc" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/.bashrc"; then
-        rm -f "$tmp_bashrc"
+    if ! curl -fsSLo "$HOME/.bashrc" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/.bashrc"; then
         printf "%b\n" "${RED}Failed to download .bashrc${RC}"
-        exit 1
-    fi
-    if ! mv "$tmp_bashrc" "$HOME/.bashrc"; then
-        rm -f "$tmp_bashrc"
-        printf "%b\n" "${RED}Failed to write $HOME/.bashrc${RC}"
         exit 1
     fi
     
     # Download starship.toml
     printf "%b\n" "${YELLOW}Downloading starship.toml...${RC}"
-    tmp_starship="$(mktemp)"
-    if ! curl -fsSLo "$tmp_starship" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/starship.toml"; then
-        rm -f "$tmp_starship"
+    if ! curl -fsSLo "$config_dir/starship.toml" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/starship.toml"; then
         printf "%b\n" "${RED}Failed to download starship.toml${RC}"
-        exit 1
-    fi
-    if ! mv "$tmp_starship" "$config_dir/starship.toml"; then
-        rm -f "$tmp_starship"
-        printf "%b\n" "${RED}Failed to write $config_dir/starship.toml${RC}"
         exit 1
     fi
     
     # Download config.jsonc
     printf "%b\n" "${YELLOW}Downloading config.jsonc...${RC}"
-    tmp_jsonc="$(mktemp)"
-    if ! curl -fsSLo "$tmp_jsonc" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/config.jsonc"; then
-        rm -f "$tmp_jsonc"
+    if ! curl -fsSLo "$config_dir/fastfetch/config.jsonc" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/config.jsonc"; then
         printf "%b\n" "${RED}Failed to download config.jsonc${RC}"
-        exit 1
-    fi
-    if ! mv "$tmp_jsonc" "$config_dir/fastfetch/config.jsonc"; then
-        rm -f "$tmp_jsonc"
-        printf "%b\n" "${RED}Failed to write $config_dir/fastfetch/config.jsonc${RC}"
         exit 1
     fi
     
