@@ -57,7 +57,7 @@ fn main() -> Result<(), DynError> {
             "build" => tasks::build()?,
             "build-cross" => tasks::build_cross()?,
             "build-linux" => tasks::build_linux()?,
-            invalid => return Err(format!("Invalid task: {}", invalid).into()),
+            invalid => return Err(format!("Invalid task: {invalid}").into()),
         },
     };
     Ok(())

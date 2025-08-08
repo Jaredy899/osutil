@@ -1,3 +1,11 @@
+# Minimal ANSI colors (PS7/Windows Terminal/TUI)
+$esc   = [char]27
+$Cyan  = "${esc}[36m"
+$Yellow= "${esc}[33m"
+$Green = "${esc}[32m"
+$Red   = "${esc}[31m"
+$Reset = "${esc}[0m"
+
 # Check if running as administrator
 function Test-Administrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -7,12 +15,12 @@ function Test-Administrator {
 
 # Self-elevate the script if required
 if (-not (Test-Administrator)) {
-    Write-Output "Requesting administrative privileges..."
+    Write-Host "${Cyan}Requesting administrative privileges...${Reset}"
     Start-Process powershell.exe -Verb RunAs -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"")
     Exit
 }
 
-Write-Output "Script running with administrative privileges..."
+Write-Host "${Cyan}Script running with administrative privileges...${Reset}"
 
 function Set-TimeSettings {
     Try {
@@ -29,7 +37,7 @@ function Set-TimeSettings {
             }
             
             if ($timezone) {
-                Write-Host "Detected timezone: $timezone" -ForegroundColor Yellow
+                Write-Host "${Yellow}Detected timezone: $timezone${Reset}"
                 
                 # Simplified mapping for common US timezones
                 $tzMapping = @{
@@ -44,7 +52,7 @@ function Set-TimeSettings {
                 if ($tzMapping.ContainsKey($timezone)) {
                     $windowsTimezone = $tzMapping[$timezone]
                     tzutil /s $windowsTimezone *>$null
-                    Write-Host "Time zone automatically set to $windowsTimezone" -ForegroundColor Green
+                    Write-Host "${Green}Time zone automatically set to $windowsTimezone${Reset}"
                 } else {
                     throw "Could not map timezone"
                 }
@@ -52,9 +60,9 @@ function Set-TimeSettings {
                 throw "Could not detect timezone"
             }
         } Catch {
-            Write-Host "Automatic timezone detection failed. Falling back to manual selection..." -ForegroundColor Yellow
+            Write-Host "${Yellow}Automatic timezone detection failed. Falling back to manual selection...${Reset}"
             # Display options for time zones
-            Write-Host "Select a time zone from the options below:" -ForegroundColor Cyan
+            Write-Host "${Cyan}Select a time zone from the options below:${Reset}"
             $timeZones = @(
                 "Eastern Standard Time",
                 "Central Standard Time",
@@ -78,9 +86,9 @@ function Set-TimeSettings {
             if ($selection -match '^\d+$' -and $selection -gt 0 -and $selection -le $timeZones.Count) {
                 $selectedTimeZone = $timeZones[$selection - 1]
                 tzutil /s "$selectedTimeZone" *>$null
-                Write-Output "Time zone set to $selectedTimeZone."
+                Write-Host "${Green}Time zone set to $selectedTimeZone.${Reset}"
             } else {
-                Write-Output "Invalid selection. Please run the script again and choose a valid number."
+                Write-Host "${Yellow}Invalid selection. Please run the script again and choose a valid number.${Reset}"
                 return
             }
         }
@@ -91,9 +99,9 @@ function Set-TimeSettings {
         Start-Service -Name w32time *>$null
         w32tm /resync *>$null
 
-        Write-Output "Time settings configured and synchronized using time.nist.gov."
+        Write-Host "${Green}Time settings configured and synchronized using time.nist.gov.${Reset}"
     } Catch {
-        Write-Output "Failed to configure time settings or synchronization: $($_)"
+        Write-Host "${Red}Failed to configure time settings or synchronization: $($_)${Reset}"
     }
 }
 
@@ -113,9 +121,9 @@ function Set-TimeSyncAtStartup {
         }
 
         Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal
-        Write-Host "Scheduled task for time synchronization at startup has been created." -ForegroundColor Green
+        Write-Host "${Green}Scheduled task for time synchronization at startup has been created.${Reset}"
     } Catch {
-        Write-Host "Failed to create scheduled task for time synchronization: $($_)" -ForegroundColor Red
+        Write-Host "${Red}Failed to create scheduled task for time synchronization: $($_)${Reset}"
     }
 }
 
@@ -123,4 +131,4 @@ function Set-TimeSyncAtStartup {
 Set-TimeSettings
 Set-TimeSyncAtStartup
 
-Write-Host "`nTime setup complete!" -ForegroundColor Green 
+Write-Host "${Green}`nTime setup complete!${Reset}"

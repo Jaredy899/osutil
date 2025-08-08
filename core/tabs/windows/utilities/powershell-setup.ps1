@@ -1,3 +1,10 @@
+$esc   = [char]27
+$Cyan  = "${esc}[36m"
+$Yellow= "${esc}[33m"
+$Green = "${esc}[32m"
+$Red   = "${esc}[31m"
+$Reset = "${esc}[0m"
+
 # Define the GitHub base URL for your setup scripts
 $githubBaseUrl = "https://raw.githubusercontent.com/Jaredy899/win/main/my_powershell"
 
@@ -17,237 +24,139 @@ $appsScriptPath = "$env:TEMP\apps_install.ps1"
 $fontScriptPath = "$env:TEMP\install_nerd_font.ps1"
 $wingetScriptPath = "$env:TEMP\install_winget.ps1"
 
-# Function to download and run a script using Start-BitsTransfer
 function Invoke-DownloadAndRunScript {
-    param (
+    param(
         [string]$url,
         [string]$localPath
     )
-
-    Write-Host "Downloading script from " -ForegroundColor Yellow -NoNewline
-    Write-Host "$url" -ForegroundColor Blue -NoNewline
-    Write-Host "..." -ForegroundColor Yellow
+    Write-Host "${Yellow}Downloading: $url${Reset}"
     try {
         Start-BitsTransfer -Source $url -Destination $localPath -ErrorAction Stop
-        Write-Host "Running script " -ForegroundColor Yellow -NoNewline
-        Write-Host "$localPath" -ForegroundColor Blue -NoNewline
-        Write-Host "..." -ForegroundColor Yellow
+        Write-Host "${Cyan}Running: $localPath${Reset}"
         & $localPath
-    }
-    catch {
-        Write-Host "Failed to download or run the script from $url. Error: $_" -ForegroundColor Red
+    } catch {
+        Write-Host "${Red}Failed to download or run: $url`n$_${Reset}"
     }
 }
 
 # Ensure Winget is installed or updated
-Write-Host "Checking Winget installation..." -ForegroundColor Cyan
+Write-Host "${Cyan}Checking winget...${Reset}"
 Invoke-DownloadAndRunScript -url $wingetScriptUrl -localPath $wingetScriptPath
 
-# Always run the applications installation script
-Write-Host "Running the applications installation script..." -ForegroundColor Cyan
+# Applications installation
+Write-Host "${Cyan}Installing apps...${Reset}"
 Invoke-DownloadAndRunScript -url $appsScriptUrl -localPath $appsScriptPath
 
-# Run the font installation script
-Write-Host "Running the Nerd Font installation script..." -ForegroundColor Cyan
+# Nerd Font installation
+Write-Host "${Cyan}Installing Nerd Font...${Reset}"
 Invoke-DownloadAndRunScript -url $fontScriptUrl -localPath $fontScriptPath
 
-# URLs for GitHub profile configuration
-$githubProfileUrl = "https://raw.githubusercontent.com/Jaredy899/win/main/my_powershell/Microsoft.PowerShell_profile.ps1"
-
-# Function to initialize PowerShell profile
+# Initialize PowerShell profiles (PS5 and PS7)
 function Initialize-Profile {
-    param (
+    param(
         [string]$profilePath,
         [string]$profileUrl
     )
-
-    Write-Host "Setting up PowerShell profile at " -ForegroundColor Yellow -NoNewline
-    Write-Host "$profilePath" -ForegroundColor Blue -NoNewline
-    Write-Host "..." -ForegroundColor Yellow
-
     $profileDir = Split-Path $profilePath
-    if (-not (Test-Path -Path $profileDir)) {
-        New-Item -ItemType Directory -Path $profileDir -Force
-    }
-
+    if (-not (Test-Path -Path $profileDir)) { New-Item -ItemType Directory -Path $profileDir -Force | Out-Null }
     if (-not [string]::IsNullOrEmpty($profileUrl)) {
         Start-BitsTransfer -Source $profileUrl -Destination $profilePath -ErrorAction Stop
-        Write-Host "PowerShell profile has been set up successfully!" -ForegroundColor Green
+        Write-Host "${Green}Profile updated: $profilePath${Reset}"
     } else {
-        Write-Host "GitHub profile URL is not set or is empty. Cannot set up the PowerShell profile." -ForegroundColor Red
+        Write-Host "${Yellow}Profile URL is empty; skipped.${Reset}"
     }
 }
 
-# Paths for PowerShell 5 and PowerShell 7 profiles
 $ps5ProfilePath = "$env:UserProfile\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
 $ps7ProfilePath = "$env:UserProfile\Documents\PowerShell\Microsoft.PowerShell_profile.ps1"
-
-# Initialize PowerShell 5 profile
 Initialize-Profile -profilePath $ps5ProfilePath -profileUrl $githubProfileUrl
-
-# Initialize PowerShell 7 profile
 Initialize-Profile -profilePath $ps7ProfilePath -profileUrl $githubProfileUrl
 
-# Function to initialize configuration files
+# Config files (fastfetch, starship)
 function Initialize-ConfigFiles {
-    Write-Host "Setting up configuration files..." -ForegroundColor Cyan
-
     $userConfigDir = "$env:UserProfile\.config"
     $fastfetchConfigDir = "$userConfigDir\fastfetch"
-
-    if (-not (Test-Path -Path $fastfetchConfigDir)) {
-        New-Item -ItemType Directory -Path $fastfetchConfigDir -Force
-    }
-
-    $localConfigJsoncPath = "$fastfetchConfigDir\config.jsonc"
-    Start-BitsTransfer -Source $configJsoncUrl -Destination $localConfigJsoncPath -ErrorAction Stop
-    Write-Host "fastfetch config.jsonc has been set up successfully!" -ForegroundColor Green
-
-    $localStarshipTomlPath = "$userConfigDir\starship.toml"
-    Start-BitsTransfer -Source $starshipTomlUrl -Destination $localStarshipTomlPath -ErrorAction Stop
-    Write-Host "starship.toml has been set up successfully!" -ForegroundColor Green
+    if (-not (Test-Path -Path $fastfetchConfigDir)) { New-Item -ItemType Directory -Path $fastfetchConfigDir -Force | Out-Null }
+    Start-BitsTransfer -Source $configJsoncUrl -Destination (Join-Path $fastfetchConfigDir 'config.jsonc') -ErrorAction Stop
+    Start-BitsTransfer -Source $starshipTomlUrl -Destination (Join-Path $userConfigDir 'starship.toml') -ErrorAction Stop
+    Write-Host "${Green}Config files updated (fastfetch, starship).${Reset}"
 }
-
-# Run the Initialize-ConfigFiles function
 Initialize-ConfigFiles
 
-# Function to install Terminal-Icons
+# Terminal-Icons module
 function Install-TerminalIcons {
     if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
-        Write-Host "Installing Terminal-Icons module..." -ForegroundColor Yellow
+        Write-Host "${Yellow}Installing Terminal-Icons...${Reset}"
         Install-Module -Name Terminal-Icons -Repository PSGallery -Force
-        Write-Host "Terminal-Icons module installed successfully!" -ForegroundColor Green
+        Write-Host "${Green}Terminal-Icons installed.${Reset}"
     } else {
-        Write-Host "Terminal-Icons module is already installed." -ForegroundColor Blue
+        Write-Host "${Cyan}Terminal-Icons already installed.${Reset}"
     }
 }
-
-# Run the Install-TerminalIcons function
 Install-TerminalIcons
 
-# Function to setup AutoHotkey and shortcuts
+# Optional: AutoHotkey shortcuts
 function Initialize-CustomShortcuts {
-    Write-Host "Would you like to set up custom keyboard shortcuts using AutoHotkey? (y/n) " -ForegroundColor Cyan -NoNewline
+    Write-Host "${Cyan}Set up custom AutoHotkey shortcuts? (y/n) ${Reset}" -NoNewline
     $response = Read-Host
-    
-    if ($response.ToLower() -eq 'y') {
-        Write-Host "Installing AutoHotkey and setting up shortcuts..." -ForegroundColor Yellow
-        
-        winget install -e --id AutoHotkey.AutoHotkey
-        
-        $startupFolder = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
-        $shortcutsPath = "$startupFolder\shortcuts.ahk"
-        
-        try {
-            Start-BitsTransfer -Source $shortcutsAhkUrl -Destination $shortcutsPath -ErrorAction Stop
-            Write-Host "AutoHotkey shortcuts have been set up successfully!" -ForegroundColor Green
-            
-            # Create desktop shortcut
-            $desktopPath = [Environment]::GetFolderPath("Desktop")
-            $shortcutPath = "$desktopPath\Custom Shortcuts.lnk"
-            $WshShell = New-Object -ComObject WScript.Shell
-            $Shortcut = $WshShell.CreateShortcut($shortcutPath)
-            $Shortcut.TargetPath = $shortcutsPath
-            $Shortcut.WorkingDirectory = $startupFolder
-            $Shortcut.Description = "Custom Keyboard Shortcuts"
-            $Shortcut.Save()
-            Write-Host "Desktop shortcut created successfully!" -ForegroundColor Green
-            
-            if (Test-Path $shortcutsPath) {
-                Start-Process $shortcutsPath
-                Write-Host "Custom shortcuts are now active!" -ForegroundColor Green
-            }
-        }
-        catch {
-            Write-Host "Failed to download or setup shortcuts. Error: $_" -ForegroundColor Red
-        }
-    }
-    else {
-        Write-Host "Skipping custom shortcuts setup." -ForegroundColor Blue
+    if ($response.ToLower() -ne 'y') { Write-Host "${Yellow}Skipped.${Reset}"; return }
+    Write-Host "${Yellow}Installing AutoHotkey and setting up shortcuts...${Reset}"
+    winget install -e --id AutoHotkey.AutoHotkey
+    $startupFolder = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
+    $shortcutsPath = Join-Path $startupFolder 'shortcuts.ahk'
+    try {
+        Start-BitsTransfer -Source $shortcutsAhkUrl -Destination $shortcutsPath -ErrorAction Stop
+        # Create desktop shortcut
+        $desktopPath = [Environment]::GetFolderPath('Desktop')
+        $shortcutPath = Join-Path $desktopPath 'Custom Shortcuts.lnk'
+        $WshShell = New-Object -ComObject WScript.Shell
+        $Shortcut = $WshShell.CreateShortcut($shortcutPath)
+        $Shortcut.TargetPath = $shortcutsPath
+        $Shortcut.WorkingDirectory = $startupFolder
+        $Shortcut.Description = 'Custom Keyboard Shortcuts'
+        $Shortcut.Save()
+        if (Test-Path $shortcutsPath) { Start-Process $shortcutsPath }
+        Write-Host "${Green}AutoHotkey shortcuts set up.${Reset}"
+    } catch {
+        Write-Host "${Red}Failed to set up shortcuts.`n$_${Reset}"
     }
 }
-
-# Run the Initialize-CustomShortcuts function
 Initialize-CustomShortcuts
 
-# Function to setup Neovim configuration files
+# Neovim config
 function Initialize-NeovimConfig {
-    Write-Host "Setting up Neovim configuration..." -ForegroundColor Cyan
-    
+    Write-Host "${Cyan}Setting up Neovim configuration...${Reset}"
     $nvimConfigDir = "$env:LOCALAPPDATA\nvim"
-    
-    # Create nvim directory if it doesn't exist
-    if (-not (Test-Path -Path $nvimConfigDir)) {
-        New-Item -ItemType Directory -Path $nvimConfigDir -Force
-        Write-Host "Created Neovim configuration directory: $nvimConfigDir" -ForegroundColor Green
-    } else {
-        Write-Host "Neovim configuration directory already exists: $nvimConfigDir" -ForegroundColor Blue
-        
-        # Backup existing config
+    if (-not (Test-Path -Path $nvimConfigDir)) { New-Item -ItemType Directory -Path $nvimConfigDir -Force | Out-Null } else {
         $backupDir = "$nvimConfigDir.backup.$(Get-Date -Format 'yyyyMMdd_HHmmss')"
-        Write-Host "Creating backup of existing Neovim configuration at: $backupDir" -ForegroundColor Yellow
         Copy-Item -Path $nvimConfigDir -Destination $backupDir -Recurse -Force
-        
-        # Clear existing directory
         Remove-Item -Path "$nvimConfigDir\*" -Recurse -Force -ErrorAction SilentlyContinue
     }
-    
-    # Create a temporary directory to download the files
-    $tempDir = "$env:TEMP\nvim_download"
-    if (Test-Path $tempDir) {
-        Remove-Item -Path $tempDir -Recurse -Force
-    }
+    $tempDir = Join-Path $env:TEMP 'nvim_download'
+    if (Test-Path $tempDir) { Remove-Item -Path $tempDir -Recurse -Force }
     New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-    
-    # Download the nvim.zip file from GitHub
-    $zipUrl = "https://github.com/Jaredy899/win/archive/refs/heads/main.zip"
-    $zipPath = "$tempDir\repo.zip"
-    
-    Write-Host "Downloading Neovim configuration files from GitHub..." -ForegroundColor Yellow
+    $zipUrl = 'https://github.com/Jaredy899/win/archive/refs/heads/main.zip'
+    $zipPath = Join-Path $tempDir 'repo.zip'
     try {
         Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
-        
-        # Extract the zip file
         Expand-Archive -Path $zipPath -DestinationPath $tempDir -Force
-        
-        # Copy the nvim folder to the destination
-        $extractedNvimPath = "$tempDir\win-main\my_powershell\nvim"
+        $extractedNvimPath = Join-Path $tempDir 'win-main\my_powershell\nvim'
         if (Test-Path $extractedNvimPath) {
-            Copy-Item -Path "$extractedNvimPath\*" -Destination $nvimConfigDir -Recurse -Force
-            Write-Host "Neovim configuration installed successfully!" -ForegroundColor Green
-        } else {
-            Write-Host "Could not find nvim folder in the downloaded repository." -ForegroundColor Red
-        }
-    } catch {
-        Write-Host "Error downloading or extracting files: $_" -ForegroundColor Red
-    }
-    
-    # Clean up temporary files
-    if (Test-Path $tempDir) {
-        Remove-Item -Path $tempDir -Recurse -Force
-    }
+            Copy-Item -Path (Join-Path $extractedNvimPath '*') -Destination $nvimConfigDir -Recurse -Force
+            Write-Host "${Green}Neovim configuration installed.${Reset}"
+        } else { Write-Host "${Red}nvim folder not found in repository.${Reset}" }
+    } catch { Write-Host "${Red}Error setting up Neovim config.`n$_${Reset}" }
+    finally { if (Test-Path $tempDir) { Remove-Item -Path $tempDir -Recurse -Force } }
 }
-
-# Run the Initialize-NeovimConfig function
 Initialize-NeovimConfig
 
-# Instructions for Manual Font Configuration
-Write-Host ""
-Write-Host "=== Manual Font Configuration ===" -ForegroundColor Cyan
-Write-Host "To set the font for Windows Terminal to 'Fira Code Nerd Font', please follow these steps:" -ForegroundColor Yellow
-Write-Host "1. Open Windows Terminal." -ForegroundColor White
-Write-Host "2. Go to Settings." -ForegroundColor White
-Write-Host "3. Select the 'Windows PowerShell' profile." -ForegroundColor White
-Write-Host "4. Under 'Appearance', set the 'Font face' to 'Fira Code Nerd Font'." -ForegroundColor White
-Write-Host "5. Save and close the settings." -ForegroundColor White
-Write-Host "===============================" -ForegroundColor Cyan
-Write-Host ""
+# Final notes (concise)
+Write-Host ''
+Write-Host "${Cyan}Font setup:${Reset}"
+Write-Host "Set 'Fira Code Nerd Font' in Windows Terminal > Settings > Windows PowerShell > Appearance." -ForegroundColor White
+Write-Host ''
+Write-Host "${Cyan}Profile notes:${Reset}"
+Write-Host 'The profile will be updated when you re-run this script.' -ForegroundColor White
+Write-Host 'For personal aliases/customizations, create a separate profile.ps1.' -ForegroundColor White
 
-# Final notes
-Write-Host "Note: This profile will update every time you run the script." -ForegroundColor Yellow
-Write-Host "If you wish to keep your own aliases or customizations, create a separate profile.ps1 file." -ForegroundColor Yellow
-Write-Host "You can use nano to create or edit this file by running the following command:" -ForegroundColor Cyan
-Write-Host "`nStart-Process 'nano' -ArgumentList '$HOME\Documents\PowerShell\profile.ps1'`n" -ForegroundColor White
-Write-Host "After adding your custom aliases or functions, save the file and restart your shell to apply the changes." -ForegroundColor Magenta
-
-Write-Host "`nDevelopment setup complete!" -ForegroundColor Green 
+Write-Host "${Green}`nDevelopment setup complete!${Reset}"

@@ -8,7 +8,7 @@ pub fn build_all() -> Result<(), DynError> {
 
     // Detect current platform
     let platform = std::env::consts::OS;
-    println!("Current platform: {}", platform);
+    println!("Current platform: {platform}");
 
     // Build for Linux architectures
     println!("Building for Linux architectures...");
@@ -56,11 +56,11 @@ fn build_linux_targets() -> Result<(), DynError> {
 
 fn build_target(target: &str) -> Result<(), DynError> {
     let status = Command::new("cargo")
-        .args(&["build", "--release", "--target", target])
+        .args(["build", "--release", "--target", target])
         .status()?;
 
     if !status.success() {
-        return Err(format!("Failed to build for target: {}", target).into());
+        return Err(format!("Failed to build for target: {target}").into());
     }
 
     Ok(())
@@ -82,7 +82,7 @@ fn create_universal_macos_binary() -> Result<(), DynError> {
 
     // Create universal binary using lipo
     let status = Command::new("lipo")
-        .args(&["-create", x86_64_path, aarch64_path, "-output", output_path])
+        .args(["-create", x86_64_path, aarch64_path, "-output", output_path])
         .status()?;
 
     if !status.success() {
@@ -92,20 +92,7 @@ fn create_universal_macos_binary() -> Result<(), DynError> {
     Ok(())
 }
 
-pub fn build_current_platform() -> Result<(), DynError> {
-    println!("Building for current platform...");
-
-    let status = Command::new("cargo")
-        .args(&["build", "--release"])
-        .status()?;
-
-    if !status.success() {
-        return Err("Failed to build for current platform".into());
-    }
-
-    println!("Build completed successfully!");
-    Ok(())
-}
+// Removed unused build_current_platform()
 
 pub fn build_cross_platform() -> Result<(), DynError> {
     println!("Building for Linux and Windows using cross-compilation...");

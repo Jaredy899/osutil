@@ -1,3 +1,11 @@
+# Minimal ANSI colors for PS7/Windows Terminal (harmless in PS5)
+$esc   = [char]27
+$Cyan  = "${esc}[36m"
+$Green = "${esc}[32m"
+$Red   = "${esc}[31m"
+$Blue  = "${esc}[34m"
+$Reset = "${esc}[0m"
+
 # Check if running as administrator
 function Test-Administrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -7,19 +15,21 @@ function Test-Administrator {
 
 # Self-elevate the script if required
 if (-not (Test-Administrator)) {
-    Write-Output "Requesting administrative privileges..."
-    Start-Process powershell.exe -Verb RunAs -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"")
+    Write-Host "${Cyan}Requesting administrative privileges...${Reset}"
+    $ps = (Get-Command pwsh -ErrorAction SilentlyContinue)?.Source
+    if (-not $ps) { $ps = (Get-Command powershell -ErrorAction SilentlyContinue).Source }
+    Start-Process $ps -Verb RunAs -ArgumentList ('-NoProfile','-ExecutionPolicy','Bypass','-File', $PSCommandPath)
     Exit
 }
 
-Write-Output "Script running with administrative privileges..."
+Write-Host "${Cyan}Script running with administrative privileges...${Reset}"
 
 function Set-RemoteDesktop {
     Try {
         New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name fDenyTSConnections -Value 0 -PropertyType DWORD -Force *>$null
-        Write-Host "Remote Desktop enabled." -ForegroundColor Green
+        Write-Host "${Green}Remote Desktop enabled.${Reset}"
     } Catch {
-        Write-Host "Failed to enable Remote Desktop: $($_)" -ForegroundColor Red
+        Write-Host "${Red}Failed to enable Remote Desktop: $($_)${Reset}"
     }
 }
 
@@ -36,9 +46,9 @@ function Enable-FirewallRule {
         } else {
             netsh advfirewall firewall set rule group="$ruleGroup" new enable=Yes *>$null
         }
-        Write-Host "${ruleName} rule enabled." -ForegroundColor Green
+        Write-Host "${Green}${ruleName} rule enabled.${Reset}"
     } Catch {
-        Write-Host "Failed to enable ${ruleName} rule: $($_)" -ForegroundColor Red
+        Write-Host "${Red}Failed to enable ${ruleName} rule: $($_)${Reset}"
     }
 }
 
@@ -49,12 +59,12 @@ function Install-WindowsCapability {
     if ((Get-WindowsCapability -Online | Where-Object Name -like "$capabilityName*").State -ne 'Installed') {
         Try {
             Add-WindowsCapability -Online -Name $capabilityName *>$null
-            Write-Host "${capabilityName} installed successfully." -ForegroundColor Green
+            Write-Host "${Green}${capabilityName} installed successfully.${Reset}"
         } Catch {
-            Write-Host "Failed to install ${capabilityName}: $($_)" -ForegroundColor Red
+            Write-Host "${Red}Failed to install ${capabilityName}: $($_)${Reset}"
         }
     } else {
-        Write-Host "${capabilityName} is already installed." -ForegroundColor Blue
+        Write-Host "${Blue}${capabilityName} is already installed.${Reset}"
     }
 }
 
@@ -62,9 +72,9 @@ function Set-SSHConfiguration {
     Try {
         Start-Service sshd *>$null
         Set-Service -Name sshd -StartupType 'Automatic' *>$null
-        Write-Host "SSH service started and set to start automatically." -ForegroundColor Green
+        Write-Host "${Green}SSH service started and set to start automatically.${Reset}"
     } Catch {
-        Write-Host "Failed to configure SSH service: $($_)" -ForegroundColor Red
+        Write-Host "${Red}Failed to configure SSH service: $($_)${Reset}"
     }
 
     Try {
@@ -72,22 +82,22 @@ function Set-SSHConfiguration {
         if ($null -eq $firewallRuleExists) {
             Try {
                 New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 *>$null
-                Write-Host "Firewall rule for OpenSSH Server (sshd) created successfully." -ForegroundColor Green
+                Write-Host "${Green}Firewall rule for OpenSSH Server (sshd) created successfully.${Reset}"
             } Catch {
-                Write-Host "Failed to create firewall rule for OpenSSH Server (sshd): $($_)" -ForegroundColor Red
+                Write-Host "${Red}Failed to create firewall rule for OpenSSH Server (sshd): $($_)${Reset}"
             }
         } else {
-            Write-Host "Firewall rule for OpenSSH Server (sshd) already exists." -ForegroundColor Blue
+            Write-Host "${Blue}Firewall rule for OpenSSH Server (sshd) already exists.${Reset}"
         }
     } Catch {
-        Write-Host "Failed to check for existing firewall rule: $($_)" -ForegroundColor Red
+        Write-Host "${Red}Failed to check for existing firewall rule: $($_)${Reset}"
     }
 
     Try {
         New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Program Files\PowerShell\7\pwsh.exe" -PropertyType String -Force *>$null
-        Write-Host "Default shell for OpenSSH set to PowerShell 7." -ForegroundColor Green
+        Write-Host "${Green}Default shell for OpenSSH set to PowerShell 7.${Reset}"
     } Catch {
-        Write-Host "Failed to set default shell for OpenSSH: $($_)" -ForegroundColor Red
+        Write-Host "${Red}Failed to set default shell for OpenSSH: $($_)${Reset}"
     }
 }
 
@@ -101,4 +111,4 @@ Install-WindowsCapability -capabilityName "OpenSSH.Client~~~~0.0.1.0"
 Install-WindowsCapability -capabilityName "OpenSSH.Server~~~~0.0.1.0"
 Set-SSHConfiguration
 
-Write-Host "`nSystem setup complete!" -ForegroundColor Green 
+Write-Host "${Green}`nSystem setup complete!${Reset}"

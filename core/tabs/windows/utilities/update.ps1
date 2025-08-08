@@ -1,14 +1,20 @@
 #Requires -Version 5.1
+$esc   = [char]27
+$Cyan  = "${esc}[36m"
+$Yellow= "${esc}[33m"
+$Green = "${esc}[32m"
+$Blue  = "${esc}[34m"
+$Reset = "${esc}[0m"
 
 $ErrorActionPreference = 'Stop'
 
 function Install-NuGetProvider {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     if (-not (Get-PackageProvider -ListAvailable -Name NuGet -ErrorAction SilentlyContinue)) {
-        Write-Host "NuGet provider not found. Installing NuGet provider..." -ForegroundColor Yellow
+        Write-Host "${Yellow}NuGet provider not found. Installing NuGet provider...${Reset}"
         try {
             Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-            Write-Host "NuGet provider installed successfully!" -ForegroundColor Green
+            Write-Host "${Green}NuGet provider installed successfully!${Reset}"
         }
         catch {
             Write-Error "Failed to install NuGet provider. Please check your internet connection or try again later."
@@ -16,16 +22,16 @@ function Install-NuGetProvider {
         }
     }
     else {
-        Write-Host "NuGet provider is already installed." -ForegroundColor Blue
+        Write-Host "${Blue}NuGet provider is already installed.${Reset}"
     }
 }
 
 function Install-PSWindowsUpdateModule {
     if (-not (Get-Module -ListAvailable -Name PSWindowsUpdate)) {
-        Write-Host "Installing PSWindowsUpdate module..." -ForegroundColor Yellow
+        Write-Host "${Yellow}Installing PSWindowsUpdate module...${Reset}"
         try {
             Install-Module -Name PSWindowsUpdate -Force -SkipPublisherCheck
-            Write-Host "PSWindowsUpdate module installed successfully!" -ForegroundColor Green
+            Write-Host "${Green}PSWindowsUpdate module installed successfully!${Reset}"
         }
         catch {
             Write-Error "Failed to install PSWindowsUpdate module. Please check your internet connection or try again later."
@@ -33,12 +39,12 @@ function Install-PSWindowsUpdateModule {
         }
     }
     else {
-        Write-Host "PSWindowsUpdate module is already installed." -ForegroundColor Blue
+        Write-Host "${Blue}PSWindowsUpdate module is already installed.${Reset}"
     }
 }
 
 function Import-PSWindowsUpdateModule {
-    Write-Host "Importing PSWindowsUpdate module..." -ForegroundColor Cyan
+    Write-Host "${Cyan}Importing PSWindowsUpdate module...${Reset}"
     try {
         Import-Module PSWindowsUpdate -Force
     }
@@ -49,7 +55,7 @@ function Import-PSWindowsUpdateModule {
 }
 
 function Update-Windows {
-    Write-Host "`n=== Checking for available updates... ===" -ForegroundColor Cyan
+    Write-Host "${Cyan}`n=== Checking for available updates... ===${Reset}"
     try {
         $updates = Get-WindowsUpdate
     }
@@ -59,13 +65,13 @@ function Update-Windows {
     }
 
     if ($updates) {
-        Write-Host "`nThe following updates are available:" -ForegroundColor Yellow
+        Write-Host "${Yellow}`nThe following updates are available:${Reset}"
         $updates | Format-Table -AutoSize
 
-        Write-Host "`nInstalling updates..." -ForegroundColor Yellow
+        Write-Host "${Yellow}`nInstalling updates...${Reset}"
         try {
             Install-WindowsUpdate -AcceptAll -AutoReboot
-            Write-Host "Updates installation process initiated!" -ForegroundColor Green
+            Write-Host "${Green}Updates installation process initiated!${Reset}"
         }
         catch {
             Write-Error "Failed to install updates."
@@ -73,12 +79,12 @@ function Update-Windows {
         }
     }
     else {
-        Write-Host "No updates are available." -ForegroundColor Blue
+        Write-Host "${Blue}No updates are available.${Reset}"
     }
 }
 
 function Get-InstalledUpdates {
-    Write-Host "`n=== Recently installed updates ===" -ForegroundColor Cyan
+    Write-Host "${Cyan}`n=== Recently installed updates ===${Reset}"
     try {
         Get-WUHistory | Format-Table -AutoSize
     }
