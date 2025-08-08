@@ -15,10 +15,7 @@ use ratatui::{
 use std::{
     fs::File,
     io::{Result, Write},
-    sync::{
-        atomic::AtomicBool,
-        Arc, Mutex,
-    },
+    sync::{atomic::AtomicBool, Arc, Mutex},
     thread::JoinHandle,
 };
 

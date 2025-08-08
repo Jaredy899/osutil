@@ -66,7 +66,8 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, state: &mut AppState) 
         // Wait briefly for an input event
         if !event::poll(Duration::from_millis(50))? {
             // No input event: if there was output, reset the flag
-            let _ = TERMINAL_UPDATED.compare_exchange(true, false, Ordering::AcqRel, Ordering::Acquire);
+            let _ =
+                TERMINAL_UPDATED.compare_exchange(true, false, Ordering::AcqRel, Ordering::Acquire);
             // Redraw periodically to reflect any new output
             terminal.draw(|frame| state.draw(frame)).unwrap();
             continue;

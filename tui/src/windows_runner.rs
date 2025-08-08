@@ -1,10 +1,10 @@
-use std::process::{Command as StdCommand, Stdio};
-use std::io::{Read, Write};
-use std::sync::{Arc, Mutex, atomic::{Ordering}};
-use std::thread::JoinHandle;
+use crate::running_command::TERMINAL_UPDATED;
 use osutil_core::Command;
 use portable_pty::ExitStatus;
-use crate::running_command::TERMINAL_UPDATED;
+use std::io::{Read, Write};
+use std::process::{Command as StdCommand, Stdio};
+use std::sync::{atomic::Ordering, Arc, Mutex};
+use std::thread::JoinHandle;
 
 pub struct WindowsCommandRunner {
     pub buffer: Arc<Mutex<Vec<u8>>>,
@@ -35,12 +35,15 @@ impl Write for WindowsStdin {
 impl WindowsCommandRunner {
     pub fn new(command: &Command) -> Self {
         let (executable, args) = match command {
-            Command::Raw(prompt) => {
-                ("cmd.exe".to_string(), vec!["/c".to_string(), prompt.clone()])
-            }
-            Command::LocalFile { executable, args, file: _ } => {
-                (executable.clone(), args.clone())
-            }
+            Command::Raw(prompt) => (
+                "cmd.exe".to_string(),
+                vec!["/c".to_string(), prompt.clone()],
+            ),
+            Command::LocalFile {
+                executable,
+                args,
+                file: _,
+            } => (executable.clone(), args.clone()),
             Command::None => panic!("Command::None was treated as a command"),
         };
 
@@ -48,7 +51,7 @@ impl WindowsCommandRunner {
         for arg in &args {
             cmd.arg(arg);
         }
-        
+
         // Set working directory if it's a LocalFile command
         if let Command::LocalFile { file, .. } = command {
             if let Some(parent_directory) = file.parent() {
@@ -69,19 +72,19 @@ impl WindowsCommandRunner {
         cmd.stdin(Stdio::piped());
 
         let command_buffer: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
-        
+
         match cmd.spawn() {
             Ok(mut child) => {
                 let mut stdout = child.stdout.take().unwrap();
                 let mut stderr = child.stderr.take().unwrap();
                 let stdin = Arc::new(Mutex::new(child.stdin.take().unwrap()));
                 let stdin_writer: Box<dyn Write + Send> = Box::new(WindowsStdin(stdin));
-                
+
                 let buffer_clone = command_buffer.clone();
                 let reader_handle = std::thread::spawn(move || {
                     let mut stdout_buf = [0u8; 1024];
                     let mut stderr_buf = [0u8; 1024];
-                    
+
                     // Read stdout
                     loop {
                         match stdout.read(&mut stdout_buf) {
@@ -95,7 +98,7 @@ impl WindowsCommandRunner {
                             Err(_) => break,
                         }
                     }
-                    
+
                     // Read stderr
                     loop {
                         match stderr.read(&mut stderr_buf) {
@@ -111,17 +114,15 @@ impl WindowsCommandRunner {
                     }
                 });
 
-                let command_handle = std::thread::spawn(move || {
-                    match child.wait() {
-                        Ok(status) => {
-                            if let Some(code) = status.code() {
-                                ExitStatus::with_exit_code(code as u32)
-                            } else {
-                                ExitStatus::with_exit_code(1)
-                            }
+                let command_handle = std::thread::spawn(move || match child.wait() {
+                    Ok(status) => {
+                        if let Some(code) = status.code() {
+                            ExitStatus::with_exit_code(code as u32)
+                        } else {
+                            ExitStatus::with_exit_code(1)
                         }
-                        Err(_) => ExitStatus::with_exit_code(1),
                     }
+                    Err(_) => ExitStatus::with_exit_code(1),
                 });
 
                 Self {
@@ -155,7 +156,9 @@ impl WindowsCommandRunner {
                 }
             }
         }
-        
-        self.status.clone().unwrap_or_else(|| ExitStatus::with_exit_code(1))
+
+        self.status
+            .clone()
+            .unwrap_or_else(|| ExitStatus::with_exit_code(1))
     }
 }
