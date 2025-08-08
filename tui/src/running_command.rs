@@ -1,9 +1,7 @@
 use crate::{float::FloatContent, hint::Shortcut, shortcuts, theme::Theme};
-use oneshot::{channel, Receiver};
+use oneshot::Receiver;
 use osutil_core::Command;
-use portable_pty::{
-    ChildKiller, CommandBuilder, ExitStatus, MasterPty, NativePtySystem, PtySize, PtySystem,
-};
+use portable_pty::{ChildKiller, ExitStatus, MasterPty, PtySize};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind},
     prelude::*,
@@ -14,7 +12,7 @@ use std::{
     fs::File,
     io::{Result, Write},
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::AtomicBool,
         Arc, Mutex,
     },
     thread::JoinHandle,
@@ -76,7 +74,7 @@ pub struct RunningCommand {
     _reader_thread: JoinHandle<()>,
     /// Virtual terminal (pty) handle, used for resizing the pty
     pty_master: Box<dyn MasterPty + Send>,
-    /// Used for sending keys to the emulated terminal
+    /// Used for sending keys to the emulated terminal (or child stdin on Windows)
     writer: Box<dyn Write + Send>,
     /// Only set after the process has ended
     status: Option<ExitStatus>,
@@ -311,214 +309,26 @@ impl RunningCommand {
 
         #[cfg(windows)]
         {
-            // On Windows, handle only the first command (sequential execution is handled in state.rs)
+            // Use Windows-specific implementation
+            use crate::windows_runner::WindowsCommandRunner;
             let command = commands.first().expect("No commands provided");
-            let _script_name = _script_names.first().cloned();
 
-            #[cfg(windows)]
-            let pty_system = NativePtySystem::default();
+            let windows_runner = WindowsCommandRunner::new(command);
 
-            #[cfg(not(windows))]
-            let pty_system = NativePtySystem::default();
-
-            let (executable, args) = match command {
-                Command::Raw(prompt) => {
-                    // For raw commands, use the default shell
-                    #[cfg(windows)]
-                    let shell = Self::get_powershell_executable()
-                        .unwrap_or_else(|| "powershell.exe".to_string());
-                    #[cfg(not(windows))]
-                    let shell = "sh";
-
-                    (shell.to_string(), vec!["-c".to_string(), prompt.clone()])
-                }
-                Command::LocalFile {
-                    executable,
-                    args,
-                    file: _,
-                } => {
-                    // For local files, use the executable and args as determined by get_shebang
-                    let full_args = args.clone();
-                    // The file path is already included in args from get_shebang, so we don't need to add it again
-                    (executable.clone(), full_args)
-                }
-                Command::None => panic!("Command::None was treated as a command"),
-            };
-
-            let mut cmd: CommandBuilder = CommandBuilder::new(&executable);
-
-            // If it's a LocalFile command, we need to set the working directory
-            if let Command::LocalFile { file, .. } = command {
-                if let Some(parent_directory) = file.parent() {
-                    cmd.cwd(parent_directory);
-                }
-            }
-
-            // Windows-specific PTY configuration
-            #[cfg(windows)]
-            {
-                // Set environment variables that might help with PTY interaction
-                cmd.env("TERM", "xterm-256color");
-                cmd.env("COLORTERM", "truecolor");
-                // Ensure PowerShell knows it's running in a terminal
-                cmd.env("OSUTIL_TUI_MODE", "1");
-                // Set additional Windows-specific environment variables
-                cmd.env("PROMPT", "$P$G");
-                cmd.env("PSModulePath", "");
-            }
-
-            for arg in args {
-                cmd.arg(arg);
-            }
-
-            // Open a pseudo-terminal with initial size
-            #[cfg(windows)]
-            let pair = match pty_system.openpty(PtySize {
-                rows: 24,
-                cols: 80,
-                pixel_width: 0,
-                pixel_height: 0,
-            }) {
-                Ok(pair) => pair,
-                Err(e) => {
-                    eprintln!("Failed to open PTY: {e}");
-                    return Self {
-                        buffer: Arc::new(Mutex::new(Vec::new())),
-                        command_thread: None,
-                        child_killer: None,
-                        _reader_thread: std::thread::spawn(|| {}),
-                        pty_master: Box::new(DummyPty),
-                        writer: Box::new(std::io::sink()),
-                        status: None,
-                        log_path: None,
-                        scroll_offset: 0,
-                    };
-                }
-            };
-
-            #[cfg(not(windows))]
-            let pair = match pty_system.openpty(PtySize {
-                rows: 24, // Initial number of rows (will be updated dynamically)
-                cols: 80, // Initial number of columns (will be updated dynamically)
-                pixel_width: 0,
-                pixel_height: 0,
-            }) {
-                Ok(pair) => pair,
-                Err(e) => {
-                    eprintln!("Failed to open PTY: {e}");
-                    // Return a dummy RunningCommand that will show an error
-                    return Self {
-                        buffer: Arc::new(Mutex::new(Vec::new())),
-                        command_thread: None,
-                        child_killer: None,
-                        _reader_thread: std::thread::spawn(|| {}),
-                        pty_master: Box::new(DummyPty),
-                        writer: Box::new(std::io::sink()),
-                        status: None,
-                        log_path: None,
-                        scroll_offset: 0,
-                    };
-                }
-            };
-
-            // On Windows, we might need to set additional PTY properties
-            #[cfg(windows)]
-            {
-                // Try to set PTY properties that might help with interactive input
-                if let Err(e) = pair.master.resize(PtySize {
-                    rows: 40,
-                    cols: 120,
-                    pixel_width: 0,
-                    pixel_height: 0,
-                }) {
-                    eprintln!("Failed to resize PTY after creation: {e}");
-                }
-
-                // Add a small delay to let the PTY settle
-                std::thread::sleep(std::time::Duration::from_millis(100));
-            }
-
-            let (tx, rx) = channel();
-            // Thread waiting for the child to complete
-            let command_handle = std::thread::spawn(move || match pair.slave.spawn_command(cmd) {
-                Ok(mut child) => {
-                    let killer = child.clone_killer();
-                    if let Err(e) = tx.send(killer) {
-                        eprintln!("Failed to send killer: {e}");
-                    }
-                    match child.wait() {
-                        Ok(status) => status,
-                        Err(e) => {
-                            eprintln!("Failed to wait for child: {e}");
-                            ExitStatus::with_exit_code(1)
-                        }
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Failed to spawn command: {e}");
-                    ExitStatus::with_exit_code(1)
-                }
-            });
-
-            let mut reader = match pair.master.try_clone_reader() {
-                Ok(reader) => reader,
-                Err(e) => {
-                    eprintln!("Failed to clone reader: {e}");
-                    Box::new(std::io::empty())
-                }
-            }; // This is a reader, this is where we
-
-            // A buffer, shared between the thread that reads the command output, and the main tread.
-            // The main thread only reads the contents
-            let command_buffer: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
-            TERMINAL_UPDATED.store(true, Ordering::Release);
-            let reader_handle = {
-                // Arc is just a reference, so we can create an owned copy without any problem
-                let command_buffer = command_buffer.clone();
-                // The closure below moves all variables used into it, so we can no longer use them,
-                // that's why command_buffer.clone(), because we need to use command_buffer later
-                std::thread::spawn(move || {
-                    let mut buf = [0u8; 8192];
-                    loop {
-                        match reader.read(&mut buf) {
-                            Ok(size) => {
-                                if size == 0 {
-                                    break; // EOF
-                                }
-                                if let Ok(mut mutex) = command_buffer.lock() {
-                                    mutex.extend_from_slice(&buf[0..size]);
-                                    TERMINAL_UPDATED.store(true, Ordering::Release);
-                                }
-                            }
-                            Err(e) => {
-                                eprintln!("Failed to read from PTY: {e}");
-                                break;
-                            }
-                        }
-                    }
-                    TERMINAL_UPDATED.store(true, Ordering::Release);
-                })
-            };
-
-            let writer = match pair.master.take_writer() {
-                Ok(writer) => writer,
-                Err(e) => {
-                    eprintln!("Failed to take writer: {e}");
-                    Box::new(std::io::sink())
-                }
-            };
             Self {
-                buffer: command_buffer,
-                command_thread: Some(command_handle),
-                child_killer: Some(rx),
-                _reader_thread: reader_handle,
-                pty_master: pair.master,
-                writer,
-                status: None,
+                buffer: windows_runner.buffer,
+                command_thread: windows_runner.command_thread,
+                child_killer: None,
+                _reader_thread: windows_runner._reader_thread,
+                pty_master: Box::new(DummyPty),
+                writer: windows_runner.stdin_writer,
+                status: windows_runner.status,
                 log_path: None,
                 scroll_offset: 0,
             }
         }
+
+        // Windows-specific fallback removed (unused)
     }
 
     fn screen(&mut self, size: Size) -> Screen {
@@ -595,6 +405,7 @@ impl RunningCommand {
 
     /// Get PowerShell executable (prefer PowerShell 7, fallback to PowerShell 5)
     #[cfg(windows)]
+    #[allow(dead_code)]
     fn get_powershell_executable() -> Option<String> {
         // First try PowerShell 7 (pwsh.exe)
         let pwsh = "pwsh.exe";
@@ -623,6 +434,7 @@ impl RunningCommand {
 
     /// Launch an interactive PowerShell script in a separate terminal window
     #[cfg(windows)]
+    #[allow(dead_code)]
     pub fn launch_in_separate_terminal(command: &Command, script_name: Option<String>) -> Self {
         if let Command::LocalFile {
             executable: _,

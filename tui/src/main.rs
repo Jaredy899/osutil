@@ -8,6 +8,8 @@ mod root;
 mod running_command;
 mod state;
 mod theme;
+#[cfg(windows)]
+mod windows_runner;
 
 #[cfg(feature = "tips")]
 mod tips;
@@ -61,14 +63,12 @@ fn main() -> Result<()> {
 
 fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, state: &mut AppState) -> Result<()> {
     loop {
-        // Wait for an event
-        if !event::poll(Duration::from_millis(10))? {
-            if TERMINAL_UPDATED
-                .compare_exchange(true, false, Ordering::AcqRel, Ordering::Acquire)
-                .is_ok()
-            {
-                terminal.draw(|frame| state.draw(frame)).unwrap();
-            }
+        // Wait briefly for an input event
+        if !event::poll(Duration::from_millis(50))? {
+            // No input event: if there was output, reset the flag
+            let _ = TERMINAL_UPDATED.compare_exchange(true, false, Ordering::AcqRel, Ordering::Acquire);
+            // Redraw periodically to reflect any new output
+            terminal.draw(|frame| state.draw(frame)).unwrap();
             continue;
         }
 

@@ -261,15 +261,22 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
             true
         };
 
-        let (base_exe, mut base_args) = if pwsh_valid {
+        // Build a -Command wrapper that captures all streams, including Write-Host (Information)
+        let command_wrapper = format!(
+            "$InformationPreference='Continue'; & '{}' *>&1",
+            script_path.to_string_lossy()
+        );
+
+        let (base_exe, base_args) = if pwsh_valid {
             (
                 pwsh.to_string(),
                 vec![
+                    "-NoLogo".to_string(),
                     "-NoProfile".to_string(),
                     "-ExecutionPolicy".to_string(),
                     "Bypass".to_string(),
-                    "-File".to_string(),
-                    script_path.to_string_lossy().to_string(),
+                    "-Command".to_string(),
+                    command_wrapper,
                 ],
             )
         } else {
@@ -288,11 +295,12 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
                 (
                     powershell.to_string(),
                     vec![
+                        "-NoLogo".to_string(),
                         "-NoProfile".to_string(),
                         "-ExecutionPolicy".to_string(),
                         "Bypass".to_string(),
-                        "-File".to_string(),
-                        script_path.to_string_lossy().to_string(),
+                        "-Command".to_string(),
+                        command_wrapper,
                     ],
                 )
             } else {
@@ -301,18 +309,6 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
             }
         };
 
-        // If sudo is available and the script appears to require elevation,
-        // wrap the invocation in sudo to keep it within the same console (inline) when possible
-        let sudo_available = if validate { which::which("sudo.exe").is_ok() } else { true };
-        if sudo_available && script_requires_admin(script_path) {
-            let mut sudo_args = Vec::with_capacity(2 + base_args.len());
-            // Force inline mode when supported to avoid opening a new window
-            sudo_args.push("--inline".to_string());
-            sudo_args.push(base_exe);
-            sudo_args.append(&mut base_args);
-            return Some(("sudo.exe".to_string(), sudo_args));
-        }
-
         Some((base_exe, base_args))
     } else {
         None
@@ -320,6 +316,7 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
 }
 
 #[cfg(windows)]
+#[allow(dead_code)]
 fn script_requires_admin(script_path: &Path) -> bool {
     match std::fs::read_to_string(script_path) {
         Ok(content) => {

@@ -1,14 +1,10 @@
 name = "Windows Utilities"
 
-[[data]]
-name = "Enable Sudo (Inline)"
-description = "Enables Windows sudo and configures it to run inline in the current console"
-script = "enable-sudo.ps1"
-task_list = "I"
+# Removed: Enable Sudo (Inline) — handled by Windows 11 sudo and not needed in the TUI
 
 [[data]]
 name = "Chris Titus Tech Windows Utility"
-description = "Invokes Chris Titus Tech's Windows Utility directly from URL"
+description = "Invokes Chris Titus Tech's Windows Utility (opens in a separate PowerShell window for full interactivity)"
 script = "chris-titus-utility.ps1"
 task_list = "I"
 
@@ -50,13 +46,13 @@ task_list = "I"
 
 [[data]]
 name = "Windows Activation"
-description = "Activates Windows using the get.activated.win service"
+description = "Activates Windows using the get.activated.win service (opens in a separate PowerShell window for full interactivity)"
 script = "windows-activation.ps1"
 task_list = "I"
 
 [[data]]
 name = "SSH Key Manager"
-description = "Interactive tool to manage SSH keys for Windows administrators, including GitHub import and manual entry"
+description = "Manage SSH keys for administrators (TUI-friendly numeric menu)"
 script = "ssh-key-manager.ps1"
 task_list = "I"
 
