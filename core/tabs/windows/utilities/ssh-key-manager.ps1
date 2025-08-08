@@ -10,11 +10,21 @@ $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
 # Check if running as administrator
-$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "${Red}This script must be run as Administrator${Reset}"
-    exit 1
+function Test-Administrator {
+    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
+
+# Self-elevate the script if required
+if (-not (Test-Administrator)) {
+    Write-Host "${Cyan}Requesting administrative privileges...${Reset}"
+    $hostExe = if ($PSVersionTable.PSEdition -eq 'Core') { 'pwsh.exe' } else { 'powershell.exe' }
+    Start-Process $hostExe -Verb RunAs -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"")
+    Exit
+}
+
+Write-Host "${Cyan}Script running with administrative privileges...${Reset}"
 
 # Variables
 $programData = $env:ProgramData
@@ -32,14 +42,28 @@ function Initialize-SshEnvironment {
     }
 }
 
-function Get-GitHubKeys { param([string]$username)
-    try { Invoke-RestMethod -Uri "https://api.github.com/users/$username/keys" -ErrorAction Stop }
-    catch { Write-Host "${Red}✗ Failed to fetch keys from GitHub: $_${Reset}"; $null }
+function Get-GitHubKeys {
+    param(
+        [string]$username
+    )
+    try {
+        Invoke-RestMethod -Uri "https://api.github.com/users/$username/keys" -ErrorAction Stop
+    }
+    catch {
+        Write-Host "${Red}✗ Failed to fetch keys from GitHub: $_${Reset}"
+        return $null
+    }
 }
 
-function Add-UniqueKey { param([string]$key)
+function Add-UniqueKey {
+    param(
+        [string]$key
+    )
     $existingKeys = if (Test-Path $adminKeys) { Get-Content -Path $adminKeys } else { @() }
-    if ($existingKeys -contains $key) { Write-Host "${Yellow}! Key already exists in $adminKeys${Reset}"; return }
+    if ($existingKeys -contains $key) {
+        Write-Host "${Yellow}! Key already exists in $adminKeys${Reset}"
+        return
+    }
     Add-Content -Path $adminKeys -Value $key
     Write-Host "${Green}✓ Added new key to $adminKeys${Reset}"
 }
@@ -65,8 +89,13 @@ function Import-GitHubKeys {
             Set-Content -Path $tmp -Value $entry.key
             $fp = (& ssh-keygen -lf $tmp) -split '\s+' | Select-Object -Index 1
             Write-Host "${Green}    Fingerprint: $fp${Reset}"
-        } catch { Write-Host "${Red}    Fingerprint: (could not compute)${Reset}" }
-        finally { Remove-Item $tmp -ErrorAction SilentlyContinue }
+        }
+        catch {
+            Write-Host "${Red}    Fingerprint: (could not compute)${Reset}"
+        }
+        finally {
+            Remove-Item $tmp -ErrorAction SilentlyContinue
+        }
     }
 
     Write-Host "${Cyan}`nEnter a number to add a key, 'a' to add all, or press Enter to cancel: ${Reset}" -NoNewline
@@ -92,15 +121,34 @@ function Add-ManualKey {
 
 function Restart-SshService {
     Write-Host "${Yellow}`nRestarting SSH service...${Reset}"
-    try { Stop-Service sshd -Force -ErrorAction Stop; Start-Sleep -Seconds 2; Start-Service sshd -ErrorAction Stop; Write-Host "${Green}✓ SSH service restarted successfully${Reset}" }
-    catch { Write-Host "${Red}✗ Failed to restart SSH service: $_${Reset}" }
+    try {
+        Stop-Service sshd -Force -ErrorAction Stop
+        Start-Sleep -Seconds 2
+        Start-Service sshd -ErrorAction Stop
+        Write-Host "${Green}✓ SSH service restarted successfully${Reset}"
+    }
+    catch {
+        Write-Host "${Red}✗ Failed to restart SSH service: $_${Reset}"
+    }
 }
 
-function Repair-SshKeyPermissions { param([string]$keyPath = "$env:USERPROFILE\.ssh\id_rsa")
+function Repair-SshKeyPermissions {
+    param(
+        [string]$keyPath = "$env:USERPROFILE\.ssh\id_rsa"
+    )
     Write-Host "${Yellow}`nChecking private key permissions...${Reset}"
-    if (-not (Test-Path -Path $keyPath)) { Write-Host "${Yellow}! No private key found at $keyPath - skipping permissions fix${Reset}"; return }
-    try { icacls $keyPath /inheritance:r | Out-Null; icacls $keyPath /grant ${env:USERNAME}:"(R)" | Out-Null; Write-Host "${Green}✓ Fixed permissions for $keyPath${Reset}" }
-    catch { Write-Host "${Red}✗ Failed to set key permissions: $_${Reset}" }
+    if (-not (Test-Path -Path $keyPath)) {
+        Write-Host "${Yellow}! No private key found at $keyPath - skipping permissions fix${Reset}"
+        return
+    }
+    try {
+        icacls $keyPath /inheritance:r | Out-Null
+        icacls $keyPath /grant "${env:USERNAME}:(R)" | Out-Null
+        Write-Host "${Green}✓ Fixed permissions for $keyPath${Reset}"
+    }
+    catch {
+        Write-Host "${Red}✗ Failed to set key permissions: $_${Reset}"
+    }
 }
 
 # Main
