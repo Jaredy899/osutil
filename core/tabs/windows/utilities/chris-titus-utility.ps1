@@ -4,6 +4,12 @@ param(
     [switch]$ForceNewWindow
 )
 
+$esc   = [char]27
+$Cyan  = "${esc}[36m"
+$Yellow= "${esc}[33m"
+$Green = "${esc}[32m"
+$Reset = "${esc}[0m"
+
 $inTui = $env:OSUTIL_TUI_MODE -eq '1'
 
 if ($ForceNewWindow -or $inTui) {
@@ -15,5 +21,5 @@ if ($ForceNewWindow -or $inTui) {
 }
 
 # Inline (non-TUI) path
-Write-Host "Invoking Chris Titus Tech's Windows Utility..."
+Write-Host "${Cyan}Invoking Chris Titus Tech's Windows Utility...${Reset}"
 Invoke-RestMethod -Uri "https://christitus.com/win" | Invoke-Expression 

@@ -1,9 +1,16 @@
-# Download and extract Nord backgrounds to Documents\nord_backgrounds
+# Download and extract Nord backgrounds to Documents
 
 [CmdletBinding()]
 param(
     [switch]$Force
 )
+
+$esc   = [char]27
+$Cyan  = "${esc}[36m"
+$Yellow= "${esc}[33m"
+$Green = "${esc}[32m"
+$Red   = "${esc}[31m"
+$Reset = "${esc}[0m"
 
 $ErrorActionPreference = 'Stop'
 
@@ -30,12 +37,12 @@ try {
             $ans = Read-Host "Nord backgrounds folder exists at '$backgroundsPath'. Overwrite? (y/n)"
             if ($ans -ne 'y') { Write-Host 'Skipping Nord backgrounds download.'; return }
         } else {
-            Write-Host "Overwriting existing folder at '$backgroundsPath'..." -ForegroundColor Yellow
+            Write-Host "${Yellow}Overwriting existing folder at '$backgroundsPath'...${Reset}"
         }
         Remove-Item $backgroundsPath -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    Write-Host 'Downloading Nord backgrounds...' -ForegroundColor Cyan
+    Write-Host "${Cyan}Downloading Nord backgrounds...${Reset}"
     try {
         Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing
     } catch {
@@ -47,7 +54,7 @@ try {
         }
     }
 
-    Write-Host 'Extracting archive...' -ForegroundColor Cyan
+    Write-Host "${Cyan}Extracting archive...${Reset}"
     Expand-Archive -Path $zipPath -DestinationPath $extractRoot -Force
 
     # Find the extracted folder (usually nord-background-main)
@@ -57,10 +64,10 @@ try {
     # Move to final location
     Move-Item -Path $extractedFolder.FullName -Destination $backgroundsPath -Force
 
-    Write-Host "Nord backgrounds set up in: $backgroundsPath" -ForegroundColor Green
+    Write-Host "${Green}Nord backgrounds set up in: $backgroundsPath${Reset}"
 }
 catch {
-    Write-Host "Error setting up Nord backgrounds: $_" -ForegroundColor Red
+    Write-Host "${Red}Error setting up Nord backgrounds: $_${Reset}"
 }
 finally {
     # Cleanup temp

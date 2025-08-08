@@ -1,10 +1,18 @@
 # Script to add SSH keys to Windows administrators authorized_keys
 # Must be run as administrator
 
+# Minimal ANSI colors (PS7/Windows Terminal/TUI)
+$esc   = [char]27
+$Cyan  = "${esc}[36m"
+$Yellow= "${esc}[33m"
+$Green = "${esc}[32m"
+$Red   = "${esc}[31m"
+$Reset = "${esc}[0m"
+
 # Check if running as administrator
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "This script must be run as Administrator" -ForegroundColor Red
+    Write-Host "${Red}This script must be run as Administrator${Reset}"
     exit 1
 }
 
@@ -16,52 +24,52 @@ $adminKeys = Join-Path $sshPath "administrators_authorized_keys"
 function Initialize-SshEnvironment {
     if (-not (Test-Path -Path $sshPath)) {
         New-Item -ItemType Directory -Path $sshPath -Force | Out-Null
-        Write-Host "✓ Created $sshPath" -ForegroundColor Green
+        Write-Host "${Green}✓ Created $sshPath${Reset}"
     }
     if (-not (Test-Path -Path $adminKeys)) {
         New-Item -ItemType File -Path $adminKeys -Force | Out-Null
-        Write-Host "✓ Created $adminKeys" -ForegroundColor Green
+        Write-Host "${Green}✓ Created $adminKeys${Reset}"
     }
 }
 
 function Get-GitHubKeys { param([string]$username)
     try { Invoke-RestMethod -Uri "https://api.github.com/users/$username/keys" -ErrorAction Stop }
-    catch { Write-Host "✗ Failed to fetch keys from GitHub: $_" -ForegroundColor Red; $null }
+    catch { Write-Host "${Red}✗ Failed to fetch keys from GitHub: $_${Reset}"; $null }
 }
 
 function Add-UniqueKey { param([string]$key)
     $existingKeys = if (Test-Path $adminKeys) { Get-Content -Path $adminKeys } else { @() }
-    if ($existingKeys -contains $key) { Write-Host "! Key already exists in $adminKeys" -ForegroundColor Yellow; return }
+    if ($existingKeys -contains $key) { Write-Host "${Yellow}! Key already exists in $adminKeys${Reset}"; return }
     Add-Content -Path $adminKeys -Value $key
-    Write-Host "✓ Added new key to $adminKeys" -ForegroundColor Green
+    Write-Host "${Green}✓ Added new key to $adminKeys${Reset}"
 }
 
 function Import-GitHubKeys {
-    Write-Host "`nEnter GitHub username: " -ForegroundColor Cyan -NoNewline
+    Write-Host "${Cyan}`nEnter GitHub username: ${Reset}" -NoNewline
     $githubUsername = Read-Host
     if (-not $githubUsername) { return }
-    Write-Host "`nFetching keys from GitHub..." -ForegroundColor Yellow
+    Write-Host "${Yellow}`nFetching keys from GitHub...${Reset}"
     $keys = Get-GitHubKeys -username $githubUsername
     if (-not $keys) { return }
 
-    Write-Host "`nFound $($keys.Count) keys for user $githubUsername" -ForegroundColor Cyan
+    Write-Host "${Cyan}`nFound $($keys.Count) keys for user $githubUsername${Reset}"
 
     $index = 0
     foreach ($entry in $keys) {
         $index++
-        Write-Host "`n[$index]" -ForegroundColor Cyan -NoNewline
+        Write-Host "${Cyan}`n[$index]${Reset}" -NoNewline
         $keyType = ($entry.key -split ' ')[0]
-        Write-Host " Type: $keyType" -ForegroundColor Yellow
+        Write-Host "${Yellow} Type: $keyType${Reset}"
         $tmp = [IO.Path]::GetTempFileName()
         try {
             Set-Content -Path $tmp -Value $entry.key
             $fp = (& ssh-keygen -lf $tmp) -split '\s+' | Select-Object -Index 1
-            Write-Host "    Fingerprint: $fp" -ForegroundColor Green
-        } catch { Write-Host "    Fingerprint: (could not compute)" -ForegroundColor Red }
+            Write-Host "${Green}    Fingerprint: $fp${Reset}"
+        } catch { Write-Host "${Red}    Fingerprint: (could not compute)${Reset}" }
         finally { Remove-Item $tmp -ErrorAction SilentlyContinue }
     }
 
-    Write-Host "`nEnter a number to add a key, 'a' to add all, or press Enter to cancel: " -ForegroundColor Cyan -NoNewline
+    Write-Host "${Cyan}`nEnter a number to add a key, 'a' to add all, or press Enter to cancel: ${Reset}" -NoNewline
     $selection = Read-Host
     if (-not $selection) { return }
     if ($selection -eq 'a') {
@@ -77,44 +85,44 @@ function Import-GitHubKeys {
 }
 
 function Add-ManualKey {
-    Write-Host "`nPaste your public key: " -ForegroundColor Cyan
+    Write-Host "${Cyan}`nPaste your public key: ${Reset}"
     $manualKey = Read-Host
     if ($manualKey) { Add-UniqueKey -key $manualKey }
 }
 
 function Restart-SshService {
-    Write-Host "`nRestarting SSH service..." -ForegroundColor Yellow
-    try { Stop-Service sshd -Force -ErrorAction Stop; Start-Sleep -Seconds 2; Start-Service sshd -ErrorAction Stop; Write-Host "✓ SSH service restarted successfully" -ForegroundColor Green }
-    catch { Write-Host "✗ Failed to restart SSH service: $_" -ForegroundColor Red }
+    Write-Host "${Yellow}`nRestarting SSH service...${Reset}"
+    try { Stop-Service sshd -Force -ErrorAction Stop; Start-Sleep -Seconds 2; Start-Service sshd -ErrorAction Stop; Write-Host "${Green}✓ SSH service restarted successfully${Reset}" }
+    catch { Write-Host "${Red}✗ Failed to restart SSH service: $_${Reset}" }
 }
 
 function Repair-SshKeyPermissions { param([string]$keyPath = "$env:USERPROFILE\.ssh\id_rsa")
-    Write-Host "`nChecking private key permissions..." -ForegroundColor Yellow
-    if (-not (Test-Path -Path $keyPath)) { Write-Host "! No private key found at $keyPath - skipping permissions fix" -ForegroundColor Yellow; return }
-    try { icacls $keyPath /inheritance:r | Out-Null; icacls $keyPath /grant ${env:USERNAME}:"(R)" | Out-Null; Write-Host "✓ Fixed permissions for $keyPath" -ForegroundColor Green }
-    catch { Write-Host "✗ Failed to set key permissions: $_" -ForegroundColor Red }
+    Write-Host "${Yellow}`nChecking private key permissions...${Reset}"
+    if (-not (Test-Path -Path $keyPath)) { Write-Host "${Yellow}! No private key found at $keyPath - skipping permissions fix${Reset}"; return }
+    try { icacls $keyPath /inheritance:r | Out-Null; icacls $keyPath /grant ${env:USERNAME}:"(R)" | Out-Null; Write-Host "${Green}✓ Fixed permissions for $keyPath${Reset}" }
+    catch { Write-Host "${Red}✗ Failed to set key permissions: $_${Reset}" }
 }
 
 # Main
 Initialize-SshEnvironment
 
 # Simple numeric menu (works with stdin)
-Write-Host "`nWindows SSH Key Manager" -ForegroundColor Cyan
-Write-Host "1) Import keys from GitHub" -ForegroundColor Gray
-Write-Host "2) Enter key manually" -ForegroundColor Gray
-Write-Host "Select an option (1-2), or press Enter to cancel: " -ForegroundColor Cyan -NoNewline
+Write-Host "${Cyan}`nWindows SSH Key Manager${Reset}"
+Write-Host "1) Import keys from GitHub"
+Write-Host "2) Enter key manually"
+Write-Host "${Cyan}Select an option (1-2), or press Enter to cancel: ${Reset}" -NoNewline
 $choice = Read-Host
 switch ($choice) {
     '1' { Import-GitHubKeys }
     '2' { Add-ManualKey }
-    default { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+    default { Write-Host "${Yellow}Cancelled.${Reset}"; return }
 }
 
-Write-Host "`nSetting permissions..." -ForegroundColor Yellow
+Write-Host "${Yellow}`nSetting permissions...${Reset}"
 icacls $adminKeys /inheritance:r /grant "Administrators:F" /grant "SYSTEM:F" | Out-Null
-Write-Host "✓ Set permissions for $adminKeys" -ForegroundColor Green
+Write-Host "${Green}✓ Set permissions for $adminKeys${Reset}"
 
 Restart-SshService
 Repair-SshKeyPermissions
 
-Write-Host "`nDone." -ForegroundColor Green 
+Write-Host "${Green}`nDone.${Reset}"
