@@ -3,26 +3,8 @@
 . ../../common-script.sh
 
 installDepend() {
-    if ! command_exists curl; then
-        printf "%b\n" "${YELLOW}Installing curl...${RC}"
-        "$ESCALATION_TOOL" apk add curl
-    fi
-    
-    if ! command_exists zoxide; then
-        printf "%b\n" "${YELLOW}Installing zoxide...${RC}"
-        "$ESCALATION_TOOL" apk add zoxide
-    fi
-    
-    if ! command_exists fastfetch; then
-        printf "%b\n" "${YELLOW}Installing fastfetch...${RC}"
-        "$ESCALATION_TOOL" apk add fastfetch
-    fi
-
-    if ! command_exists bat; then
-        printf "%b\n" "${YELLOW}Installing bat...${RC}"
-        "$ESCALATION_TOOL" apk add bat
-    fi
-
+    printf "%b\n" "${YELLOW}Installing required packages...${RC}"
+    "$ESCALATION_TOOL" apk add curl zoxide fastfetch bat fzf
 }
 
 downloadProfile() {
