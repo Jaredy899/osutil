@@ -37,16 +37,20 @@ prefix_to_netmask() {
 }
 
 list_interfaces_raw() {
-    if command_exists nmcli; then
-        nmcli -t -f DEVICE,TYPE,STATE device status \
-            | awk -F: '($2=="ethernet"||$2=="wifi"){print $1}'
+    if command_exists ip; then
+        # List kernel interfaces, strip @ suffix, filter out common virtual/container links
+        ip -o link show \
+            | awk -F': ' '($2!="lo"){print $2}' \
+            | sed 's/@.*$//' \
+            | grep -Ev '^(docker|br-|veth|virbr|vmnet|zt|wg|tailscale|tun|tap|podman|cni)' || true
         return
     fi
-    # List kernel interfaces, strip @ suffix, filter out common virtual/container links
-    ip -o link show \
-        | awk -F': ' '($2!="lo"){print $2}' \
-        | sed 's/@.*$//' \
-        | grep -Ev '^(docker|br-|veth|virbr|vmnet|zt|wg|tailscale|tun|tap|podman|cni)' || true
+    # Fallback to nmcli if ip is unavailable
+    if command_exists nmcli; then
+        nmcli -t -f DEVICE device status | awk -F: 'NF{print $1}'
+        return
+    fi
+    return 0
 }
 
 pretty_print_interfaces() {
@@ -60,52 +64,52 @@ pretty_print_interfaces() {
 }
 
 select_interface() {
-    # Build list
-    interfaces=$(list_interfaces_raw)
+    # Build list and de-duplicate
+    interfaces=$(list_interfaces_raw | sort -u)
     # If empty (filters too strict), fallback to all non-lo (still strip @)
-    if [ -z "$interfaces" ]; then
+    if [ -z "$interfaces" ] && command_exists ip; then
         interfaces=$(ip -o link show | awk -F': ' '($2!="lo"){print $2}' | sed 's/@.*$//')
     fi
-
     # Last resort: try nmcli device list without type filtering
     if [ -z "$interfaces" ] && command_exists nmcli; then
         interfaces=$(nmcli -t -f DEVICE device status | awk -F: 'NF{print $1}')
     fi
 
-    # Enumerate for display
     printf "%b\n" "${YELLOW}Available interfaces:${RC}"
-    i=1
-    printf "%s" "$interfaces" | while IFS= read -r iface; do
-        [ -z "$iface" ] && continue
-        # Determine a simple type label when nmcli is absent
-        label=""
-        if command_exists nmcli; then
-            label=$(nmcli -t -f DEVICE,TYPE,STATE device status | awk -F: -v d="$iface" '($1==d){printf " (%s - %s)", $2, $3}')
-        fi
-        printf "%d. %s%s\n" "$i" "$iface" "$label"
-        i=$((i+1))
-    done
+    tmp_list=$(mktemp)
+    printf "%s\n" "$interfaces" > "$tmp_list"
+    # If still empty, notify and exit
+    if [ ! -s "$tmp_list" ]; then
+        printf "%b\n" "${RED}No interfaces found. If running in a container/WSL, ensure a physical interface is present.${RC}"
+        rm -f "$tmp_list"
+        exit 1
+    fi
+
+    # Show numbered list
+    nl -w1 -s'. ' "$tmp_list"
 
     printf "%b" "${CYAN}Enter number or interface name (e.g., 1 or eth0): ${RC}"
     read -r INPUT_SEL
     if [ -z "$INPUT_SEL" ]; then
         printf "%b\n" "${RED}No interface selected.${RC}"
+        rm -f "$tmp_list"
         exit 1
     fi
     if printf "%s" "$INPUT_SEL" | grep -qE '^[0-9]+$'; then
-        # Numeric selection
-        idx="$INPUT_SEL"
-        SELECTED_INTERFACE=$(printf "%s" "$interfaces" | sed -n "${idx}p")
+        SELECTED_INTERFACE=$(sed -n "${INPUT_SEL}p" "$tmp_list")
     else
-        # Name selection
-        SELECTED_INTERFACE="$INPUT_SEL"
+        # Validate name exists in the list
+        if grep -qx "$INPUT_SEL" "$tmp_list"; then
+            SELECTED_INTERFACE="$INPUT_SEL"
+        else
+            printf "%b\n" "${RED}Interface not found: $INPUT_SEL${RC}"
+            rm -f "$tmp_list"
+            exit 1
+        fi
     fi
+    rm -f "$tmp_list"
     # Normalize: strip any @suffix if provided
     SELECTED_INTERFACE=$(printf "%s" "$SELECTED_INTERFACE" | sed 's/@.*$//')
-    if [ -z "$SELECTED_INTERFACE" ]; then
-        printf "%b\n" "${RED}Invalid selection.${RC}"
-        exit 1
-    fi
 }
 
 prompt_static_ipv4() {
