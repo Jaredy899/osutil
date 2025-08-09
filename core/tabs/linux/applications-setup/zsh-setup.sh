@@ -2,6 +2,9 @@
 
 . ../common-script.sh
 
+# Centralized base URL for configuration files
+CONFIG_BASE_URL="${CONFIG_BASE_URL:-https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes}"
+
 # Function to install zsh
 installZsh() {
     if ! command_exists zsh; then
@@ -86,8 +89,7 @@ installZoxide() {
     fi
 }
 
-BASE_URL="https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes"
-ZSHRC_URL="https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/.zshrc"
+ 
 
 setupAndReplaceConfigs() {
     printf "%b\n" "${YELLOW}Setting up Zsh and downloading configurations...${RC}"
@@ -97,8 +99,8 @@ setupAndReplaceConfigs() {
     mkdir -p "$HOME/.config/fastfetch"
     mkdir -p "$HOME/.config"
 
-    # Download .zshrc from your mac repo
-    curl -fsSL "$ZSHRC_URL" -o "$HOME/.config/zsh/.zshrc"
+    # Download .zshrc from config_changes
+    curl -fsSL "$CONFIG_BASE_URL/.zshrc" -o "$HOME/.config/zsh/.zshrc"
 
     # Ensure /etc/zsh/zshenv sets ZDOTDIR to the user's config directory
     [ ! -f /etc/zsh/zshenv ] && "$ESCALATION_TOOL" mkdir -p /etc/zsh && "$ESCALATION_TOOL" touch /etc/zsh/zshenv
@@ -107,14 +109,12 @@ setupAndReplaceConfigs() {
 
     # Handle Alpine and Solus special cases for /etc/profile and .profile
     if [ -f /etc/alpine-release ]; then
-        "$ESCALATION_TOOL" curl -sSfL -o "/etc/profile" "$BASE_URL/profile"
-    elif [ "$DTYPE" = "solus" ]; then
-        curl -sSfL -o "$HOME/.profile" "$BASE_URL/.profile"
+        "$ESCALATION_TOOL" curl -sSfL -o "/etc/profile" "$CONFIG_BASE_URL/profile"
     fi
 
     # Download fastfetch and starship configs
-    curl -sSfL -o "$HOME/.config/fastfetch/config.jsonc" "$BASE_URL/config.jsonc"
-    curl -sSfL -o "$HOME/.config/starship.toml" "$BASE_URL/starship.toml"
+    curl -sSfL -o "$HOME/.config/fastfetch/config.jsonc" "$CONFIG_BASE_URL/config.jsonc"
+    curl -sSfL -o "$HOME/.config/starship.toml" "$CONFIG_BASE_URL/starship.toml"
 
     printf "%b\n" "${GREEN}Zsh and other configurations set up successfully.${RC}"
 }

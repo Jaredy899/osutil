@@ -4,6 +4,9 @@
 
 config_dir="$HOME/.config"
 
+# Centralized base URL for configuration files
+CONFIG_BASE_URL="${CONFIG_BASE_URL:-https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes}"
+
 installDepend() {
     if [ ! -f "/usr/share/bash-completion/bash_completion" ] || ! command_exists bash tar bat tree unzip fc-list git; then
         printf "%b\n" "${YELLOW}Installing Bash...${RC}"
@@ -32,21 +35,21 @@ downloadConfigs() {
     
     # Download .bashrc
     printf "%b\n" "${YELLOW}Downloading .bashrc...${RC}"
-    if ! curl -fsSLo "$HOME/.bashrc" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/.bashrc"; then
+    if ! curl -fsSLo "$HOME/.bashrc" "$CONFIG_BASE_URL/.bashrc"; then
         printf "%b\n" "${RED}Failed to download .bashrc${RC}"
         exit 1
     fi
     
     # Download starship.toml
     printf "%b\n" "${YELLOW}Downloading starship.toml...${RC}"
-    if ! curl -fsSLo "$config_dir/starship.toml" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/starship.toml"; then
+    if ! curl -fsSLo "$config_dir/starship.toml" "$CONFIG_BASE_URL/starship.toml"; then
         printf "%b\n" "${RED}Failed to download starship.toml${RC}"
         exit 1
     fi
     
     # Download config.jsonc
     printf "%b\n" "${YELLOW}Downloading config.jsonc...${RC}"
-    if ! curl -fsSLo "$config_dir/fastfetch/config.jsonc" "https://raw.githubusercontent.com/Jaredy899/linux/main/config_changes/config.jsonc"; then
+    if ! curl -fsSLo "$config_dir/fastfetch/config.jsonc" "$CONFIG_BASE_URL/config.jsonc"; then
         printf "%b\n" "${RED}Failed to download config.jsonc${RC}"
         exit 1
     fi

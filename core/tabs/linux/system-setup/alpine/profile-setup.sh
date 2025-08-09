@@ -2,9 +2,12 @@
 
 . ../../common-script.sh
 
+# Centralized base URL for configuration files
+CONFIG_BASE_URL="${CONFIG_BASE_URL:-https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes}"
+
 installDepend() {
     printf "%b\n" "${YELLOW}Installing required packages...${RC}"
-    "$ESCALATION_TOOL" apk add curl zoxide fastfetch bat fzf
+    "$ESCALATION_TOOL" apk add curl zoxide fastfetch starship bat fzf
 }
 
 downloadProfile() {
@@ -13,7 +16,7 @@ downloadProfile() {
     # Download profile to a temporary location first
     printf "%b\n" "${YELLOW}Downloading profile...${RC}"
     TEMP_PROFILE="/tmp/profile.tmp"
-    if ! curl -sSLo "$TEMP_PROFILE" "https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes/profile"; then
+    if ! curl -sSLo "$TEMP_PROFILE" "$CONFIG_BASE_URL/profile"; then
         printf "%b\n" "${RED}Failed to download profile${RC}"
         exit 1
     fi
@@ -27,12 +30,20 @@ downloadProfile() {
     # Download fastfetch config
     printf "%b\n" "${YELLOW}Downloading fastfetch config...${RC}"
     mkdir -p "$HOME/.config/fastfetch"
-    if ! curl -sSLo "$HOME/.config/fastfetch/config.jsonc" "https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes/config.jsonc"; then
+    if ! curl -sSLo "$HOME/.config/fastfetch/config.jsonc" "$CONFIG_BASE_URL/config.jsonc"; then
         printf "%b\n" "${RED}Failed to download fastfetch config${RC}"
         exit 1
     fi
+
+    # Download starship config
+    printf "%b\n" "${YELLOW}Downloading starship config...${RC}"
+    mkdir -p "$HOME/.config"
+    if ! curl -sSLo "$HOME/.config/starship.toml" "$CONFIG_BASE_URL/starship.toml"; then
+        printf "%b\n" "${RED}Failed to download starship config${RC}"
+        exit 1
+    fi
     
-    printf "%b\n" "${GREEN}Profile and fastfetch config downloaded successfully! Restart your shell to see the changes.${RC}"
+    printf "%b\n" "${GREEN}Profile, fastfetch, and starship configs downloaded successfully! Restart your shell to see the changes.${RC}"
 }
 
 backupExistingProfile() {
@@ -49,6 +60,12 @@ backupExistingProfile() {
     if [ -e "$HOME/.config/fastfetch/config.jsonc" ] && [ ! -e "$HOME/.config/fastfetch/config.jsonc.bak" ]; then
         printf "%b\n" "${YELLOW}Backing up existing fastfetch config to $HOME/.config/fastfetch/config.jsonc.bak${RC}"
         mv "$HOME/.config/fastfetch/config.jsonc" "$HOME/.config/fastfetch/config.jsonc.bak"
+    fi
+
+    # Backup existing starship config if it exists
+    if [ -e "$HOME/.config/starship.toml" ] && [ ! -e "$HOME/.config/starship.toml.bak" ]; then
+        printf "%b\n" "${YELLOW}Backing up existing starship config to $HOME/.config/starship.toml.bak${RC}"
+        mv "$HOME/.config/starship.toml" "$HOME/.config/starship.toml.bak"
     fi
 }
 
