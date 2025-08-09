@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 
 . ../common-script.sh
 . ../common-service-script.sh
@@ -86,10 +86,10 @@ select_interface() {
     fi
 
     # Show numbered list
-    nl -w1 -s'. ' "$tmp_list"
+    nl -w1 -s'. ' "$tmp_list" | sed 's/^/  /'
 
     printf "%b" "${CYAN}Enter number or interface name (e.g., 1 or eth0): ${RC}"
-    read -r INPUT_SEL
+    read -r INPUT_SEL || { printf "%b\n" "${RED}Input error.${RC}"; rm -f "$tmp_list"; exit 1; }
     if [ -z "$INPUT_SEL" ]; then
         printf "%b\n" "${RED}No interface selected.${RC}"
         rm -f "$tmp_list"
@@ -175,7 +175,7 @@ configure_with_nmcli_static() {
         nmcli con mod "$con_name" ipv4.ignore-auto-dns yes
     fi
     nmcli con mod "$con_name" connection.autoconnect yes
-    nmcli con up "$con_name"
+    nmcli con up "$con_name" || nmcli dev reapply "$iface" || true
 }
 
 configure_with_nmcli_dhcp() {
@@ -199,8 +199,13 @@ configure_with_netplan_static() {
         printf "  version: 2\n"
         printf "  ethernets:\n"
         printf "    %s:\n" "$iface"
+        printf "      dhcp4: false\n"
         printf "      addresses: ['%s/%s']\n" "$ip_addr" "$prefix"
-        [ -n "$gateway" ] && printf "      gateway4: %s\n" "$gateway"
+        if [ -n "$gateway" ]; then
+            printf "      routes:\n"
+            printf "        - to: default\n"
+            printf "          via: %s\n" "$gateway"
+        fi
         if [ -n "$dns_list" ]; then
             # Convert comma list to YAML array
             dns_yaml=$(printf "%s" "$dns_list" | awk -F, '{for(i=1;i<=NF;i++){gsub(/^ +| +$/,"",$i); if($i!="") printf("%s%s",(i==1?"":" "),$i)}}')
@@ -211,8 +216,8 @@ configure_with_netplan_static() {
     if command_exists netplan; then
         # Ensure proper permissions before apply
         "$ESCALATION_TOOL" chmod 600 "$netplan_file" 2>/dev/null || true
-        "$ESCALATION_TOOL" netplan generate
-        "$ESCALATION_TOOL" netplan apply
+        "$ESCALATION_TOOL" netplan generate || true
+        "$ESCALATION_TOOL" netplan apply || true
     fi
 }
 
@@ -229,8 +234,8 @@ configure_with_netplan_dhcp() {
     } | "$ESCALATION_TOOL" tee "$netplan_file" >/dev/null
     if command_exists netplan; then
         "$ESCALATION_TOOL" chmod 600 "$netplan_file" 2>/dev/null || true
-        "$ESCALATION_TOOL" netplan generate
-        "$ESCALATION_TOOL" netplan apply
+        "$ESCALATION_TOOL" netplan generate || true
+        "$ESCALATION_TOOL" netplan apply || true
     fi
 }
 
@@ -294,11 +299,16 @@ configure_with_ifupdown_static() {
             printf "    dns-nameservers %s\n" "$(printf "%s" "$dns_list" | tr ',' ' ')"
         fi
     } | "$ESCALATION_TOOL" tee -a "$interfaces_file" >/dev/null
-    case "$INIT_MANAGER" in
-        systemctl) "$ESCALATION_TOOL" systemctl restart networking || true ;;
-        rc-service) "$ESCALATION_TOOL" rc-service networking restart || true ;;
-        service) "$ESCALATION_TOOL" service networking restart || true ;;
-    esac
+    if command_exists ifdown && command_exists ifup; then
+        "$ESCALATION_TOOL" ifdown "$iface" || true
+        "$ESCALATION_TOOL" ifup "$iface" || true
+    else
+        case "$INIT_MANAGER" in
+            systemctl) "$ESCALATION_TOOL" systemctl restart networking || true ;;
+            rc-service) "$ESCALATION_TOOL" rc-service networking restart || true ;;
+            service) "$ESCALATION_TOOL" service networking restart || true ;;
+        esac
+    fi
 }
 
 configure_with_ifupdown_dhcp() {
@@ -325,11 +335,16 @@ configure_with_ifupdown_dhcp() {
         printf "\nauto %s\n" "$iface"
         printf "iface %s inet dhcp\n" "$iface"
     } | "$ESCALATION_TOOL" tee -a "$interfaces_file" >/dev/null
-    case "$INIT_MANAGER" in
-        systemctl) "$ESCALATION_TOOL" systemctl restart networking || true ;;
-        rc-service) "$ESCALATION_TOOL" rc-service networking restart || true ;;
-        service) "$ESCALATION_TOOL" service networking restart || true ;;
-    esac
+    if command_exists ifdown && command_exists ifup; then
+        "$ESCALATION_TOOL" ifdown "$iface" || true
+        "$ESCALATION_TOOL" ifup "$iface" || true
+    else
+        case "$INIT_MANAGER" in
+            systemctl) "$ESCALATION_TOOL" systemctl restart networking || true ;;
+            rc-service) "$ESCALATION_TOOL" rc-service networking restart || true ;;
+            service) "$ESCALATION_TOOL" service networking restart || true ;;
+        esac
+    fi
 }
 
 configure_with_dhcpcd_static() {
@@ -403,24 +418,28 @@ apply_static_config() {
     if [ -d /etc/netplan ] && command_exists netplan; then
         printf "%b\n" "${YELLOW}Applying static IP using netplan...${RC}"
         configure_with_netplan_static "$SELECTED_INTERFACE" "$STATIC_IP" "$STATIC_PREFIX" "$STATIC_GW" "$STATIC_DNS"
+        printf "%b\n" "${GREEN}Requested static configuration applied (netplan).${RC}"
         return
     fi
 
     if command_exists systemctl && "$ESCALATION_TOOL" systemctl is-active --quiet systemd-networkd; then
         printf "%b\n" "${YELLOW}Applying static IP using systemd-networkd...${RC}"
         configure_with_networkd_static "$SELECTED_INTERFACE" "$STATIC_IP" "$STATIC_PREFIX" "$STATIC_GW" "$STATIC_DNS"
+        printf "%b\n" "${GREEN}Requested static configuration applied (networkd).${RC}"
         return
     fi
 
     if [ -f /etc/network/interfaces ]; then
         printf "%b\n" "${YELLOW}Applying static IP using ifupdown (/etc/network/interfaces)...${RC}"
         configure_with_ifupdown_static "$SELECTED_INTERFACE" "$STATIC_IP" "$STATIC_PREFIX" "$STATIC_GW" "$STATIC_DNS"
+        printf "%b\n" "${GREEN}Requested static configuration applied (ifupdown).${RC}"
         return
     fi
 
     if command_exists dhcpcd; then
         printf "%b\n" "${YELLOW}Applying static IP using dhcpcd...${RC}"
         configure_with_dhcpcd_static "$SELECTED_INTERFACE" "$STATIC_IP" "$STATIC_PREFIX" "$STATIC_GW" "$STATIC_DNS"
+        printf "%b\n" "${GREEN}Requested static configuration applied (dhcpcd).${RC}"
         return
     fi
 
@@ -482,7 +501,7 @@ main_menu() {
         printf "%b\n" "3) Show current IPv4 for an interface"
         printf "%b\n" "0) Exit"
         printf "%b" "Choose an option: "
-        read -r CHOICE
+        read -r CHOICE || { printf "%b\n" "${RED}Input error.${RC}"; exit 1; }
         case "$CHOICE" in
             1) apply_static_config ;;
             2) apply_dhcp_config ;;
@@ -490,7 +509,7 @@ main_menu() {
             0) exit 0 ;;
             *) printf "%b\n" "${RED}Invalid option. Try again.${RC}" ;;
         esac
-        printf "%b\n" "Press [Enter] to continue..."; read -r _
+        printf "%b\n" "Press [Enter] to continue..."; read -r _ || true
     done
 }
 
