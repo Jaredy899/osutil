@@ -42,11 +42,11 @@ list_interfaces_raw() {
             | awk -F: '($2=="ethernet"||$2=="wifi"){print $1}'
         return
     fi
-    # Prefer likely physical/wireless names; strip @ suffix
+    # List kernel interfaces, strip @ suffix, filter out common virtual/container links
     ip -o link show \
         | awk -F': ' '($2!="lo"){print $2}' \
         | sed 's/@.*$//' \
-        | grep -E '^(e(th|n|np)|wl|ww)' || true
+        | grep -Ev '^(docker|br-|veth|virbr|vmnet|zt|wg|tailscale|tun|tap|podman|cni)' || true
 }
 
 pretty_print_interfaces() {
@@ -62,9 +62,14 @@ pretty_print_interfaces() {
 select_interface() {
     # Build list
     interfaces=$(list_interfaces_raw)
-    # If empty (regex filtered out everything), fallback to all non-lo
+    # If empty (filters too strict), fallback to all non-lo (still strip @)
     if [ -z "$interfaces" ]; then
         interfaces=$(ip -o link show | awk -F': ' '($2!="lo"){print $2}' | sed 's/@.*$//')
+    fi
+
+    # Last resort: try nmcli device list without type filtering
+    if [ -z "$interfaces" ] && command_exists nmcli; then
+        interfaces=$(nmcli -t -f DEVICE device status | awk -F: 'NF{print $1}')
     fi
 
     # Enumerate for display
