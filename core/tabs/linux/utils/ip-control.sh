@@ -162,7 +162,7 @@ EOF
 # Backends
 configure_with_nmcli_static() {
     iface="$1"; ip_addr="$2"; prefix="$3"; gateway="$4"; dns_list="$5"
-    con_name=$(nmcli -t -f NAME,DEVICE con show | awk -F: -v d="$iface" '$2==d{print $1; exit}')
+    con_name=$(nmcli -t -f NAME,DEVICE connection show | awk -F: -v d="$iface" '$2==d{print $1; exit}')
     if [ -z "$con_name" ]; then
         con_name="$iface"
         nmcli con add type ethernet ifname "$iface" con-name "$con_name" >/dev/null 2>&1 || true
@@ -180,7 +180,7 @@ configure_with_nmcli_static() {
 
 configure_with_nmcli_dhcp() {
     iface="$1"
-    con_name=$(nmcli -t -f NAME,DEVICE con show | awk -F: -v d="$iface" '$2==d{print $1; exit}')
+    con_name=$(nmcli -t -f NAME,DEVICE connection show | awk -F: -v d="$iface" '$2==d{print $1; exit}')
     if [ -z "$con_name" ]; then
         con_name="$iface"
         nmcli con add type ethernet ifname "$iface" con-name "$con_name" >/dev/null 2>&1 || true
@@ -209,6 +209,9 @@ configure_with_netplan_static() {
         fi
     } | "$ESCALATION_TOOL" tee "$netplan_file" >/dev/null
     if command_exists netplan; then
+        # Ensure proper permissions before apply
+        "$ESCALATION_TOOL" chmod 600 "$netplan_file" 2>/dev/null || true
+        "$ESCALATION_TOOL" netplan generate
         "$ESCALATION_TOOL" netplan apply
     fi
 }
@@ -225,6 +228,8 @@ configure_with_netplan_dhcp() {
         printf "      dhcp4: true\n"
     } | "$ESCALATION_TOOL" tee "$netplan_file" >/dev/null
     if command_exists netplan; then
+        "$ESCALATION_TOOL" chmod 600 "$netplan_file" 2>/dev/null || true
+        "$ESCALATION_TOOL" netplan generate
         "$ESCALATION_TOOL" netplan apply
     fi
 }
@@ -234,7 +239,8 @@ configure_with_networkd_static() {
     file_path="/etc/systemd/network/10-${iface}.network"
     {
         printf "[Match]\nName=%s\n\n" "$iface"
-        printf "[Network]\nAddress=%s/%s\n" "$ip_addr" "$prefix"
+        printf "[Network]\n"
+        printf "Address=%s/%s\n" "$ip_addr" "$prefix"
         [ -n "$gateway" ] && printf "Gateway=%s\n" "$gateway"
         if [ -n "$dns_list" ]; then
             printf "%s" "$dns_list" | tr ',' ' ' | awk '{for(i=1;i<=NF;i++) printf("DNS=%s\n", $i)}'
@@ -260,6 +266,7 @@ configure_with_ifupdown_static() {
     netmask=$(prefix_to_netmask "$prefix")
     [ -z "$netmask" ] && { printf "%b\n" "${RED}Invalid prefix length for ifupdown.${RC}"; exit 1; }
     interfaces_file="/etc/network/interfaces"
+    [ -f "$interfaces_file" ] || "$ESCALATION_TOOL" touch "$interfaces_file"
     tmp_file=$(mktemp)
     # Remove existing stanza for iface
     awk -v IF="$iface" '
@@ -297,6 +304,7 @@ configure_with_ifupdown_static() {
 configure_with_ifupdown_dhcp() {
     iface="$1"
     interfaces_file="/etc/network/interfaces"
+    [ -f "$interfaces_file" ] || "$ESCALATION_TOOL" touch "$interfaces_file"
     tmp_file=$(mktemp)
     awk -v IF="$iface" '
         BEGIN{skip=0}
@@ -383,10 +391,13 @@ apply_static_config() {
     select_interface
     prompt_static_ipv4
 
-    if command_exists nmcli; then
+    if command_exists nmcli && isServiceActive NetworkManager; then
         printf "%b\n" "${YELLOW}Applying static IP using NetworkManager (nmcli)...${RC}"
         configure_with_nmcli_static "$SELECTED_INTERFACE" "$STATIC_IP" "$STATIC_PREFIX" "$STATIC_GW" "$STATIC_DNS"
         return
+    fi
+    if command_exists nmcli && ! isServiceActive NetworkManager; then
+        printf "%b\n" "${CYAN}nmcli is installed but NetworkManager is not running; skipping nmcli backend.${RC}"
     fi
 
     if [ -d /etc/netplan ] && command_exists netplan; then
@@ -420,10 +431,13 @@ apply_static_config() {
 apply_dhcp_config() {
     select_interface
 
-    if command_exists nmcli; then
+    if command_exists nmcli && isServiceActive NetworkManager; then
         printf "%b\n" "${YELLOW}Enabling DHCP using NetworkManager (nmcli)...${RC}"
         configure_with_nmcli_dhcp "$SELECTED_INTERFACE"
         return
+    fi
+    if command_exists nmcli && ! isServiceActive NetworkManager; then
+        printf "%b\n" "${CYAN}nmcli is installed but NetworkManager is not running; skipping nmcli backend.${RC}"
     fi
 
     if [ -d /etc/netplan ] && command_exists netplan; then
