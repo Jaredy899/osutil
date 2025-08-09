@@ -205,3 +205,9 @@ name = "WiFi Manager"
 description = "This utility is designed to manage wifi in your system"
 script = "wifi-control.sh"
 task_list = "I SS"
+
+[[data]]
+name = "IP Address Manager"
+description = "Configure static or DHCP IPv4 per interface (nmcli/netplan/systemd-networkd/ifupdown/dhcpcd)"
+script = "ip-control.sh"
+task_list = "SS"
