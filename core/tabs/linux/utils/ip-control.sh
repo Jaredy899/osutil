@@ -113,10 +113,40 @@ select_interface() {
 }
 
 prompt_static_ipv4() {
-    printf "%b" "${CYAN}Enter IPv4 address (e.g., 192.168.1.50): ${RC}"
+    printf "%b" "${CYAN}Enter IPv4 address (e.g., 192.168.1.50 or 192.168.1.50/24): ${RC}"
     read -r STATIC_IP
-    printf "%b" "${CYAN}Enter prefix length (e.g., 24 for /24): ${RC}"
+    printf "%b" "${CYAN}Enter prefix length (e.g., 24 for /24). Leave empty if provided above: ${RC}"
     read -r STATIC_PREFIX
+    # If CIDR was provided within IP, split it
+    if printf "%s" "$STATIC_IP" | grep -q '/'; then
+        cidr_prefix=$(printf "%s" "$STATIC_IP" | awk -F'/' 'NF>1{print $2}')
+        STATIC_IP=$(printf "%s" "$STATIC_IP" | awk -F'/' '{print $1}')
+        [ -z "$STATIC_PREFIX" ] && STATIC_PREFIX="$cidr_prefix"
+    fi
+    # Sanitize prefix: strip leading '/', non-digits, spaces
+    STATIC_PREFIX=$(printf "%s" "$STATIC_PREFIX" | sed 's#^/##; s/[^0-9].*$//')
+    # Basic IPv4 format check
+    if ! printf "%s" "$STATIC_IP" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        printf "%b\n" "${RED}Invalid IPv4 address format: $STATIC_IP${RC}"
+        exit 1
+    fi
+    # Validate octets 0-255
+    invalid_octet=false
+    IFS='.' read -r o1 o2 o3 o4 <<EOF
+$STATIC_IP
+EOF
+    for o in "$o1" "$o2" "$o3" "$o4"; do
+        if [ "$o" -lt 0 ] 2>/dev/null || [ "$o" -gt 255 ] 2>/dev/null; then invalid_octet=true; fi
+    done
+    if [ "$invalid_octet" = true ]; then
+        printf "%b\n" "${RED}Invalid IPv4 octet in $STATIC_IP${RC}"
+        exit 1
+    fi
+    # Validate prefix 1..32
+    if [ -z "$STATIC_PREFIX" ] || ! printf "%s" "$STATIC_PREFIX" | grep -qE '^[0-9]+$' || [ "$STATIC_PREFIX" -lt 1 ] || [ "$STATIC_PREFIX" -gt 32 ]; then
+        printf "%b\n" "${RED}Invalid prefix length. Provide a number 1-32.${RC}"
+        exit 1
+    fi
     printf "%b" "${CYAN}Enter gateway IPv4 (optional): ${RC}"
     read -r STATIC_GW
     printf "%b" "${CYAN}Enter DNS servers (comma or space separated, optional): ${RC}"
