@@ -36,21 +36,69 @@ prefix_to_netmask() {
     esac
 }
 
-list_interfaces() {
+list_interfaces_raw() {
     if command_exists nmcli; then
-        nmcli -t -f DEVICE,TYPE,STATE device status | awk -F: '$2=="ethernet"||$2=="wifi"{print $1" ("$2" - "$3")"}'
-    else
-        ip -o link show | awk -F': ' '($2!="lo"){print $2}'
+        nmcli -t -f DEVICE,TYPE,STATE device status \
+            | awk -F: '($2=="ethernet"||$2=="wifi"){print $1}'
+        return
     fi
+    # Prefer likely physical/wireless names; strip @ suffix
+    ip -o link show \
+        | awk -F': ' '($2!="lo"){print $2}' \
+        | sed 's/@.*$//' \
+        | grep -E '^(e(th|n|np)|wl|ww)' || true
+}
+
+pretty_print_interfaces() {
+    if command_exists nmcli; then
+        nmcli -t -f DEVICE,TYPE,STATE device status \
+            | awk -F: '($2=="ethernet"||$2=="wifi"){printf "%s (%s - %s)\n", $1, $2, $3}'
+        return
+    fi
+    # Fallback: show raw device names
+    list_interfaces_raw
 }
 
 select_interface() {
+    # Build list
+    interfaces=$(list_interfaces_raw)
+    # If empty (regex filtered out everything), fallback to all non-lo
+    if [ -z "$interfaces" ]; then
+        interfaces=$(ip -o link show | awk -F': ' '($2!="lo"){print $2}' | sed 's/@.*$//')
+    fi
+
+    # Enumerate for display
     printf "%b\n" "${YELLOW}Available interfaces:${RC}"
-    list_interfaces | nl -w1 -s'. '
-    printf "%b" "${CYAN}Enter interface name (e.g., eth0): ${RC}"
-    read -r SELECTED_INTERFACE
-    if [ -z "$SELECTED_INTERFACE" ]; then
+    i=1
+    printf "%s" "$interfaces" | while IFS= read -r iface; do
+        [ -z "$iface" ] && continue
+        # Determine a simple type label when nmcli is absent
+        label=""
+        if command_exists nmcli; then
+            label=$(nmcli -t -f DEVICE,TYPE,STATE device status | awk -F: -v d="$iface" '($1==d){printf " (%s - %s)", $2, $3}')
+        fi
+        printf "%d. %s%s\n" "$i" "$iface" "$label"
+        i=$((i+1))
+    done
+
+    printf "%b" "${CYAN}Enter number or interface name (e.g., 1 or eth0): ${RC}"
+    read -r INPUT_SEL
+    if [ -z "$INPUT_SEL" ]; then
         printf "%b\n" "${RED}No interface selected.${RC}"
+        exit 1
+    fi
+    if printf "%s" "$INPUT_SEL" | grep -qE '^[0-9]+$'; then
+        # Numeric selection
+        idx="$INPUT_SEL"
+        SELECTED_INTERFACE=$(printf "%s" "$interfaces" | sed -n "${idx}p")
+    else
+        # Name selection
+        SELECTED_INTERFACE="$INPUT_SEL"
+    fi
+    # Normalize: strip any @suffix if provided
+    SELECTED_INTERFACE=$(printf "%s" "$SELECTED_INTERFACE" | sed 's/@.*$//')
+    if [ -z "$SELECTED_INTERFACE" ]; then
+        printf "%b\n" "${RED}Invalid selection.${RC}"
         exit 1
     fi
 }
