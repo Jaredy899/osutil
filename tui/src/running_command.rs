@@ -399,9 +399,13 @@ impl RunningCommand {
             #[cfg(windows)]
             {
                 if let Some(pid) = self.child_pid {
+                    use std::process::Stdio;
                     let _ = std::process::Command::new("taskkill")
                         .args(["/T", "/F", "/PID", &pid.to_string()])
-                        .spawn();
+                        .stdin(Stdio::null())
+                        .stdout(Stdio::null())
+                        .stderr(Stdio::null())
+                        .status();
                 }
             }
         }
