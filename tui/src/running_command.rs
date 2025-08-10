@@ -477,6 +477,7 @@ impl RunningCommand {
                         status: Some(ExitStatus::with_exit_code(1)),
                         log_path: None,
                         scroll_offset: 0,
+                        child_pid: None,
                     };
                 }
             };
@@ -526,6 +527,7 @@ impl RunningCommand {
                         status: Some(ExitStatus::with_exit_code(0)),
                         log_path: None,
                         scroll_offset: 0,
+                        child_pid: None,
                     }
                 }
                 Err(e) => {
@@ -551,6 +553,7 @@ impl RunningCommand {
                         status: Some(ExitStatus::with_exit_code(1)),
                         log_path: None,
                         scroll_offset: 0,
+                        child_pid: None,
                     }
                 }
             }
@@ -568,6 +571,7 @@ impl RunningCommand {
                 status: Some(ExitStatus::with_exit_code(1)),
                 log_path: None,
                 scroll_offset: 0,
+                child_pid: None,
             }
         }
     }
