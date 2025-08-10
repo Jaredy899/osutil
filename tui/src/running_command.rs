@@ -474,7 +474,6 @@ impl RunningCommand {
                     return Self {
                         buffer: Arc::new(Mutex::new(message.as_bytes().to_vec())),
                         command_thread: None,
-                        child_killer: None,
                         _reader_thread: std::thread::spawn(|| {}),
                         pty_master: Box::new(DummyPty),
                         writer: Box::new(std::io::sink()),
@@ -524,7 +523,6 @@ impl RunningCommand {
                     Self {
                         buffer: Arc::new(Mutex::new(message.into_bytes())),
                         command_thread: None,
-                        child_killer: None,
                         _reader_thread: std::thread::spawn(|| {}),
                         pty_master: Box::new(DummyPty),
                         writer: Box::new(std::io::sink()),
@@ -550,7 +548,6 @@ impl RunningCommand {
                     Self {
                         buffer: Arc::new(Mutex::new(message.into_bytes())),
                         command_thread: None,
-                        child_killer: None,
                         _reader_thread: std::thread::spawn(|| {}),
                         pty_master: Box::new(DummyPty),
                         writer: Box::new(std::io::sink()),
@@ -568,7 +565,6 @@ impl RunningCommand {
                     "ERROR!\r\n\r\nCannot launch in separate terminal.\r\n\r\nFalling back to TUI...".as_bytes().to_vec()
                 )),
                 command_thread: None,
-                child_killer: None,
                 _reader_thread: std::thread::spawn(|| {}),
                 pty_master: Box::new(DummyPty),
                 writer: Box::new(std::io::sink()),
