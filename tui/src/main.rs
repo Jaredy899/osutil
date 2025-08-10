@@ -33,6 +33,34 @@ use std::{
     sync::atomic::Ordering,
     time::Duration,
 };
+use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
+
+// Ensure we restore the terminal at most once
+static TERMINAL_CLEANED: AtomicBool = AtomicBool::new(false);
+
+fn cleanup_terminal(mouse_enabled: bool) {
+    if TERMINAL_CLEANED.swap(true, AtomicOrdering::AcqRel) {
+        return;
+    }
+    let _ = disable_raw_mode();
+    let mut out = stdout();
+    let _ = out.execute(LeaveAlternateScreen);
+    if mouse_enabled {
+        let _ = out.execute(DisableMouseCapture);
+    }
+    let _ = out.execute(ResetColor);
+    let _ = out.execute(ratatui::crossterm::cursor::Show);
+}
+
+struct TerminalCleanupGuard {
+    mouse: bool,
+}
+
+impl Drop for TerminalCleanupGuard {
+    fn drop(&mut self) {
+        cleanup_terminal(self.mouse);
+    }
+}
 
 fn main() -> Result<()> {
     let args = Args::parse();
@@ -44,19 +72,30 @@ fn main() -> Result<()> {
     }
 
     enable_raw_mode()?;
+    let _cleanup_guard = TerminalCleanupGuard { mouse: args.mouse };
+
+    // Ensure cleanup on panic and Ctrl-C
+    {
+        let mouse_flag = args.mouse;
+        std::panic::set_hook(Box::new(move |_| {
+            cleanup_terminal(mouse_flag);
+        }));
+    }
+    {
+        let mouse_flag = args.mouse;
+        let _ = ctrlc::set_handler(move || {
+            cleanup_terminal(mouse_flag);
+            std::process::exit(130);
+        });
+    }
+
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     terminal.clear()?;
 
     run(&mut terminal, &mut state)?;
 
     // restore terminal
-    disable_raw_mode()?;
-    terminal.backend_mut().execute(LeaveAlternateScreen)?;
-    if args.mouse {
-        terminal.backend_mut().execute(DisableMouseCapture)?;
-    }
-    terminal.backend_mut().execute(ResetColor)?;
-    terminal.show_cursor()?;
+    cleanup_terminal(args.mouse);
 
     Ok(())
 }

@@ -31,6 +31,7 @@ nix = { version = "0.30.1", features = [ "user" ], optional = true }
 vt100-ctt = "0.16.0"
 anyhow = "1.0"
 which = "8.0"
+ctrlc = "3.4"
 
 [[bin]]
 name = "osutil"
