@@ -6,9 +6,9 @@ use oneshot::Receiver;
 use osutil_core::Command;
 #[cfg(not(windows))]
 use portable_pty::ChildKiller;
-use portable_pty::{ExitStatus, MasterPty, PtySize};
 #[cfg(not(windows))]
 use portable_pty::{CommandBuilder, NativePtySystem, PtySystem};
+use portable_pty::{ExitStatus, MasterPty, PtySize};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind},
     prelude::*,
@@ -328,7 +328,7 @@ impl RunningCommand {
             Self {
                 buffer: windows_runner.buffer,
                 command_thread: windows_runner.command_thread,
-                
+
                 _reader_thread: windows_runner._reader_thread,
                 pty_master: Box::new(DummyPty),
                 writer: windows_runner.stdin_writer,
