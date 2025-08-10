@@ -1,9 +1,12 @@
 use crate::{float::FloatContent, hint::Shortcut, shortcuts, theme::Theme};
 #[cfg(not(windows))]
 use oneshot::channel;
+#[cfg(not(windows))]
 use oneshot::Receiver;
 use osutil_core::Command;
-use portable_pty::{ChildKiller, ExitStatus, MasterPty, PtySize};
+#[cfg(not(windows))]
+use portable_pty::ChildKiller;
+use portable_pty::{ExitStatus, MasterPty, PtySize};
 #[cfg(not(windows))]
 use portable_pty::{CommandBuilder, NativePtySystem, PtySystem};
 use ratatui::{
@@ -73,6 +76,7 @@ pub struct RunningCommand {
     /// A handle for the thread running the command
     command_thread: Option<JoinHandle<ExitStatus>>,
     /// A handle to kill the running process; it's an option because it can only be used once
+    #[cfg(not(windows))]
     child_killer: Option<Receiver<Box<dyn ChildKiller + Send + Sync>>>,
     /// A join handle for the thread that reads command output and sends it to the main thread
     _reader_thread: JoinHandle<()>,
@@ -324,7 +328,7 @@ impl RunningCommand {
             Self {
                 buffer: windows_runner.buffer,
                 command_thread: windows_runner.command_thread,
-                child_killer: None,
+                
                 _reader_thread: windows_runner._reader_thread,
                 pty_master: Box::new(DummyPty),
                 writer: windows_runner.stdin_writer,
