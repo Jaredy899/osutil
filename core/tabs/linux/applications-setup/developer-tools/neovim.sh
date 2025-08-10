@@ -21,11 +21,17 @@ installNeovim() {
             "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm neovim ripgrep fzf python-virtualenv luarocks go shellcheck git
             ;;
         apt-get|nala)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y ripgrep fd-find python3-venv luarocks golang-go shellcheck git ninja-build gettext cmake unzip curl
-            git clone --depth 1 https://github.com/neovim/neovim
-            cd neovim
-            make CMAKE_BUILD_TYPE=Release
-            "$ESCALATION_TOOL" make install
+            # Check the candidate version from the repos and install from the package manager if >= 0.10
+            CANDIDATE_VERSION=$(apt-cache policy neovim | awk '/Candidate:/ {print $2}')
+            if [ -n "$CANDIDATE_VERSION" ] && [ "$CANDIDATE_VERSION" != "(none)" ] && dpkg --compare-versions "$CANDIDATE_VERSION" ge "0.10"; then
+                "$ESCALATION_TOOL" "$PACKAGER" install -y neovim ripgrep fd-find fzf python3-venv luarocks golang-go shellcheck git
+            else
+                "$ESCALATION_TOOL" "$PACKAGER" install -y ripgrep fd-find fzf python3-venv luarocks golang-go shellcheck git ninja-build gettext cmake unzip curl
+                git clone --depth 1 https://github.com/neovim/neovim
+                cd neovim
+                make CMAKE_BUILD_TYPE=Release
+                "$ESCALATION_TOOL" make install
+            fi
             ;;
         dnf)
             "$ESCALATION_TOOL" "$PACKAGER" install -y neovim ripgrep fzf python3-virtualenv luarocks golang ShellCheck git
