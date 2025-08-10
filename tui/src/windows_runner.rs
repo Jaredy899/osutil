@@ -12,6 +12,7 @@ pub struct WindowsCommandRunner {
     pub _reader_thread: JoinHandle<()>,
     pub status: Option<ExitStatus>,
     pub stdin_writer: Box<dyn Write + Send>,
+    pub child_pid: Option<u32>,
 }
 
 struct WindowsStdin(Arc<Mutex<std::process::ChildStdin>>);
@@ -79,6 +80,7 @@ impl WindowsCommandRunner {
                 let mut stderr = child.stderr.take().unwrap();
                 let stdin = Arc::new(Mutex::new(child.stdin.take().unwrap()));
                 let stdin_writer: Box<dyn Write + Send> = Box::new(WindowsStdin(stdin));
+                let pid = child.id();
 
                 let buffer_clone = command_buffer.clone();
                 let reader_handle = std::thread::spawn(move || {
@@ -131,6 +133,7 @@ impl WindowsCommandRunner {
                     _reader_thread: reader_handle,
                     status: None,
                     stdin_writer,
+                    child_pid: Some(pid),
                 }
             }
             Err(e) => {
@@ -141,6 +144,7 @@ impl WindowsCommandRunner {
                     _reader_thread: std::thread::spawn(|| {}),
                     status: Some(ExitStatus::with_exit_code(1)),
                     stdin_writer: Box::new(std::io::sink()),
+                    child_pid: None,
                 }
             }
         }

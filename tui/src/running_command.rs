@@ -84,6 +84,8 @@ pub struct RunningCommand {
     status: Option<ExitStatus>,
     log_path: Option<String>,
     scroll_offset: usize,
+    #[cfg(windows)]
+    child_pid: Option<u32>,
 }
 
 impl FloatContent for RunningCommand {
@@ -329,6 +331,7 @@ impl RunningCommand {
                 status: windows_runner.status,
                 log_path: None,
                 scroll_offset: 0,
+                child_pid: windows_runner.child_pid,
             }
         }
 
@@ -379,11 +382,22 @@ impl RunningCommand {
     /// Send SIGHUB signal, *not* SIGKILL or SIGTERM, to the child process
     pub fn kill_child(&mut self) {
         if !self.is_finished() {
-            if let Some(rx) = self.child_killer.take() {
-                if let Ok(mut killer) = rx.recv() {
-                    if let Err(e) = killer.kill() {
-                        eprintln!("Failed to kill child process: {e}");
+            #[cfg(not(windows))]
+            {
+                if let Some(rx) = self.child_killer.take() {
+                    if let Ok(mut killer) = rx.recv() {
+                        if let Err(e) = killer.kill() {
+                            eprintln!("Failed to kill child process: {e}");
+                        }
                     }
+                }
+            }
+            #[cfg(windows)]
+            {
+                if let Some(pid) = self.child_pid {
+                    let _ = std::process::Command::new("taskkill")
+                        .args(["/T", "/F", "/PID", &pid.to_string()])
+                        .spawn();
                 }
             }
         }
