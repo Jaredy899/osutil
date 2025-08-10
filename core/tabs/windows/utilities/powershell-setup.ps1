@@ -5,6 +5,49 @@ $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
+function Download-File {
+    param(
+        [Parameter(Mandatory=$true)][string]$Url,
+        [Parameter(Mandatory=$true)][string]$Destination
+    )
+    # Try BITS first (preferred)
+    try {
+        Start-BitsTransfer -Source $Url -Destination $Destination -ErrorAction Stop
+        return $true
+    } catch {
+        $err = $_.Exception.Message
+        Write-Host "${Yellow}BITS failed: $err${Reset}"
+        # Common Win10 error when BITS service is unavailable: 0x800704DD
+        # Fallback 1: Invoke-WebRequest
+        try {
+            Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
+            return $true
+        } catch {
+            Write-Host "${Yellow}Invoke-WebRequest failed: $($_.Exception.Message)${Reset}"
+            # Fallback 2: .NET WebClient
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($Url, $Destination)
+                return $true
+            } catch {
+                Write-Host "${Yellow}.NET WebClient failed: $($_.Exception.Message)${Reset}"
+                # Fallback 3: curl.exe (if available)
+                try {
+                    $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+                    if ($null -ne $curl) {
+                        & $curl.Path -L -o $Destination $Url
+                        if ($LASTEXITCODE -eq 0 -and (Test-Path $Destination)) { return $true }
+                    }
+                    throw "curl.exe not available or failed"
+                } catch {
+                    Write-Host "${Red}All download methods failed for: $Url${Reset}"
+                    return $false
+                }
+            }
+        }
+    }
+}
+
 # Define the GitHub base URL for your setup scripts
 $githubBaseUrl = "https://raw.githubusercontent.com/Jaredy899/win/main/my_powershell"
 
@@ -30,12 +73,11 @@ function Invoke-DownloadAndRunScript {
         [string]$localPath
     )
     Write-Host "${Yellow}Downloading: $url${Reset}"
-    try {
-        Start-BitsTransfer -Source $url -Destination $localPath -ErrorAction Stop
+    if (Download-File -Url $url -Destination $localPath) {
         Write-Host "${Cyan}Running: $localPath${Reset}"
-        & $localPath
-    } catch {
-        Write-Host "${Red}Failed to download or run: $url`n$_${Reset}"
+        try { & $localPath } catch { Write-Host "${Red}Script failed: $($_.Exception.Message)${Reset}" }
+    } else {
+        Write-Host "${Red}Failed to download or run: $url${Reset}"
     }
 }
 
@@ -60,8 +102,11 @@ function Initialize-Profile {
     $profileDir = Split-Path $profilePath
     if (-not (Test-Path -Path $profileDir)) { New-Item -ItemType Directory -Path $profileDir -Force | Out-Null }
     if (-not [string]::IsNullOrEmpty($profileUrl)) {
-        Start-BitsTransfer -Source $profileUrl -Destination $profilePath -ErrorAction Stop
-        Write-Host "${Green}Profile updated: $profilePath${Reset}"
+        if (Download-File -Url $profileUrl -Destination $profilePath) {
+            Write-Host "${Green}Profile updated: $profilePath${Reset}"
+        } else {
+            Write-Host "${Red}Failed to update profile from: $profileUrl${Reset}"
+        }
     } else {
         Write-Host "${Yellow}Profile URL is empty; skipped.${Reset}"
     }
@@ -77,9 +122,16 @@ function Initialize-ConfigFiles {
     $userConfigDir = "$env:UserProfile\.config"
     $fastfetchConfigDir = "$userConfigDir\fastfetch"
     if (-not (Test-Path -Path $fastfetchConfigDir)) { New-Item -ItemType Directory -Path $fastfetchConfigDir -Force | Out-Null }
-    Start-BitsTransfer -Source $configJsoncUrl -Destination (Join-Path $fastfetchConfigDir 'config.jsonc') -ErrorAction Stop
-    Start-BitsTransfer -Source $starshipTomlUrl -Destination (Join-Path $userConfigDir 'starship.toml') -ErrorAction Stop
-    Write-Host "${Green}Config files updated (fastfetch, starship).${Reset}"
+    if (Download-File -Url $configJsoncUrl -Destination (Join-Path $fastfetchConfigDir 'config.jsonc')) {
+        Write-Host "${Green}Fastfetch config updated.${Reset}"
+    } else {
+        Write-Host "${Red}Failed to update fastfetch config.${Reset}"
+    }
+    if (Download-File -Url $starshipTomlUrl -Destination (Join-Path $userConfigDir 'starship.toml')) {
+        Write-Host "${Green}Starship config updated.${Reset}"
+    } else {
+        Write-Host "${Red}Failed to update starship config.${Reset}"
+    }
 }
 Initialize-ConfigFiles
 

@@ -1,11 +1,14 @@
 use crate::{float::FloatContent, hint::Shortcut, shortcuts, theme::Theme};
 #[cfg(not(windows))]
 use oneshot::channel;
+#[cfg(not(windows))]
 use oneshot::Receiver;
 use osutil_core::Command;
-use portable_pty::{ChildKiller, ExitStatus, MasterPty, PtySize};
+#[cfg(not(windows))]
+use portable_pty::ChildKiller;
 #[cfg(not(windows))]
 use portable_pty::{CommandBuilder, NativePtySystem, PtySystem};
+use portable_pty::{ExitStatus, MasterPty, PtySize};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind},
     prelude::*,
@@ -73,6 +76,7 @@ pub struct RunningCommand {
     /// A handle for the thread running the command
     command_thread: Option<JoinHandle<ExitStatus>>,
     /// A handle to kill the running process; it's an option because it can only be used once
+    #[cfg(not(windows))]
     child_killer: Option<Receiver<Box<dyn ChildKiller + Send + Sync>>>,
     /// A join handle for the thread that reads command output and sends it to the main thread
     _reader_thread: JoinHandle<()>,
@@ -84,6 +88,8 @@ pub struct RunningCommand {
     status: Option<ExitStatus>,
     log_path: Option<String>,
     scroll_offset: usize,
+    #[cfg(windows)]
+    child_pid: Option<u32>,
 }
 
 impl FloatContent for RunningCommand {
@@ -322,13 +328,14 @@ impl RunningCommand {
             Self {
                 buffer: windows_runner.buffer,
                 command_thread: windows_runner.command_thread,
-                child_killer: None,
+
                 _reader_thread: windows_runner._reader_thread,
                 pty_master: Box::new(DummyPty),
                 writer: windows_runner.stdin_writer,
                 status: windows_runner.status,
                 log_path: None,
                 scroll_offset: 0,
+                child_pid: windows_runner.child_pid,
             }
         }
 
@@ -379,11 +386,22 @@ impl RunningCommand {
     /// Send SIGHUB signal, *not* SIGKILL or SIGTERM, to the child process
     pub fn kill_child(&mut self) {
         if !self.is_finished() {
-            if let Some(rx) = self.child_killer.take() {
-                if let Ok(mut killer) = rx.recv() {
-                    if let Err(e) = killer.kill() {
-                        eprintln!("Failed to kill child process: {e}");
+            #[cfg(not(windows))]
+            {
+                if let Some(rx) = self.child_killer.take() {
+                    if let Ok(mut killer) = rx.recv() {
+                        if let Err(e) = killer.kill() {
+                            eprintln!("Failed to kill child process: {e}");
+                        }
                     }
+                }
+            }
+            #[cfg(windows)]
+            {
+                if let Some(pid) = self.child_pid {
+                    let _ = std::process::Command::new("taskkill")
+                        .args(["/T", "/F", "/PID", &pid.to_string()])
+                        .spawn();
                 }
             }
         }
@@ -456,13 +474,13 @@ impl RunningCommand {
                     return Self {
                         buffer: Arc::new(Mutex::new(message.as_bytes().to_vec())),
                         command_thread: None,
-                        child_killer: None,
                         _reader_thread: std::thread::spawn(|| {}),
                         pty_master: Box::new(DummyPty),
                         writer: Box::new(std::io::sink()),
                         status: Some(ExitStatus::with_exit_code(1)),
                         log_path: None,
                         scroll_offset: 0,
+                        child_pid: None,
                     };
                 }
             };
@@ -505,13 +523,13 @@ impl RunningCommand {
                     Self {
                         buffer: Arc::new(Mutex::new(message.into_bytes())),
                         command_thread: None,
-                        child_killer: None,
                         _reader_thread: std::thread::spawn(|| {}),
                         pty_master: Box::new(DummyPty),
                         writer: Box::new(std::io::sink()),
                         status: Some(ExitStatus::with_exit_code(0)),
                         log_path: None,
                         scroll_offset: 0,
+                        child_pid: None,
                     }
                 }
                 Err(e) => {
@@ -530,13 +548,13 @@ impl RunningCommand {
                     Self {
                         buffer: Arc::new(Mutex::new(message.into_bytes())),
                         command_thread: None,
-                        child_killer: None,
                         _reader_thread: std::thread::spawn(|| {}),
                         pty_master: Box::new(DummyPty),
                         writer: Box::new(std::io::sink()),
                         status: Some(ExitStatus::with_exit_code(1)),
                         log_path: None,
                         scroll_offset: 0,
+                        child_pid: None,
                     }
                 }
             }
@@ -547,13 +565,13 @@ impl RunningCommand {
                     "ERROR!\r\n\r\nCannot launch in separate terminal.\r\n\r\nFalling back to TUI...".as_bytes().to_vec()
                 )),
                 command_thread: None,
-                child_killer: None,
                 _reader_thread: std::thread::spawn(|| {}),
                 pty_master: Box::new(DummyPty),
                 writer: Box::new(std::io::sink()),
                 status: Some(ExitStatus::with_exit_code(1)),
                 log_path: None,
                 scroll_offset: 0,
+                child_pid: None,
             }
         }
     }
