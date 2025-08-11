@@ -62,6 +62,13 @@ description = "Manage SSH keys for administrators (TUI-friendly numeric menu)"
 script = "ssh-key-manager.ps1"
 task_list = "I"
 
+# WSL setup and autostart
+[[data]]
+name = "WSL Setup & Autostart"
+description = "Install/configure WSL, enable systemd, choose a distro, and create a Task Scheduler job to auto-start it at boot"
+script = "wsl-setup.ps1"
+task_list = "I"
+
 # [[data]]
 # name = "First Setup"
 # description = "Initial Windows system setup and configuration"
