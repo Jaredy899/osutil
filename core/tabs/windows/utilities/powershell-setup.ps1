@@ -5,7 +5,7 @@ $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
-function Download-File {
+function Save-RemoteFile {
     param(
         [Parameter(Mandatory=$true)][string]$Url,
         [Parameter(Mandatory=$true)][string]$Destination
@@ -73,7 +73,7 @@ function Invoke-DownloadAndRunScript {
         [string]$localPath
     )
     Write-Host "${Yellow}Downloading: $url${Reset}"
-    if (Download-File -Url $url -Destination $localPath) {
+    if (Save-RemoteFile -Url $url -Destination $localPath) {
         Write-Host "${Cyan}Running: $localPath${Reset}"
         try { & $localPath } catch { Write-Host "${Red}Script failed: $($_.Exception.Message)${Reset}" }
     } else {
@@ -102,7 +102,7 @@ function Initialize-Profile {
     $profileDir = Split-Path $profilePath
     if (-not (Test-Path -Path $profileDir)) { New-Item -ItemType Directory -Path $profileDir -Force | Out-Null }
     if (-not [string]::IsNullOrEmpty($profileUrl)) {
-        if (Download-File -Url $profileUrl -Destination $profilePath) {
+        if (Save-RemoteFile -Url $profileUrl -Destination $profilePath) {
             Write-Host "${Green}Profile updated: $profilePath${Reset}"
         } else {
             Write-Host "${Red}Failed to update profile from: $profileUrl${Reset}"
@@ -122,12 +122,12 @@ function Initialize-ConfigFiles {
     $userConfigDir = "$env:UserProfile\.config"
     $fastfetchConfigDir = "$userConfigDir\fastfetch"
     if (-not (Test-Path -Path $fastfetchConfigDir)) { New-Item -ItemType Directory -Path $fastfetchConfigDir -Force | Out-Null }
-    if (Download-File -Url $configJsoncUrl -Destination (Join-Path $fastfetchConfigDir 'config.jsonc')) {
+    if (Save-RemoteFile -Url $configJsoncUrl -Destination (Join-Path $fastfetchConfigDir 'config.jsonc')) {
         Write-Host "${Green}Fastfetch config updated.${Reset}"
     } else {
         Write-Host "${Red}Failed to update fastfetch config.${Reset}"
     }
-    if (Download-File -Url $starshipTomlUrl -Destination (Join-Path $userConfigDir 'starship.toml')) {
+    if (Save-RemoteFile -Url $starshipTomlUrl -Destination (Join-Path $userConfigDir 'starship.toml')) {
         Write-Host "${Green}Starship config updated.${Reset}"
     } else {
         Write-Host "${Red}Failed to update starship config.${Reset}"

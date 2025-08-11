@@ -17,7 +17,7 @@ function Assert-Administrator {
     }
 }
 
-function Ensure-WindowsUpdateServices {
+function Start-WindowsUpdateServices {
     $requiredServices = @('wuauserv', 'bits', 'UsoSvc')
     foreach ($serviceName in $requiredServices) {
         try {
@@ -32,7 +32,7 @@ function Ensure-WindowsUpdateServices {
     }
 }
 
-function Ensure-MicrosoftUpdateRegistered {
+function Register-MicrosoftUpdateService {
     try {
         $muServiceId = '7971f918-a847-4430-9279-4a52d1efe18d'
         $isRegistered = Get-WUServiceManager -ErrorAction SilentlyContinue |
@@ -136,10 +136,10 @@ function Get-InstalledUpdates {
 }
 
 Assert-Administrator
-Ensure-WindowsUpdateServices
+Start-WindowsUpdateServices
 Install-NuGetProvider
 Install-PSWindowsUpdateModule
 Import-PSWindowsUpdateModule
-Ensure-MicrosoftUpdateRegistered
+Register-MicrosoftUpdateService
 Update-Windows
 Get-InstalledUpdates
