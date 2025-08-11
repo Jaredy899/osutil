@@ -7,6 +7,72 @@ $Red   = "${esc}[31m"
 $Blue  = "${esc}[34m"
 $Reset = "${esc}[0m"
 
+# Cross-version secure password reader
+# Tries true no-echo console read first (no masking characters),
+# then falls back to host/UI methods if a console is not available.
+function Read-PasswordSecure {
+    param(
+        [Parameter(Mandatory=$true)][string]$PromptText
+    )
+    Write-Host $PromptText -NoNewline
+
+    # In OSUTIL TUI mode, read from standard input without echo.
+    # This avoids any host-provided masking like ****** entirely.
+    if ($env:OSUTIL_TUI_MODE -eq '1') {
+        try {
+            $secure = New-Object System.Security.SecureString
+            $stdin = [System.Console]::OpenStandardInput()
+            $buffer = New-Object byte[] 1
+            while ($true) {
+                $read = $stdin.Read($buffer, 0, 1)
+                if ($read -le 0) { break }
+                $b = $buffer[0]
+                if ($b -eq 13 -or $b -eq 10) { break } # CR or LF ends input
+                if ($b -eq 8 -or $b -eq 127) { # Backspace/Delete
+                    if ($secure.Length -gt 0) { $secure.RemoveAt($secure.Length - 1) }
+                    continue
+                }
+                $secure.AppendChar([char]$b)
+            }
+            Write-Host ""
+            return $secure
+        } catch { }
+    }
+
+    # Primary path: read directly from the console without echo
+    try {
+        $secure = New-Object System.Security.SecureString
+        while ($true) {
+            $keyInfo = [System.Console]::ReadKey($true)
+            if ($keyInfo.Key -eq [System.ConsoleKey]::Enter) { break }
+            if ($keyInfo.Key -eq [System.ConsoleKey]::Backspace) {
+                if ($secure.Length -gt 0) { $secure.RemoveAt($secure.Length - 1) }
+            } else {
+                $secure.AppendChar($keyInfo.KeyChar)
+            }
+        }
+        Write-Host ""
+        return $secure
+    } catch {
+        # Fall through to host-based methods
+    }
+
+    # Fallback 1: GUI credential prompt (no echo in console)
+    try {
+        $currentFullUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+        $cred = $Host.UI.PromptForCredential("Password Entry", "Enter password", $currentFullUser, "")
+        if ($null -ne $cred) { return $cred.Password }
+    } catch { }
+
+    # Fallback 2: host UI secure input (may mask with asterisks depending on host)
+    if ($Host -and $Host.UI -and ($Host.UI.PSObject.Methods.Name -contains 'ReadLineAsSecureString')) {
+        return $Host.UI.ReadLineAsSecureString()
+    }
+
+    # Fallback 3: Read-Host secure input (may mask with asterisks depending on host)
+    return Read-Host -AsSecureString
+}
+
 # Check if running as administrator
 function Test-Administrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -48,10 +114,8 @@ $changePassword = Read-Host
 if ($changePassword -eq "yes" -or $changePassword -eq "y" -or [string]::IsNullOrEmpty($changePassword)) {
     $passwordsMatch = $false
     while (-not $passwordsMatch) {
-        Write-Host "${Yellow}Enter the new password: ${Reset}" -NoNewline
-        $password1 = Read-Host -AsSecureString
-        Write-Host "${Yellow}Confirm the new password: ${Reset}" -NoNewline
-        $password2 = Read-Host -AsSecureString
+        $password1 = Read-PasswordSecure "${Yellow}Enter the new password: ${Reset}"
+        $password2 = Read-PasswordSecure "${Yellow}Confirm the new password: ${Reset}"
 
         # Convert SecureString to plain text for comparison
         $BSTR1 = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password1)
