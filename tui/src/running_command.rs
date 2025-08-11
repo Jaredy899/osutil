@@ -9,7 +9,6 @@ use portable_pty::ChildKiller;
 use portable_pty::{ExitStatus, MasterPty, PtySize};
 #[cfg(not(windows))]
 use portable_pty::{CommandBuilder, NativePtySystem, PtySystem};
-use portable_pty::{ExitStatus, MasterPty, PtySize};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind},
     prelude::*,
