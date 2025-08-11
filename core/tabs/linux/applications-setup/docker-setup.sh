@@ -25,14 +25,17 @@ install_docker() {
     if ! command_exists docker; then
         printf "%b\n" "${YELLOW}Installing Docker...${RC}"
         case "$PACKAGER" in
-            pacman|eopkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y docker docker-compose
+            pacman)
+                "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm --needed docker docker-compose
                 ;;
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy docker docker-compose
                 ;;
             zypper)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y docker docker-compose docker-compose-switch
+                ;;
+            eopkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y docker docker-compose
                 ;;
             apk)
                 "$ESCALATION_TOOL" apk add --no-cache --update-cache \
