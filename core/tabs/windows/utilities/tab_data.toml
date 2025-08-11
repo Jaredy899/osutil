@@ -45,6 +45,12 @@ script = "update.ps1"
 task_list = "I"
 
 [[data]]
+name = "Winget Backup / Restore / Update"
+description = "Backup installed winget packages to Documents, restore from backup, or update all packages"
+script = "winget-backup-restore.ps1"
+task_list = "I"
+
+[[data]]
 name = "Windows Activation"
 description = "Activates Windows using the get.activated.win service (opens in a separate PowerShell window for full interactivity)"
 script = "windows-activation.ps1"

@@ -6,6 +6,7 @@ use oneshot::Receiver;
 use osutil_core::Command;
 #[cfg(not(windows))]
 use portable_pty::ChildKiller;
+use portable_pty::{ExitStatus, MasterPty, PtySize};
 #[cfg(not(windows))]
 use portable_pty::{CommandBuilder, NativePtySystem, PtySystem};
 use portable_pty::{ExitStatus, MasterPty, PtySize};
@@ -328,7 +329,7 @@ impl RunningCommand {
             Self {
                 buffer: windows_runner.buffer,
                 command_thread: windows_runner.command_thread,
-
+                
                 _reader_thread: windows_runner._reader_thread,
                 pty_master: Box::new(DummyPty),
                 writer: windows_runner.stdin_writer,
@@ -399,9 +400,13 @@ impl RunningCommand {
             #[cfg(windows)]
             {
                 if let Some(pid) = self.child_pid {
+                    use std::process::Stdio;
                     let _ = std::process::Command::new("taskkill")
                         .args(["/T", "/F", "/PID", &pid.to_string()])
-                        .spawn();
+                        .stdin(Stdio::null())
+                        .stdout(Stdio::null())
+                        .stderr(Stdio::null())
+                        .status();
                 }
             }
         }

@@ -6,8 +6,6 @@ param(
 
 $esc   = [char]27
 $Cyan  = "${esc}[36m"
-$Yellow= "${esc}[33m"
-$Green = "${esc}[32m"
 $Reset = "${esc}[0m"
 
 $inTui = $env:OSUTIL_TUI_MODE -eq '1'
