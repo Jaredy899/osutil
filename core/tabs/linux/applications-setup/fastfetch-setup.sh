@@ -10,15 +10,16 @@ installFastfetch() {
                 "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm fastfetch
                 ;;
             apt-get|nala)
-                if "$ESCALATION_TOOL" "$PACKAGER" install -y fastfetch 2>/dev/null; then
-                    return 0
-                fi
                 case "$ARCH" in
                     x86_64)
                         DEB_FILE="fastfetch-linux-amd64.deb"
                         ;;
                     aarch64)
                         DEB_FILE="fastfetch-linux-aarch64.deb"
+                        ;;
+                    *)
+                        printf "%b\n" "${RED}Unsupported architecture for deb install: $ARCH${RC}"
+                        exit 1
                         ;;
                 esac
                 curl -sSLo "/tmp/fastfetch.deb" "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$DEB_FILE"
