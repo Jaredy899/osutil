@@ -22,8 +22,18 @@ function Invoke-WindowsActivationInline {
 }
 
 if ($ForceNewWindow -or $inTui) {
-    $ps = (Get-Command pwsh -ErrorAction SilentlyContinue)?.Source
-    if (-not $ps) { $ps = (Get-Command powershell -ErrorAction SilentlyContinue).Source }
+    $ps = $null
+    $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($cmd) {
+        $ps = $cmd.Source
+    } else {
+        $cmd = Get-Command powershell -ErrorAction SilentlyContinue
+        if ($cmd) {
+            $ps = $cmd.Source
+        } else {
+            $ps = 'powershell.exe'
+        }
+    }
     $cmd = "`$confirmation = Read-Host 'Are you sure you want to activate Windows? (y/n)'; if (`$confirmation -eq 'y') { Invoke-RestMethod https://get.activated.win | Invoke-Expression } else { Write-Host 'Windows activation cancelled.' }"
     Start-Process $ps -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-NoLogo','-Command', $cmd
     exit 0

@@ -16,8 +16,19 @@ function Test-Administrator {
 # Self-elevate the script if required
 if (-not (Test-Administrator)) {
     Write-Host "${Cyan}Requesting administrative privileges...${Reset}"
-    $ps = (Get-Command pwsh -ErrorAction SilentlyContinue)?.Source
-    if (-not $ps) { $ps = (Get-Command powershell -ErrorAction SilentlyContinue).Source }
+    # Resolve a shell executable path in a way that's compatible with Windows PowerShell 5.x (no null-conditional operator)
+    $ps = $null
+    $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($cmd) {
+        $ps = $cmd.Source
+    } else {
+        $cmd = Get-Command powershell -ErrorAction SilentlyContinue
+        if ($cmd) {
+            $ps = $cmd.Source
+        } else {
+            $ps = 'powershell.exe'
+        }
+    }
     Start-Process $ps -Verb RunAs -ArgumentList ('-NoProfile','-ExecutionPolicy','Bypass','-File', $PSCommandPath)
     Exit
 }
