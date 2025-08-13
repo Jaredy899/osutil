@@ -38,12 +38,11 @@ view_all_services() {
             "$ESCALATION_TOOL" rc-update show | more
             ;;
         sv)
-            # shellcheck disable=SC2012
-            ls -1 /etc/sv/ | more
+            find /etc/sv/ -mindepth 1 -maxdepth 1 -exec basename {} \; | more
             ;;
         service)
             if [ -d "/etc/rc.d" ]; then
-                ls -1 /etc/rc.d/rc.* | sed 's/^\/etc\/rc.d\/rc\.//' | more
+                find /etc/rc.d/ -maxdepth 1 -type f -name 'rc.*' -exec basename {} \; | sed 's/^rc\.//' | more
             else
                 "$ESCALATION_TOOL" service --status-all | more
             fi
@@ -62,11 +61,10 @@ view_enabled_services() {
             "$ESCALATION_TOOL" rc-update show -v | grep "\[" | more
             ;;
         sv)
-            # shellcheck disable=SC2012
             if [ -d "/etc/service" ]; then
-                ls -1 /etc/service/ | more
+                find /etc/service/ -mindepth 1 -maxdepth 1 -exec basename {} \; | more
             else
-                ls -1 /var/service/ | more
+                find /var/service/ -mindepth 1 -maxdepth 1 -exec basename {} \; | more
             fi
             ;;
         service)
@@ -90,11 +88,18 @@ view_disabled_services() {
             "$ESCALATION_TOOL" rc-update show -v | grep -v "\[" | more
             ;;
         sv)
-            # shellcheck disable=SC2010
             if [ -d "/etc/service" ]; then
-                ls -1 /etc/sv/ | grep -v "$(ls -1 /etc/service/)" | more
+                ALL="$(mktemp)"; ACTIVE="$(mktemp)"
+                find /etc/sv/ -mindepth 1 -maxdepth 1 -exec basename {} \; | sort > "$ALL"
+                find /etc/service/ -mindepth 1 -maxdepth 1 -exec basename {} \; | sort > "$ACTIVE"
+                comm -23 "$ALL" "$ACTIVE" | more
+                rm -f "$ALL" "$ACTIVE"
             else
-                ls -1 /etc/sv/ | grep -v "$(ls -1 /var/service/)" | more
+                ALL="$(mktemp)"; ACTIVE="$(mktemp)"
+                find /etc/sv/ -mindepth 1 -maxdepth 1 -exec basename {} \; | sort > "$ALL"
+                find /var/service/ -mindepth 1 -maxdepth 1 -exec basename {} \; | sort > "$ACTIVE"
+                comm -23 "$ALL" "$ACTIVE" | more
+                rm -f "$ALL" "$ACTIVE"
             fi
             ;;
         service)
