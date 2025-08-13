@@ -39,6 +39,36 @@ script = "ssh.sh"
 task_list = "I PFM"
 
 [[data]]
+name = "Firewall Hardening"
+description = "Enable firewall, stealth mode, and optionally block all incoming connections; then verify status."
+script = "firewall-hardening.sh"
+task_list = "I PFM"
+
+[[data]]
+name = "Privacy Baseline"
+description = "Disable analytics/diagnostics, ad personalization, and online suggestions where scriptable; shows what changed."
+script = "privacy-baseline.sh"
+task_list = "I PFM"
+
+[[data]]
+name = "Gatekeeper Disable"
+description = "Disable Gatekeeper; optionally purge quarantine attributes from Downloads."
+script = "gatekeeper-disable.sh"
+task_list = "I"
+
+[[data]]
+name = "Power Tuning"
+description = "Apply power profiles for battery/AC using pmset, or restore defaults; view current settings."
+script = "power-tuning.sh"
+task_list = "RP PFM"
+
+[[data]]
+name = "Spotlight Tuning"
+description = "Disable network suggestions, rebuild the index, and toggle indexing for the current volume."
+script = "spotlight-tuning.sh"
+task_list = "RP PFM"
+
+[[data]]
 name = "Configure Trackpad"
 description = "Configures the Trackpad settings to my personal setup"
 script = "trackpad-setup.sh"
