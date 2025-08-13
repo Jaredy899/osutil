@@ -11,9 +11,6 @@ mod theme;
 #[cfg(windows)]
 mod windows_runner;
 
-#[cfg(feature = "tips")]
-mod tips;
-
 use crate::cli::Args;
 use clap::Parser;
 use ratatui::{
