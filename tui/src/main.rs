@@ -11,9 +11,6 @@ mod theme;
 #[cfg(windows)]
 mod windows_runner;
 
-#[cfg(feature = "tips")]
-mod tips;
-
 use crate::cli::Args;
 use clap::Parser;
 use ratatui::{
@@ -28,12 +25,12 @@ use ratatui::{
 };
 use running_command::TERMINAL_UPDATED;
 use state::AppState;
+use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 use std::{
     io::{stdout, Result, Stdout},
     sync::atomic::Ordering,
     time::Duration,
 };
-use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 
 // Ensure we restore the terminal at most once
 static TERMINAL_CLEANED: AtomicBool = AtomicBool::new(false);
