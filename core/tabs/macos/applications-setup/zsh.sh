@@ -72,7 +72,7 @@ setupFastfetchConfig() {
         cp -r "${HOME}/.config/fastfetch" "${HOME}/.config/fastfetch-bak"
     fi
     mkdir -p "${HOME}/.config/fastfetch/"
-    curl -sSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/config.jsonc
+    curl -fsSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/config.jsonc
 }
 
 # Function to setup zsh configuration

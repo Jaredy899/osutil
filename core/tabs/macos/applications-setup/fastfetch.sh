@@ -21,7 +21,7 @@ setupFastfetchConfig() {
         cp -r "${HOME}/.config/fastfetch" "${HOME}/.config/fastfetch-bak"
     fi
     mkdir -p "${HOME}/.config/fastfetch/"
-    curl -sSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/config.jsonc
+    curl -fsSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/Jaredy899/mac/refs/heads/main/myzsh/config.jsonc
 }
 
 setupFastfetchShell() {
@@ -55,13 +55,11 @@ setupFastfetchShell() {
             printf "%b\n" "${YELLOW}Fastfetch is already configured in $rc_file${RC}"
             return 0
         else
-            printf "%b" "${GREEN}Would you like to add fastfetch to $rc_file? [y/N] ${RC}"
-            read -r response
-            if [ "$response" = "y" ] || [ "$response" = "Y" ]; then
+            if [ "${ADD_FASTFETCH_TO_SHELL:-0}" = "1" ]; then
                 printf "\n# Run fastfetch on shell initialization\nfastfetch\n" >>"$rc_file"
                 printf "%b\n" "${GREEN}Added fastfetch to $rc_file${RC}"
             else
-                printf "%b\n" "${YELLOW}Skipped adding fastfetch to shell config${RC}"
+                printf "%b\n" "${YELLOW}Skipped adding fastfetch to shell config (set ADD_FASTFETCH_TO_SHELL=1 to enable)${RC}"
             fi
         fi
     fi
