@@ -51,9 +51,9 @@ script = "privacy-baseline.sh"
 task_list = "I PFM"
 
 [[data]]
-name = "Gatekeeper Tighten"
-description = "Verify Gatekeeper is enabled; optionally purge quarantine attributes from Downloads."
-script = "gatekeeper-tighten.sh"
+name = "Gatekeeper Disable"
+description = "Disable Gatekeeper; optionally purge quarantine attributes from Downloads."
+script = "gatekeeper-disable.sh"
 task_list = "I"
 
 [[data]]
