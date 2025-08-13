@@ -151,22 +151,16 @@ jobs:
       - name: Build for macOS (ARM)
         run: cargo build --release --target aarch64-apple-darwin --all-features
 
-      - name: Create universal macOS binary
-        run: |
-          lipo -create \
-            target/x86_64-apple-darwin/release/osutil \
-            target/aarch64-apple-darwin/release/osutil \
-            -output target/release/osutil
-
-      - name: Prepare macOS binary for upload
+      - name: Prepare macOS binaries for upload (separate arch)
         run: |
           mkdir -p macos-binaries
-          cp target/release/osutil macos-binaries/osutil-macos
+          cp target/x86_64-apple-darwin/release/osutil macos-binaries/osutil-macos-x86_64
+          cp target/aarch64-apple-darwin/release/osutil macos-binaries/osutil-macos-arm64
 
-      - name: Upload macOS artifact
+      - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-binary
+          name: macos-binaries
           path: macos-binaries/
 
   release:
@@ -200,7 +194,8 @@ jobs:
             - **armv7l**: `osutil-armv7l` (ARMv7 Linux)
             
             ### macOS
-            - **Universal**: `osutil-macos` (Intel & ARM)
+            - **x86_64**: `osutil-macos-x86_64` (Intel Macs)
+            - **arm64**: `osutil-macos-arm64` (Apple Silicon)
             
             ### Windows
             - **x86_64**: `osutil.exe` (Windows - No external dependencies)
@@ -221,7 +216,8 @@ jobs:
             linux-binaries/osutil
             linux-binaries/osutil-aarch64
             linux-binaries/osutil-armv7l
-            macos-binary/osutil-macos
+            macos-binaries/osutil-macos-x86_64
+            macos-binaries/osutil-macos-arm64
             windows-msvc-binary/osutil.exe
           generate_release_notes: true
         env:

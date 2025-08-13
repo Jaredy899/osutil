@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::fs;
 use std::process::Command;
 
 type DynError = Box<dyn Error>;
@@ -26,9 +27,9 @@ pub fn build_all() -> Result<(), DynError> {
         println!("Building for macOS (ARM)...");
         build_target("aarch64-apple-darwin")?;
 
-        // Create universal binary
-        println!("Creating universal macOS binary...");
-        create_universal_macos_binary()?;
+        // Prepare separate macOS binaries (no lipo)
+        println!("Preparing separate macOS binaries (no universal binary)...");
+        prepare_separate_macos_binaries()?;
     } else {
         println!("Not on macOS, skipping macOS builds");
         println!("Note: macOS builds require native macOS environment");
@@ -66,6 +67,7 @@ fn build_target(target: &str) -> Result<(), DynError> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn create_universal_macos_binary() -> Result<(), DynError> {
     let x86_64_path = "target/x86_64-apple-darwin/release/osutil";
     let aarch64_path = "target/aarch64-apple-darwin/release/osutil";
@@ -88,6 +90,30 @@ fn create_universal_macos_binary() -> Result<(), DynError> {
     if !status.success() {
         return Err("Failed to create universal macOS binary".into());
     }
+
+    Ok(())
+}
+
+fn prepare_separate_macos_binaries() -> Result<(), DynError> {
+    let x86_64_src = "target/x86_64-apple-darwin/release/osutil";
+    let arm64_src = "target/aarch64-apple-darwin/release/osutil";
+    let out_dir = "target/release";
+    let x86_64_dst = format!("{out_dir}/osutil-macos-x86_64");
+    let arm64_dst = format!("{out_dir}/osutil-macos-arm64");
+
+    if !std::path::Path::new(x86_64_src).exists() {
+        return Err("x86_64 macOS binary not found".into());
+    }
+    if !std::path::Path::new(arm64_src).exists() {
+        return Err("aarch64 macOS binary not found".into());
+    }
+
+    fs::create_dir_all(out_dir)?;
+    fs::copy(x86_64_src, &x86_64_dst)?;
+    fs::copy(arm64_src, &arm64_dst)?;
+
+    println!("✓ Created {x86_64_dst}");
+    println!("✓ Created {arm64_dst}");
 
     Ok(())
 }
