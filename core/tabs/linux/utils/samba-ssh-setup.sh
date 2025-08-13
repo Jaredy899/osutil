@@ -8,6 +8,7 @@
 install_package() {
     PACKAGE=$1
     if ! command_exists "$PACKAGE"; then
+        # shellcheck disable=SC2153
         case "$PACKAGER" in
             pacman)
                 "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm "$PACKAGE"
