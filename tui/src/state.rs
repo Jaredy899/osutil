@@ -1,6 +1,7 @@
 #[cfg(unix)]
 use crate::root::check_root_status;
 use crate::{
+    cli::Args,
     confirmation::{ConfirmPrompt, ConfirmStatus},
     filter::{Filter, SearchAction},
     float::{Float, FloatContent},
@@ -9,7 +10,6 @@ use crate::{
     running_command::RunningCommand,
     shortcuts,
     theme::Theme,
-    Args,
 };
 #[allow(unused_imports)]
 use osutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
@@ -64,8 +64,7 @@ pub struct AppState {
     multi_select: bool,
     selected_commands: Vec<Rc<ListNode>>,
     drawable: bool,
-    #[cfg(feature = "tips")]
-    tip: &'static str,
+    // tips removed
     size_bypass: bool,
     skip_confirmation: bool,
     mouse_enabled: bool,
@@ -133,8 +132,6 @@ impl AppState {
             multi_select: false,
             selected_commands: Vec::new(),
             drawable: false,
-            #[cfg(feature = "tips")]
-            tip: crate::tips::get_random_tip(),
             size_bypass: args.size_bypass,
             skip_confirmation: args.skip_confirmation,
             mouse_enabled: args.mouse,
@@ -436,12 +433,6 @@ impl AppState {
             TITLE
         };
 
-        #[cfg(feature = "tips")]
-        let bottom_title = Line::from(format!(" {} ", self.tip))
-            .bold()
-            .blue()
-            .centered();
-        #[cfg(not(feature = "tips"))]
         let bottom_title = "";
 
         let task_list_title = Line::from(" Important Actions ").right_aligned();
