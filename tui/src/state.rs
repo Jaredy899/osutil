@@ -1,6 +1,7 @@
 #[cfg(unix)]
 use crate::root::check_root_status;
 use crate::{
+    cli::Args,
     confirmation::{ConfirmPrompt, ConfirmStatus},
     filter::{Filter, SearchAction},
     float::{Float, FloatContent},
@@ -9,7 +10,6 @@ use crate::{
     running_command::RunningCommand,
     shortcuts,
     theme::Theme,
-    cli::Args,
 };
 #[allow(unused_imports)]
 use osutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
