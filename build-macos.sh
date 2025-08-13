@@ -90,13 +90,12 @@ cargo build --release --target x86_64-apple-darwin --all-features
 echo "Building for macOS ARM (aarch64)..."
 cargo build --release --target aarch64-apple-darwin --all-features
 
-# Create universal binary
-echo "Creating universal macOS binary..."
-lipo -create \
-    target/x86_64-apple-darwin/release/osutil \
-    target/aarch64-apple-darwin/release/osutil \
-    -output "$BUILD_DIR/osutil-macos"
-echo "✓ Created universal macOS binary"
+# Copy architecture-specific binaries (no universal binary)
+echo "Preparing separate macOS binaries..."
+cp target/x86_64-apple-darwin/release/osutil "$BUILD_DIR/osutil-macos-x86_64"
+cp target/aarch64-apple-darwin/release/osutil "$BUILD_DIR/osutil-macos-arm64"
+echo "✓ Created $BUILD_DIR/osutil-macos-x86_64"
+echo "✓ Created $BUILD_DIR/osutil-macos-arm64"
 
 echo ""
 echo "Build completed! Binary in $BUILD_DIR/:"
@@ -104,7 +103,9 @@ ls -la "$BUILD_DIR/"
 
 echo ""
 echo "Build Summary:"
-echo "- macOS Universal: $BUILD_DIR/osutil-macos"
+echo "- macOS x86_64: $BUILD_DIR/osutil-macos-x86_64"
+echo "- macOS arm64:  $BUILD_DIR/osutil-macos-arm64"
 echo ""
-echo "To install system-wide, run:"
-echo "sudo cp $BUILD_DIR/osutil-macos /usr/local/bin/osutil" 
+echo "To install system-wide, choose the correct binary for your Mac:"
+echo "  Intel (x86_64): sudo cp $BUILD_DIR/osutil-macos-x86_64 /usr/local/bin/osutil"
+echo "  Apple Silicon:  sudo cp $BUILD_DIR/osutil-macos-arm64 /usr/local/bin/osutil"

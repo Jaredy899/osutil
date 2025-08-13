@@ -5,7 +5,18 @@ ARCH=$(uname -m)
 
 case "$OS" in
   Darwin)
-    URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-macos"
+    case "$ARCH" in
+      x86_64|amd64)
+        URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-macos-x86_64"
+        ;;
+      arm64|aarch64)
+        URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-macos-arm64"
+        ;;
+      *)
+        echo "Unsupported macOS architecture: $ARCH"
+        exit 1
+        ;;
+    esac
     ;;
   Linux)
     case "$ARCH" in
