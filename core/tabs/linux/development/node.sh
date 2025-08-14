@@ -21,15 +21,16 @@ installNode() {
             ;;
     esac
 
-    # Install NVM
-    export NVM_DIR="$HOME/.nvm"
-    if [ ! -d "$NVM_DIR" ]; then
+    # Install NVM (avoid exporting NVM_DIR before installer runs)
+    NVM_DIR="$HOME/.nvm"
+    [ -d "$NVM_DIR" ] || mkdir -p "$NVM_DIR"
+    if [ ! -s "$NVM_DIR/nvm.sh" ]; then
         curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
     fi
 
-    # Fallback: if NVM directory still missing, install via git clone
+    # Fallback: if NVM directory still missing or incomplete, install via git clone
     if [ ! -d "$NVM_DIR" ] || [ ! -s "$NVM_DIR/nvm.sh" ]; then
-        mkdir -p "$NVM_DIR"
+        rm -rf "$NVM_DIR"
         git clone --branch v0.39.7 --depth 1 https://github.com/nvm-sh/nvm.git "$NVM_DIR"
     fi
 
