@@ -3,7 +3,7 @@
 . ../common-script.sh
 
 installNode() {
-    printf "%b\n" "${YELLOW}Installing Node.js via NVM (latest LTS)...${RC}"
+    printf "%b\n" "${YELLOW}Installing Node.js via NVM (latest)...${RC}"
 
     # Ensure curl, bash, and git are available
     case "$PACKAGER" in
@@ -21,17 +21,13 @@ installNode() {
             ;;
     esac
 
-    # Install NVM (avoid exporting NVM_DIR before installer runs)
+    # Install NVM without hardcoded version: use latest release tag; fallback to master
     NVM_DIR="$HOME/.nvm"
-    [ -d "$NVM_DIR" ] || mkdir -p "$NVM_DIR"
     if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-        curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-    fi
-
-    # Fallback: if NVM directory still missing or incomplete, install via git clone
-    if [ ! -d "$NVM_DIR" ] || [ ! -s "$NVM_DIR/nvm.sh" ]; then
         rm -rf "$NVM_DIR"
-        git clone --branch v0.39.7 --depth 1 https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+        latest_tag=$(curl -fsSL https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -o '"tag_name"[: ][^,]*' | head -n1 | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\(v[^"[:space:]]*\)".*/\1/')
+        [ -z "$latest_tag" ] && latest_tag="master"
+        git clone --depth 1 --branch "$latest_tag" https://github.com/nvm-sh/nvm.git "$NVM_DIR"
     fi
 
     # Load NVM into this shell
@@ -43,10 +39,10 @@ installNode() {
         exit 1
     fi
 
-    # Install latest LTS and set default
-    nvm install --lts
-    nvm use --lts
-    nvm alias default 'lts/*'
+    # Install latest Node (current) and set as default
+    nvm install node
+    nvm use node
+    nvm alias default node
 
     # Enable Corepack (yarn/pnpm)
     if command_exists corepack; then
@@ -69,7 +65,7 @@ RCAPPEND
         } >> "$SHELL_RC"
     fi
 
-    printf "%b\n" "${GREEN}Node.js (LTS) installed via NVM. Restart your shell to use 'node' and 'npm'.${RC}"
+    printf "%b\n" "${GREEN}Node.js (current) installed via NVM. Restart your shell to use 'node' and 'npm'.${RC}"
 }
 
 checkEnv
