@@ -21,46 +21,48 @@ if (-not (Test-Administrator)) {
 }
 
 Write-Host "${Cyan}Script running with administrative privileges...${Reset}"
+ 
+function Enable-AutoTimeZone {
+    Try {
+        New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DateTime" -Force *>$null
+        New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DateTime" -Name "AutoTimeZoneEnabled" -PropertyType DWord -Value 1 -Force *>$null
+
+        Try {
+            New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" -Force *>$null
+            New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" -Name "DisableLocation" -PropertyType DWord -Value 0 -Force *>$null
+        } Catch {}
+
+        Try { Set-Service -Name lfsvc -StartupType Automatic *>$null } Catch {}
+        Try { Start-Service -Name lfsvc *>$null } Catch {}
+        Try { Set-Service -Name tzautoupdate -StartupType Automatic *>$null } Catch {}
+
+        $taskPath = "\\Microsoft\\Windows\\Time Zone\\"
+        $taskName = "SynchronizeTimeZone"
+        $task = Get-ScheduledTask -TaskPath $taskPath -TaskName $taskName -ErrorAction SilentlyContinue
+        if ($task) {
+            Start-ScheduledTask -TaskPath $taskPath -TaskName $taskName
+            Start-Sleep -Seconds 3
+        } else {
+            Try { Start-Service -Name tzautoupdate *>$null } Catch {}
+        }
+
+        $currentTz = Get-TimeZone -ErrorAction SilentlyContinue
+        if ($currentTz) {
+            Write-Host "${Green}Automatic time zone enabled (${currentTz.Id}).${Reset}"
+        } else {
+            Write-Host "${Yellow}Automatic time zone enabled, but current time zone could not be read.${Reset}"
+        }
+        return $true
+    } Catch {
+        Write-Host "${Yellow}Failed to enable automatic time zone: $($_)${Reset}"
+        return $false
+    }
+}
 
 function Set-TimeSettings {
     Try {
-        # Attempt to automatically detect timezone
-        Try {
-            # Try multiple geolocation services
-            $timezone = $null
-            
-            # Try ipapi.co first
-            Try {
-                $timezone = (Invoke-RestMethod -Uri "https://ipapi.co/timezone" -Method Get -TimeoutSec 5).Trim()
-            } Catch {
-                Write-Output "ipapi.co detection failed, trying alternative service..."
-            }
-            
-            if ($timezone) {
-                Write-Host "${Yellow}Detected timezone: $timezone${Reset}"
-                
-                # Simplified mapping for common US timezones
-                $tzMapping = @{
-                    'America/New_York' = 'Eastern Standard Time'
-                    'America/Chicago' = 'Central Standard Time'
-                    'America/Denver' = 'Mountain Standard Time'
-                    'America/Los_Angeles' = 'Pacific Standard Time'
-                    'America/Anchorage' = 'Alaskan Standard Time'
-                    'Pacific/Honolulu' = 'Hawaiian Standard Time'
-                }
-
-                if ($tzMapping.ContainsKey($timezone)) {
-                    $windowsTimezone = $tzMapping[$timezone]
-                    tzutil /s $windowsTimezone *>$null
-                    Write-Host "${Green}Time zone automatically set to $windowsTimezone${Reset}"
-                } else {
-                    throw "Could not map timezone"
-                }
-            } else {
-                throw "Could not detect timezone"
-            }
-        } Catch {
-            Write-Host "${Yellow}Automatic timezone detection failed. Falling back to manual selection...${Reset}"
+        if (-not (Enable-AutoTimeZone)) {
+            Write-Host "${Yellow}Automatic timezone unavailable. Falling back to manual selection...${Reset}"
             # Display options for time zones
             Write-Host "${Cyan}Select a time zone from the options below:${Reset}"
             $timeZones = @(
@@ -76,7 +78,7 @@ function Set-TimeSettings {
             
             # Display the list of options
             for ($i = 0; $i -lt $timeZones.Count; $i++) {
-                Write-Output "$($i + 1). $($timeZones[$i])"
+                Write-Output "$(($i + 1)). $($timeZones[$i])"
             }
 
             # Prompt the user to select a time zone
@@ -85,7 +87,7 @@ function Set-TimeSettings {
             # Validate input and set the time zone
             if ($selection -match '^\d+$' -and $selection -gt 0 -and $selection -le $timeZones.Count) {
                 $selectedTimeZone = $timeZones[$selection - 1]
-                tzutil /s "$selectedTimeZone" *>$null
+                Set-TimeZone -Id "$selectedTimeZone"
                 Write-Host "${Green}Time zone set to $selectedTimeZone.${Reset}"
             } else {
                 Write-Host "${Yellow}Invalid selection. Please run the script again and choose a valid number.${Reset}"
