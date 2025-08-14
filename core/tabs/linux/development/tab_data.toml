@@ -24,4 +24,16 @@ description = "Installs the latest stable Zig from the official releases and sym
 script = "zig.sh"
 task_list = "I"
 
+[[data]]
+name = "Java (OpenJDK LTS)"
+description = "Installs OpenJDK (prefers 21, falls back to 17) using the system package manager."
+script = "java.sh"
+task_list = "I"
+
+[[data]]
+name = "Ruby"
+description = "Installs Ruby using the system package manager."
+script = "ruby.sh"
+task_list = "I"
+
 
