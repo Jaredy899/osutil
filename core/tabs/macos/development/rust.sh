@@ -3,7 +3,7 @@
 . ../common-script.sh
 
 installRust() {
-    if command -v rustup >/dev/null 2>&1; then
+    if brewprogram_exists rustup; then
         printf "%b\n" "${YELLOW}rustup detected. Updating to latest stable...${RC}"
         rustup default stable
         rustup update stable

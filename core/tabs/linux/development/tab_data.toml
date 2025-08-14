@@ -13,7 +13,7 @@ script = "go.sh"
 task_list = "I"
 
 [[data]]
-name = "Node.js (NVM, LTS)"
+name = "Node.js (NVM)"
 description = "Installs NVM and the latest LTS Node.js, sets it as default, and enables Corepack (Yarn/pnpm)."
 script = "node.sh"
 task_list = "I"

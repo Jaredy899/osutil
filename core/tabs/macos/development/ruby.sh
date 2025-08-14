@@ -4,6 +4,10 @@
 
 installRuby() {
     printf "%b\n" "${YELLOW}Installing Ruby (via Homebrew)...${RC}"
+    if brewprogram_exists ruby; then
+        printf "%b\n" "${GREEN}Ruby already installed. Skipping.${RC}"
+        return 0
+    fi
     if ! brew install ruby; then
         printf "%b\n" "${RED}Failed to install Ruby with Homebrew.${RC}"
         exit 1

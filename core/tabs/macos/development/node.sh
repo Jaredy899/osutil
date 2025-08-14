@@ -5,11 +5,15 @@
 installNode() {
     printf "%b\n" "${YELLOW}Installing Node.js via NVM (latest)...${RC}"
 
+    if brewprogram_exists node; then
+        printf "%b\n" "${GREEN}Node.js already installed. Skipping.${RC}"
+        return 0
+    fi
+
     # Ensure dependencies for nvm install (idempotent)
     if command -v brew >/dev/null 2>&1; then
         brew install curl
         brew install git
-        brew install bash
     fi
 
     NVM_DIR="$HOME/.nvm"
@@ -28,9 +32,9 @@ installNode() {
         exit 1
     fi
 
-    nvm install --lts
-    nvm use --lts
-    nvm alias default 'lts/*'
+    nvm install node
+    nvm use node
+    nvm alias default node
 
     if command -v corepack >/dev/null 2>&1; then
         if ! corepack enable; then

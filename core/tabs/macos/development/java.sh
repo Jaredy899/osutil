@@ -4,6 +4,10 @@
 
 installJava() {
     printf "%b\n" "${YELLOW}Installing Java (OpenJDK via Homebrew)...${RC}"
+    if brewprogram_exists java; then
+        printf "%b\n" "${GREEN}Java already installed. Skipping.${RC}"
+        return 0
+    fi
     if ! brew install openjdk@21; then
         printf "%b\n" "${YELLOW}openjdk@21 failed, trying openjdk@17...${RC}"
         if ! brew install openjdk@17; then
