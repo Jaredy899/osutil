@@ -5,19 +5,19 @@
 installNode() {
     printf "%b\n" "${YELLOW}Installing Node.js via NVM (latest LTS)...${RC}"
 
-    # Ensure curl and bash available
+    # Ensure curl, bash, and git are available
     case "$PACKAGER" in
         pacman)
-            "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm curl bash
+            "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm curl bash git
             ;;
         apk)
-            "$ESCALATION_TOOL" "$PACKAGER" add curl bash
+            "$ESCALATION_TOOL" "$PACKAGER" add curl bash git
             ;;
         xbps-install)
-            "$ESCALATION_TOOL" "$PACKAGER" -Sy curl bash
+            "$ESCALATION_TOOL" "$PACKAGER" -Sy curl bash git
             ;;
         *)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y curl bash
+            "$ESCALATION_TOOL" "$PACKAGER" install -y curl bash git
             ;;
     esac
 
@@ -27,8 +27,20 @@ installNode() {
         curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
     fi
 
+    # Fallback: if NVM directory still missing, install via git clone
+    if [ ! -d "$NVM_DIR" ] || [ ! -s "$NVM_DIR/nvm.sh" ]; then
+        mkdir -p "$NVM_DIR"
+        git clone --branch v0.39.7 --depth 1 https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+    fi
+
     # Load NVM into this shell
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+    # Ensure nvm function is available before proceeding
+    if ! command -v nvm >/dev/null 2>&1; then
+        printf "%b\n" "${RED}nvm not available after installation. Check NVM_DIR and your shell init files.${RC}"
+        exit 1
+    fi
 
     # Install latest LTS and set default
     nvm install --lts
