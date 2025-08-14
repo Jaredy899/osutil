@@ -13,7 +13,7 @@ Write-Host "${Yellow}Installing Zig...${Reset}"
 if (Test-CommandExists zig) { Write-Host "${Green}Zig already installed. Skipping.${Reset}"; exit 0 }
 
 try {
-  winget install -e --id Zig.Zig -h --scope user
+  winget install -e --id zig.zig -h --scope user --accept-package-agreements --accept-source-agreements
   Write-Host "${Green}Zig installed.${Reset}"
 } catch { Write-Host "${Red}Failed to install Zig: $($_.Exception.Message)${Reset}"; exit 1 }
 
