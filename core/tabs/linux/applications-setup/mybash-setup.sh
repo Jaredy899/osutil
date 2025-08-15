@@ -100,7 +100,7 @@ installStarshipAndFzf() {
         printf "%b\n" "${GREEN}Fzf already installed${RC}"
     else
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-        "$ESCALATION_TOOL" ~/.fzf/install
+        ~/.fzf/install --all
     fi
 }
 
