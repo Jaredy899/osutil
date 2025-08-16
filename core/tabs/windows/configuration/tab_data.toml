@@ -1,4 +1,4 @@
-name = "Windows Utilities"
+name = "Configurations"
 
 # Removed: Enable Sudo (Inline) — handled by Windows 11 sudo and not needed in the TUI
 

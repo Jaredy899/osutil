@@ -1,0 +1,39 @@
+name = "Development"
+
+[[data]]
+name = "Rust (rustup)"
+description = "Installs the latest stable Rust toolchain via rustup and adds rustfmt and clippy."
+script = "rust.sh"
+task_list = "I"
+
+[[data]]
+name = "Go (golang)"
+description = "Installs Go via Homebrew."
+script = "go.sh"
+task_list = "I"
+
+[[data]]
+name = "Node.js (NVM)"
+description = "Installs NVM and the latest LTS Node.js, sets it as default, and enables Corepack (Yarn/pnpm)."
+script = "node.sh"
+task_list = "I"
+
+[[data]]
+name = "Zig"
+description = "Installs Zig via Homebrew."
+script = "zig.sh"
+task_list = "I"
+
+[[data]]
+name = "Java (OpenJDK LTS)"
+description = "Installs OpenJDK (prefers 21, falls back to 17) via Homebrew and suggests PATH adjustments."
+script = "java.sh"
+task_list = "I"
+
+[[data]]
+name = "Ruby"
+description = "Installs Ruby via Homebrew and ensures it is on PATH."
+script = "ruby.sh"
+task_list = "I"
+
+

@@ -1,0 +1,39 @@
+name = "Development"
+
+[[data]]
+name = "Rust (rustup)"
+description = "Installs the latest stable Rust toolchain via rustup and adds rustfmt and clippy."
+script = "rust.ps1"
+task_list = "I"
+
+[[data]]
+name = "Go (golang)"
+description = "Installs Go via winget."
+script = "go.ps1"
+task_list = "I"
+
+[[data]]
+name = "Node.js (Current)"
+description = "Installs Node.js via nvm-windows (preferred) or winget (fallback). Sets latest as default."
+script = "node.ps1"
+task_list = "I"
+
+[[data]]
+name = "Zig"
+description = "Installs Zig via winget."
+script = "zig.ps1"
+task_list = "I"
+
+[[data]]
+name = "Java (Temurin JDK)"
+description = "Installs Temurin JDK 21 (fallback 17) via winget."
+script = "java.ps1"
+task_list = "I"
+
+[[data]]
+name = "Ruby"
+description = "Installs Ruby (with DevKit) via winget."
+script = "ruby.ps1"
+task_list = "I"
+
+

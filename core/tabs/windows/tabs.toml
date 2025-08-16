@@ -1,3 +1,4 @@
 directories = [
-    "utilities",
+    "configuration",
+    "development",
 ] 
