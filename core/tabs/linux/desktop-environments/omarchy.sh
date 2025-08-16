@@ -39,62 +39,18 @@ if [[ -n "$OMARCHY_REF" ]]; then
   cd -
 fi
 
-# Check if the basecamp omarchy install script exists and fix potential issues
+# Fix tte command issues in the basecamp omarchy install script
 if [[ -f ~/.local/share/omarchy/install ]]; then
-  echo -e "\nChecking basecamp omarchy install script for potential issues..."
+  echo -e "\nPreparing basecamp omarchy install script for osutil environment..."
   
-  # Check if 'tte' command is used and fix it
-  if grep -q "tte" ~/.local/share/omarchy/install; then
-    echo -e "\nFixing 'tte' command issue in basecamp omarchy install script..."
-    # Create a backup
-    cp ~/.local/share/omarchy/install ~/.local/share/omarchy/install.backup
-    
-    # First, try to find tte in common locations
-    TTE_FOUND=false
-    for tte_path in "$HOME/.local/bin/tte" "/usr/local/bin/tte" "/usr/bin/tte" "$HOME/.cargo/bin/tte"; do
-      if [[ -x "$tte_path" ]]; then
-        echo -e "\nFound 'tte' at: $tte_path"
-        # Create a symlink or add to PATH
-        export PATH="$(dirname "$tte_path"):$PATH"
-        TTE_FOUND=true
-        break
-      fi
-    done
-    
-    # If tte not found, try to install it
-    if [[ "$TTE_FOUND" == "false" ]]; then
-      if command -v yay >/dev/null 2>&1; then
-        echo -e "\nAttempting to install 'tte' from AUR..."
-        yay -S --noconfirm tte 2>/dev/null && TTE_FOUND=true || {
-          echo -e "\n'tte' not available in AUR, removing tte commands from install script..."
-          # Remove or comment out tte commands
-          sed -i 's/^[[:space:]]*tte/# tte/g' ~/.local/share/omarchy/install
-          sed -i 's/[[:space:]]*tte/# tte/g' ~/.local/share/omarchy/install
-        }
-      else
-        echo -e "\nNo AUR helper found, removing tte commands from install script..."
-        # Remove or comment out tte commands
-        sed -i 's/^[[:space:]]*tte/# tte/g' ~/.local/share/omarchy/install
-        sed -i 's/[[:space:]]*tte/# tte/g' ~/.local/share/omarchy/install
-      fi
-    fi
-    
-    # If we found tte, make sure it's in the PATH for the install script
-    if [[ "$TTE_FOUND" == "true" ]]; then
-      echo -e "\nEnsuring 'tte' is available in PATH for installation..."
-      # Add common tte locations to the beginning of the install script
-      cat > ~/.local/share/omarchy/install.tmp << 'EOF'
-#!/bin/bash
-
-# Ensure tte is in PATH
-export PATH="$HOME/.local/bin:$HOME/.cargo/bin:/usr/local/bin:/usr/bin:$PATH"
-
-EOF
-      cat ~/.local/share/omarchy/install >> ~/.local/share/omarchy/install.tmp
-      mv ~/.local/share/omarchy/install.tmp ~/.local/share/omarchy/install
-      chmod +x ~/.local/share/omarchy/install
-    fi
-  fi
+  # Create a backup
+  cp ~/.local/share/omarchy/install ~/.local/share/omarchy/install.backup
+  
+  # Comment out all tte commands to avoid the error
+  sed -i 's/^[[:space:]]*tte/# tte/g' ~/.local/share/omarchy/install
+  sed -i 's/[[:space:]]*tte/# tte/g' ~/.local/share/omarchy/install
+  
+  echo -e "\n'tte' commands have been commented out to ensure compatibility with osutil environment."
 fi
 
 echo -e "\nInstallation starting..."
