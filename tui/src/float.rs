@@ -55,18 +55,23 @@ impl<Content: FloatContent + ?Sized> Float<Content> {
 
     // Returns true if the floating window is finished.
     pub fn handle_key_event(&mut self, key: &KeyEvent) -> bool {
-        match key.code {
-            KeyCode::Enter
-            | KeyCode::Char('p')
-            | KeyCode::Char('d')
-            | KeyCode::Char('g')
-            | KeyCode::Char('q')
-            | KeyCode::Esc
-                if self.content.is_finished() =>
-            {
-                true
+        // Let the content handle the key first
+        let content_handled = self.content.handle_key_event(key);
+
+        // If content handled it (like RunningCommand closing itself), return that result
+        if content_handled {
+            return true;
+        }
+
+        // For content that doesn't handle closing (like FloatingText),
+        // provide default exit behavior when finished
+        if self.content.is_finished() {
+            match key.code {
+                KeyCode::Enter | KeyCode::Char('q') | KeyCode::Esc => true,
+                _ => false,
             }
-            _ => self.content.handle_key_event(key),
+        } else {
+            false
         }
     }
 
