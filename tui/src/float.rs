@@ -66,10 +66,7 @@ impl<Content: FloatContent + ?Sized> Float<Content> {
         // For content that doesn't handle closing (like FloatingText),
         // provide default exit behavior when finished
         if self.content.is_finished() {
-            match key.code {
-                KeyCode::Enter | KeyCode::Char('q') | KeyCode::Esc => true,
-                _ => false,
-            }
+            matches!(key.code, KeyCode::Enter | KeyCode::Char('q') | KeyCode::Esc)
         } else {
             false
         }
