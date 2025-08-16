@@ -39,19 +39,30 @@ if [[ -n "$OMARCHY_REF" ]]; then
   cd -
 fi
 
-# Fix tte command issues in the basecamp omarchy install script
+# Fix tte command issues in both install scripts
+echo -e "\nPreparing install scripts for osutil environment..."
+
+# Fix basecamp omarchy install script
 if [[ -f ~/.local/share/omarchy/install ]]; then
-  echo -e "\nPreparing basecamp omarchy install script for osutil environment..."
-  
   # Create a backup
   cp ~/.local/share/omarchy/install ~/.local/share/omarchy/install.backup
   
   # Comment out all tte commands to avoid the error
   sed -i 's/^[[:space:]]*tte/# tte/g' ~/.local/share/omarchy/install
   sed -i 's/[[:space:]]*tte/# tte/g' ~/.local/share/omarchy/install
-  
-  echo -e "\n'tte' commands have been commented out to ensure compatibility with osutil environment."
 fi
+
+# Fix Titus install script
+if [[ -f ~/.local/share/omarchy-titus/install.sh ]]; then
+  # Create a backup
+  cp ~/.local/share/omarchy-titus/install.sh ~/.local/share/omarchy-titus/install.sh.backup
+  
+  # Comment out all tte commands to avoid the error
+  sed -i 's/^[[:space:]]*tte/# tte/g' ~/.local/share/omarchy-titus/install.sh
+  sed -i 's/[[:space:]]*tte/# tte/g' ~/.local/share/omarchy-titus/install.sh
+fi
+
+echo -e "\n'tte' commands have been commented out to ensure compatibility with osutil environment."
 
 echo -e "\nInstallation starting..."
 source ~/.local/share/omarchy-titus/install.sh
