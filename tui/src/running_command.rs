@@ -158,6 +158,10 @@ impl FloatContent for RunningCommand {
             KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 self.kill_child();
             }
+            // Pass Enter key to running command for user input
+            KeyCode::Enter if !self.is_finished() => {
+                self.handle_passthrough_key_event(key);
+            }
             // Close the window when Enter is pressed and the command is finished
             KeyCode::Enter if self.is_finished() => {
                 return true;
@@ -222,8 +226,24 @@ impl RunningCommand {
         let mut cmd: CommandBuilder = CommandBuilder::new("sh");
         cmd.arg("-c");
 
+        // Set environment variables needed for interactive TUI tools like gum
+        cmd.env("TERM", "xterm-256color");
+        cmd.env("COLORTERM", "truecolor");
+        // Ensure that interactive tools can detect they're in a terminal
+        cmd.env("FORCE_COLOR", "1");
+        cmd.env("NO_COLOR", "");
+
         // All the merged commands are passed as a single argument to reduce the overhead of rebuilding the command arguments for each and every command
         let mut script = String::new();
+
+        // Add a prefix to ensure proper terminal setup for interactive tools
+        script.push_str("export TERM=xterm-256color\n");
+        script.push_str("export COLORTERM=truecolor\n");
+        script.push_str("export FORCE_COLOR=1\n");
+        script.push_str("unset NO_COLOR\n");
+        script.push_str("stty sane\n"); // Reset terminal settings
+        script.push_str("stty icanon echo\n"); // Ensure canonical mode and echo are enabled
+
         for command in commands {
             match command {
                 Command::Raw(prompt) => script.push_str(&format!("{prompt}\n")),
@@ -281,16 +301,23 @@ impl RunningCommand {
             std::thread::spawn(move || {
                 let mut buf = [0u8; 8192];
                 loop {
-                    let size = reader.read(&mut buf).unwrap(); // Can block here
-                    if size == 0 {
-                        break; // EOF
+                    match reader.read(&mut buf) {
+                        Ok(size) => {
+                            if size == 0 {
+                                break; // EOF
+                            }
+                            let mut mutex = command_buffer.lock(); // Only lock the mutex after the read is
+                                                                   // done, to minimise the time it is opened
+                            let command_buffer = mutex.as_mut().unwrap();
+                            command_buffer.extend_from_slice(&buf[0..size]);
+                            TERMINAL_UPDATED.store(true, Ordering::Release);
+                            // The mutex is closed here automatically
+                        }
+                        Err(e) => {
+                            eprintln!("Error reading from terminal: {}", e);
+                            break;
+                        }
                     }
-                    let mut mutex = command_buffer.lock(); // Only lock the mutex after the read is
-                                                           // done, to minimise the time it is opened
-                    let command_buffer = mutex.as_mut().unwrap();
-                    command_buffer.extend_from_slice(&buf[0..size]);
-                    TERMINAL_UPDATED.store(true, Ordering::Release);
-                    // The mutex is closed here automatically
                 }
                 TERMINAL_UPDATED.store(true, Ordering::Release);
             })
@@ -604,7 +631,7 @@ impl RunningCommand {
                     _ => raw_utf8(),
                 }
             }
-            KeyCode::Enter => vec![b'\n'],
+            KeyCode::Enter => vec![b'\r', b'\n'], // Send both CR and LF for better compatibility
             KeyCode::Backspace => vec![0x7f],
             KeyCode::Left => vec![27, 91, 68],
             KeyCode::Right => vec![27, 91, 67],
@@ -622,13 +649,11 @@ impl RunningCommand {
 
         // Send the keycodes to the virtual terminal
         if let Err(e) = self.writer.write_all(&input_bytes) {
-            // Log the error but don't panic - this allows the TUI to continue
-            eprintln!("Failed to write to PTY: {e}");
+            eprintln!("Failed to write to terminal: {}", e);
         }
-
-        // Flush the writer to ensure the data is sent immediately
+        // Ensure the data is flushed immediately, especially important for Enter key
         if let Err(e) = self.writer.flush() {
-            eprintln!("Failed to flush PTY writer: {e}");
+            eprintln!("Failed to flush terminal: {}", e);
         }
     }
 }

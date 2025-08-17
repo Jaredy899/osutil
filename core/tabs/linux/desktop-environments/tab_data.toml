@@ -86,6 +86,28 @@ data = "command_exists"
 values = ["apk"]
 
 [[data]]
+name = "Omakub"
+description = "An Omakase Developer Setup for Ubuntu 24.04+ by DHH"
+script = "omakub.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["apt-get", "nala"]
+
+[[data]]
+name = "Omarchy"
+description = "An opinionated Arch + Hyprland Setup by DHH"
+script = "omarchy.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["pacman"]
+
+[[data]]
 name = "Sway"
 description = "Sway is a tiling Wayland compositor and a drop-in replacement for the i3 window manager for X11, compatible with i3 configuration."
 script = "sway-setup.sh"
