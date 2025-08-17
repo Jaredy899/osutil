@@ -22,11 +22,41 @@ if (-not (Test-Administrator)) {
 
 Write-Host "${Cyan}Script running with administrative privileges...${Reset}"
 
+# Function: Download and parse IANA → Windows timezone mapping
+function Get-IanaToWindowsTimeZoneMap {
+    param(
+        [string]$Url = "https://raw.githubusercontent.com/unicode-org/cldr/main/common/supplemental/windowsZones.xml"
+    )
+
+    try {
+        Write-Host "${Cyan}Downloading timezone mapping from CLDR...${Reset}"
+        [xml]$xml = Invoke-RestMethod -Uri $Url -UseBasicParsing
+
+        $map = @{}
+
+        foreach ($mapZone in $xml.supplementalData.windowsZones.mapTimezones.mapZone) {
+            $windowsTz = $mapZone.other
+            $ianaTzs   = $mapZone.type -split " "
+
+            foreach ($iana in $ianaTzs) {
+                if (-not $map.ContainsKey($iana)) {
+                    $map[$iana] = $windowsTz
+                }
+            }
+        }
+
+        return $map
+    }
+    catch {
+        Write-Host "${Red}Failed to download or parse timezone mapping: $_${Reset}"
+        return $null
+    }
+}
+
 function Set-TimeSettings {
     Try {
         # Attempt to automatically detect timezone
         Try {
-            # Try multiple geolocation services
             $timezone = $null
             
             # Try ipapi.co first
@@ -38,18 +68,11 @@ function Set-TimeSettings {
             
             if ($timezone) {
                 Write-Host "${Yellow}Detected timezone: $timezone${Reset}"
-                
-                # Simplified mapping for common US timezones
-                $tzMapping = @{
-                    'America/New_York' = 'Eastern Standard Time'
-                    'America/Chicago' = 'Central Standard Time'
-                    'America/Denver' = 'Mountain Standard Time'
-                    'America/Los_Angeles' = 'Pacific Standard Time'
-                    'America/Anchorage' = 'Alaskan Standard Time'
-                    'Pacific/Honolulu' = 'Hawaiian Standard Time'
-                }
 
-                if ($tzMapping.ContainsKey($timezone)) {
+                # Load IANA → Windows mapping
+                $tzMapping = Get-IanaToWindowsTimeZoneMap
+
+                if ($tzMapping -and $tzMapping.ContainsKey($timezone)) {
                     $windowsTimezone = $tzMapping[$timezone]
                     tzutil /s $windowsTimezone *>$null
                     Write-Host "${Green}Time zone automatically set to $windowsTimezone${Reset}"
@@ -63,17 +86,8 @@ function Set-TimeSettings {
             Write-Host "${Yellow}Automatic timezone detection failed. Falling back to manual selection...${Reset}"
             # Display options for time zones
             Write-Host "${Cyan}Select a time zone from the options below:${Reset}"
-            $timeZones = @(
-                "Eastern Standard Time",
-                "Central Standard Time",
-                "Mountain Standard Time",
-                "Pacific Standard Time",
-                "Greenwich Standard Time",
-                "UTC",
-                "Hawaiian Standard Time",
-                "Alaskan Standard Time"
-            )
-            
+            $timeZones = (Get-TimeZone -ListAvailable).Id | Sort-Object
+
             # Display the list of options
             for ($i = 0; $i -lt $timeZones.Count; $i++) {
                 Write-Output "$($i + 1). $($timeZones[$i])"
