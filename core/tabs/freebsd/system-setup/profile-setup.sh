@@ -46,14 +46,16 @@ downloadProfile() {
 
         mv "${TEMP_PROFILE}.freebsd" "$TEMP_PROFILE"
 
-        # Validate the profile syntax
+        # Validate the profile syntax (try both sh and bash)
         printf "%b\n" "${YELLOW}Validating profile syntax...${RC}"
-        if sh -n "$TEMP_PROFILE"; then
-            printf "%b\n" "${GREEN}Profile syntax is valid${RC}"
+        if command -v bash >/dev/null 2>&1 && bash -n "$TEMP_PROFILE" 2>/dev/null; then
+            printf "%b\n" "${GREEN}Profile syntax is valid (bash)${RC}"
+        elif sh -n "$TEMP_PROFILE" 2>/dev/null; then
+            printf "%b\n" "${GREEN}Profile syntax is valid (sh)${RC}"
         else
-            printf "%b\n" "${RED}Profile has syntax errors, using basic FreeBSD profile${RC}"
+            printf "%b\n" "${RED}Profile has syntax errors, creating minimal FreeBSD profile${RC}"
             cat > "$TEMP_PROFILE" << 'EOF'
-# Basic FreeBSD Profile
+# Minimal FreeBSD Profile - sh compatible
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export PAGER=less
 umask 022
@@ -62,26 +64,23 @@ umask 022
 export CLICOLOR=1
 export LSCOLORS="Gxfxcxdxbxegedabagacad"
 
-# Load additional configurations
+# Basic aliases that work in sh
+alias ls='ls -F --color=auto'
+alias ll='ls -la'
+alias la='ls -A'
+
+# Initialize tools if available (simple check without eval)
+if command -v fastfetch >/dev/null 2>&1; then
+    fastfetch
+fi
+
+# Source additional configs if they exist
 if [ -f "$HOME/.bashrc" ]; then
     . "$HOME/.bashrc"
 fi
 
 if [ -f "$HOME/.zshrc" ]; then
     . "$HOME/.zshrc"
-fi
-
-# Initialize tools if available
-if command -v starship >/dev/null 2>&1; then
-    eval "$(starship init bash)"
-fi
-
-if command -v zoxide >/dev/null 2>&1; then
-    eval "$(zoxide init bash)"
-fi
-
-if command -v fastfetch >/dev/null 2>&1; then
-    fastfetch
 fi
 EOF
         fi
