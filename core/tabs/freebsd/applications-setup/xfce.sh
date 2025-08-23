@@ -15,11 +15,8 @@ installXFCE() {
         polkit \
         xorg \
         xf86-video-scfb \
-        xf86-video-vmware \
         xf86-input-keyboard \
-        xf86-input-mouse \
-        xf86-input-synaptics \
-        xf86-input-evdev
+        xf86-input-mouse
 
     # Enable services
     printf "%b\n" "${CYAN}Enabling required services...${RC}"
@@ -30,79 +27,6 @@ installXFCE() {
     # Start services
     "$ESCALATION_TOOL" service dbus start
     "$ESCALATION_TOOL" service moused start
-
-    # Configure X server for VM environment
-    printf "%b\n" "${CYAN}Configuring X server for VM environment...${RC}"
-    
-    # Create X server configuration
-    cat > /usr/local/share/X11/xorg.conf.d/10-vm.conf << 'EOF'
-Section "ServerLayout"
-    Identifier     "X.org Configured"
-    Screen      0  "Screen0" 0 0
-    InputDevice    "Mouse0" "CorePointer"
-    InputDevice    "Keyboard0" "CoreKeyboard"
-EndSection
-
-Section "Files"
-    ModulePath   "/usr/local/lib/xorg/modules"
-    FontPath     "/usr/local/share/fonts/misc/"
-    FontPath     "/usr/local/share/fonts/TTF/"
-    FontPath     "/usr/local/share/fonts/OTF/"
-    FontPath     "/usr/local/share/fonts/Type1/"
-    FontPath     "/usr/local/share/fonts/100dpi/"
-    FontPath     "/usr/local/share/fonts/75dpi/"
-EndSection
-
-Section "Module"
-    Load  "extmod"
-    Load  "record"
-    Load  "dbe"
-    Load  "dri"
-    Load  "dri2"
-    Load  "glx"
-EndSection
-
-Section "InputDevice"
-    Identifier  "Keyboard0"
-    Driver      "kbd"
-    Option      "XkbRules" "xorg"
-    Option      "XkbModel" "pc105"
-    Option      "XkbLayout" "us"
-EndSection
-
-Section "InputDevice"
-    Identifier  "Mouse0"
-    Driver      "mouse"
-    Option      "Protocol" "auto"
-    Option      "Device" "/dev/sysmouse"
-    Option      "ZAxisMapping" "4 5 6 7"
-EndSection
-
-Section "Monitor"
-    Identifier   "Monitor0"
-    VendorName   "Monitor Vendor"
-    ModelName    "Monitor Model"
-EndSection
-
-Section "Device"
-    Identifier  "Card0"
-    Driver      "vmware"
-    VendorName  "VMware"
-    BoardName   "VMware SVGA II Adapter"
-    Option      "UseFBDev" "true"
-EndSection
-
-Section "Screen"
-    Identifier "Screen0"
-    Device     "Card0"
-    Monitor    "Monitor0"
-    DefaultDepth     24
-    SubSection     "Display"
-        Depth       24
-        Modes      "1024x768" "800x600" "640x480"
-    EndSubSection
-EndSection
-EOF
 
     # Configure SLiM for XFCE
     printf "%b\n" "${CYAN}Configuring SLiM for XFCE...${RC}"
@@ -195,11 +119,6 @@ EOF
     printf "%b\n" "${CYAN}Reboot your system to start using XFCE desktop environment.${RC}"
     printf "%b\n" "${CYAN}You can select XFCE from the login manager (SLiM).${RC}"
     printf "%b\n" "${YELLOW}If you still have issues, try logging in via SSH and running: startx${RC}"
-    printf "%b\n" "${YELLOW}If mouse doesn't work, try these troubleshooting steps:${RC}"
-    printf "%b\n" "${YELLOW}1. Check if /dev/sysmouse exists: ls -la /dev/sysmouse${RC}"
-    printf "%b\n" "${YELLOW}2. Ensure moused is running: service moused status${RC}"
-    printf "%b\n" "${YELLOW}3. Try different mouse protocols in X config${RC}"
-    printf "%b\n" "${YELLOW}4. For Proxmox VMs, ensure 'tablet' is enabled in VM settings${RC}"
 }
 
 checkEnv

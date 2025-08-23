@@ -11,9 +11,3 @@ name = "XFCE Desktop"
 description = "Installs XFCE desktop environment with SLiM login manager."
 script = "xfce.sh"
 task_list = "I"
-
-[[data]]
-name = "Fix VM Mouse (Proxmox)"
-description = "Fixes mouse issues in Proxmox VM environments with additional drivers and configuration."
-script = "fix-vm-mouse.sh"
-task_list = "I"
