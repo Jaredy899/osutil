@@ -20,9 +20,18 @@ installPortsTree() {
                 "$ESCALATION_TOOL" git -C /usr/ports pull
             else
                 printf "%b\n" "${YELLOW}Ports tree is not a git repository, trying to convert...${RC}"
-                "$ESCALATION_TOOL" git clone https://git.freebsd.org/ports.git /usr/ports.tmp
-                "$ESCALATION_TOOL" rm -rf /usr/ports
-                "$ESCALATION_TOOL" mv /usr/ports.tmp /usr/ports
+                # Use a safer approach that doesn't require removing the busy directory
+                "$ESCALATION_TOOL" git clone https://git.freebsd.org/ports.git /usr/ports.new
+                if [ $? -eq 0 ]; then
+                    printf "%b\n" "${CYAN}Successfully cloned ports tree to /usr/ports.new${RC}"
+                    printf "%b\n" "${YELLOW}You can manually replace /usr/ports with /usr/ports.new when ready:${RC}"
+                    printf "%b\n" "${CYAN}  mv /usr/ports /usr/ports.old${RC}"
+                    printf "%b\n" "${CYAN}  mv /usr/ports.new /usr/ports${RC}"
+                    printf "%b\n" "${CYAN}  rm -rf /usr/ports.old${RC}"
+                else
+                    printf "%b\n" "${RED}Failed to clone ports tree${RC}"
+                    exit 1
+                fi
             fi
         elif command_exists "svn"; then
             # Alternative: use svn to update ports tree
@@ -31,7 +40,17 @@ installPortsTree() {
                 "$ESCALATION_TOOL" svn update /usr/ports
             else
                 printf "%b\n" "${YELLOW}Ports tree is not an svn repository, trying to convert...${RC}"
-                "$ESCALATION_TOOL" svn checkout https://svn.freebsd.org/ports/head /usr/ports
+                "$ESCALATION_TOOL" svn checkout https://svn.freebsd.org/ports/head /usr/ports.new
+                if [ $? -eq 0 ]; then
+                    printf "%b\n" "${CYAN}Successfully checked out ports tree to /usr/ports.new${RC}"
+                    printf "%b\n" "${YELLOW}You can manually replace /usr/ports with /usr/ports.new when ready:${RC}"
+                    printf "%b\n" "${CYAN}  mv /usr/ports /usr/ports.old${RC}"
+                    printf "%b\n" "${CYAN}  mv /usr/ports.new /usr/ports${RC}"
+                    printf "%b\n" "${CYAN}  rm -rf /usr/ports.old${RC}"
+                else
+                    printf "%b\n" "${RED}Failed to checkout ports tree${RC}"
+                    exit 1
+                fi
             fi
         else
             printf "%b\n" "${RED}Neither portsnap, git, nor svn found. Cannot update ports tree.${RC}"
