@@ -24,14 +24,69 @@ downloadProfile() {
         # Adapt the profile for FreeBSD compatibility
         printf "%b\n" "${YELLOW}Adapting profile for FreeBSD compatibility...${RC}"
 
-        # Create FreeBSD-compatible version
-        sed -i.bak \
-            -e 's|ip route|route -n get default|g' \
-            -e 's|ip -4 -o addr show|ifconfig|g' \
-            -e 's|netstat -nape --inet|netstat -an -p tcp|g' \
-            -e '/\/etc\/alpine-release/d' \
-            -e '/\/etc\/profile\.d/d' \
-            "$TEMP_PROFILE"
+        # Create FreeBSD-compatible version using awk for safer text processing
+        awk '
+        # Replace Alpine-specific networking commands with FreeBSD equivalents
+        /ip route/ {
+            print "    dev=$(route -n get default 2>/dev/null | awk '\''/interface:/ {print $2}'\'')"
+            next
+        }
+        /ip -4 -o addr show/ {
+            print "    ifconfig \"$dev\" | awk '\''/inet / {print $2; exit}'\'' 2>/dev/null || echo \"N/A\""
+            next
+        }
+        /netstat -nape --inet/ {
+            print "alias openports='\''netstat -an -p tcp'\''"
+            next
+        }
+        # Remove Alpine-specific files
+        /\/etc\/alpine-release/ { next }
+        /\/etc\/profile\.d/ { next }
+        # Keep everything else unchanged
+        { print }
+        ' "$TEMP_PROFILE" > "${TEMP_PROFILE}.freebsd"
+
+        mv "${TEMP_PROFILE}.freebsd" "$TEMP_PROFILE"
+
+        # Validate the profile syntax
+        printf "%b\n" "${YELLOW}Validating profile syntax...${RC}"
+        if sh -n "$TEMP_PROFILE"; then
+            printf "%b\n" "${GREEN}Profile syntax is valid${RC}"
+        else
+            printf "%b\n" "${RED}Profile has syntax errors, using basic FreeBSD profile${RC}"
+            cat > "$TEMP_PROFILE" << 'EOF'
+# Basic FreeBSD Profile
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PAGER=less
+umask 022
+
+# FreeBSD specific settings
+export CLICOLOR=1
+export LSCOLORS="Gxfxcxdxbxegedabagacad"
+
+# Load additional configurations
+if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+
+if [ -f "$HOME/.zshrc" ]; then
+    . "$HOME/.zshrc"
+fi
+
+# Initialize tools if available
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init bash)"
+fi
+
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init bash)"
+fi
+
+if command -v fastfetch >/dev/null 2>&1; then
+    fastfetch
+fi
+EOF
+        fi
 
         # Backup existing profile if it exists
         if [ -f "$USER_PROFILE" ] && [ ! -f "$USER_PROFILE.bak" ]; then
