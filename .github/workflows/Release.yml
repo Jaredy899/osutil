@@ -1,4 +1,4 @@
-name: Multi-Platform Release
+name: Multi-Platform Release (Linux-only)
 
 on:
   push:
@@ -13,16 +13,19 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  linux_build:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install required packages
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential musl-tools musl-dev gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf libc6-dev-arm64-cross libc6-dev-armhf-cross
+          sudo apt-get install -y build-essential pkg-config curl git zig docker.io
+          sudo systemctl start docker
+          cargo install cargo-zigbuild --locked
+          cargo install cross --locked
 
       - name: Cache Cargo registry
         uses: actions/cache@v4
@@ -41,143 +44,71 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-unknown-linux-musl,aarch64-unknown-linux-musl,armv7-unknown-linux-musleabihf
+          targets: >
+            x86_64-unknown-linux-musl,
+            aarch64-unknown-linux-musl,
+            armv7-unknown-linux-musleabihf,
+            x86_64-pc-windows-gnu,
+            x86_64-apple-darwin,
+            aarch64-apple-darwin,
+            x86_64-unknown-freebsd
 
-      - name: Install cross-rs for cross-compilation
-        run: cargo install cross
-
-      - name: Build x86_64 binary (musl)
-        run: cargo build --release --target=x86_64-unknown-linux-musl --all-features
-
-      - name: Build aarch64 binary (musl)
+      - name: Build all targets
         run: |
-          cross build --release --target=aarch64-unknown-linux-musl --all-features
-          mv target/aarch64-unknown-linux-musl/release/osutil target/aarch64-unknown-linux-musl/release/osutil-aarch64
+          set -euo pipefail
+          mkdir -p dist
 
-      - name: Build armv7 binary (musl)
-        run: |
-          cross build --release --target=armv7-unknown-linux-musleabihf --all-features
-          mv target/armv7-unknown-linux-musleabihf/release/osutil target/armv7-unknown-linux-musleabihf/release/osutil-armv7l
+          echo "==> Linux (musl)"
+          cargo zigbuild --release --target x86_64-unknown-linux-musl
+          cp target/x86_64-unknown-linux-musl/release/osutil dist/osutil-linux-x86_64
 
-      - name: Prepare Linux binaries for upload
-        run: |
-          mkdir -p linux-binaries
-          cp target/x86_64-unknown-linux-musl/release/osutil linux-binaries/
-          cp target/aarch64-unknown-linux-musl/release/osutil-aarch64 linux-binaries/
-          cp target/armv7-unknown-linux-musleabihf/release/osutil-armv7l linux-binaries/
+          cargo zigbuild --release --target aarch64-unknown-linux-musl
+          cp target/aarch64-unknown-linux-musl/release/osutil dist/osutil-linux-aarch64
 
-      - name: Upload Linux artifacts
+          cargo zigbuild --release --target armv7-unknown-linux-musleabihf
+          cp target/armv7-unknown-linux-musleabihf/release/osutil dist/osutil-linux-armv7
+
+          echo "==> Windows (GNU)"
+          if cross build --release --target x86_64-pc-windows-gnu; then
+            cp target/x86_64-pc-windows-gnu/release/osutil.exe dist/osutil-windows-x86_64-gnu.exe
+          else
+            echo "⚠️ Windows GNU build failed"
+          fi
+
+          echo "==> macOS (Darwin)"
+          cargo zigbuild --release --target x86_64-apple-darwin
+          cp target/x86_64-apple-darwin/release/osutil dist/osutil-macos-x86_64
+
+          cargo zigbuild --release --target aarch64-apple-darwin
+          cp target/aarch64-apple-darwin/release/osutil dist/osutil-macos-arm64
+
+          echo "==> FreeBSD (x86_64)"
+          if cross build --release --target x86_64-unknown-freebsd; then
+            cp target/x86_64-unknown-freebsd/release/osutil dist/osutil-freebsd-x86_64
+          else
+            echo "⚠️ FreeBSD build failed"
+          fi
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-binaries
-          path: linux-binaries/
-
-  windows_build:
-    runs-on: windows-latest
-    
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Cache Cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-registry-
-
-      - name: Cache Cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-index-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-msvc
-
-      - name: Build for Windows (MSVC)
-        run: |
-          if (!(Test-Path .cargo)) { New-Item -ItemType Directory -Path .cargo }
-          echo '[target.x86_64-pc-windows-msvc]' > .cargo/config.toml
-          echo 'rustflags = ["-C", "target-feature=+crt-static"]' >> .cargo/config.toml
-          cargo build --release --target x86_64-pc-windows-msvc --no-default-features
-
-      - name: Prepare Windows binaries for upload
-        run: |
-          mkdir -p windows-binaries
-          cp target/x86_64-pc-windows-msvc/release/osutil.exe windows-binaries/osutil.exe
-
-      - name: Upload Windows MSVC artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-msvc-binary
-          path: windows-binaries/
-
-
-
-  build-macos:
-    runs-on: macos-latest
-    
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Cache Cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-registry-
-
-      - name: Cache Cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-index-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install macOS targets
-        run: |
-          rustup target add x86_64-apple-darwin
-          rustup target add aarch64-apple-darwin
-
-      - name: Build for macOS (x86_64)
-        run: cargo build --release --target x86_64-apple-darwin --all-features
-
-      - name: Build for macOS (ARM)
-        run: cargo build --release --target aarch64-apple-darwin --all-features
-
-      - name: Prepare macOS binaries for upload (separate arch)
-        run: |
-          mkdir -p macos-binaries
-          cp target/x86_64-apple-darwin/release/osutil macos-binaries/osutil-macos-x86_64
-          cp target/aarch64-apple-darwin/release/osutil macos-binaries/osutil-macos-arm64
-
-      - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-binaries
-          path: macos-binaries/
+          name: binaries
+          path: dist/*
 
   release:
-    needs: [linux_build, windows_build, build-macos]
+    needs: build
     runs-on: ubuntu-latest
     
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: binaries
+          path: dist
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v5
-
-      - name: Extract version from tag
+      - name: Extract version
         id: extract_version
-        run: |
-          version=${GITHUB_REF#refs/tags/v}
-          echo "version=$version" >> $GITHUB_OUTPUT
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Create Release
@@ -188,17 +119,20 @@ jobs:
           body: |
             ## Downloads
             
-            ### Linux (musl binaries)
-            - **x86_64**: `osutil` (x86_64 Linux)
-            - **aarch64**: `osutil-aarch64` (ARM64 Linux)
-            - **armv7l**: `osutil-armv7l` (ARMv7 Linux)
+            ### Linux (musl)
+            - **x86_64**: `osutil-linux-x86_64`
+            - **aarch64**: `osutil-linux-aarch64`
+            - **armv7l**: `osutil-linux-armv7`
             
             ### macOS
-            - **x86_64**: `osutil-macos-x86_64` (Intel Macs)
-            - **arm64**: `osutil-macos-arm64` (Apple Silicon)
+            - **x86_64**: `osutil-macos-x86_64`
+            - **arm64**: `osutil-macos-arm64`
             
             ### Windows
-            - **x86_64**: `osutil.exe` (Windows - No external dependencies)
+            - **x86_64 (GNU)**: `osutil-windows-x86_64-gnu.exe`
+            
+            ### FreeBSD
+            - **x86_64**: `osutil-freebsd-x86_64`
             
             ## Installation
             
@@ -212,13 +146,7 @@ jobs:
             irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
             ```
 
-          files: |
-            linux-binaries/osutil
-            linux-binaries/osutil-aarch64
-            linux-binaries/osutil-armv7l
-            macos-binaries/osutil-macos-x86_64
-            macos-binaries/osutil-macos-arm64
-            windows-msvc-binary/osutil.exe
+          files: dist/*
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
