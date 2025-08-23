@@ -24,17 +24,25 @@ downloadProfile() {
         # Adapt the profile for FreeBSD compatibility
         printf "%b\n" "${YELLOW}Adapting profile for FreeBSD compatibility...${RC}"
 
-        # Create FreeBSD-compatible version using a simpler approach
+        # Create FreeBSD-compatible version using a basic approach
         cp "$TEMP_PROFILE" "${TEMP_PROFILE}.freebsd"
 
-        # Use sed for simple replacements that are less likely to break syntax
-        sed -i \
-            -e 's/ip route/route -n get default/g' \
-            -e 's/ip -4 -o addr show/ifconfig/g' \
-            -e 's/netstat -nape --inet/netstat -an -p tcp/g' \
-            -e '/\/etc\/alpine-release/d' \
-            -e '/\/etc\/profile\.d/d' \
-            "${TEMP_PROFILE}.freebsd"
+        # Use simple sed commands that work on all systems
+        sed 's/ip route/route -n get default/g' "${TEMP_PROFILE}.freebsd" > "${TEMP_PROFILE}.tmp"
+        mv "${TEMP_PROFILE}.tmp" "${TEMP_PROFILE}.freebsd"
+
+        sed 's/ip -4 -o addr show/ifconfig/g' "${TEMP_PROFILE}.freebsd" > "${TEMP_PROFILE}.tmp"
+        mv "${TEMP_PROFILE}.tmp" "${TEMP_PROFILE}.freebsd"
+
+        sed 's/netstat -nape --inet/netstat -an -p tcp/g' "${TEMP_PROFILE}.freebsd" > "${TEMP_PROFILE}.tmp"
+        mv "${TEMP_PROFILE}.tmp" "${TEMP_PROFILE}.freebsd"
+
+        # Remove Alpine-specific lines
+        grep -v '/etc/alpine-release' "${TEMP_PROFILE}.freebsd" > "${TEMP_PROFILE}.tmp"
+        mv "${TEMP_PROFILE}.tmp" "${TEMP_PROFILE}.freebsd"
+
+        grep -v '/etc/profile.d' "${TEMP_PROFILE}.freebsd" > "${TEMP_PROFILE}.tmp"
+        mv "${TEMP_PROFILE}.tmp" "${TEMP_PROFILE}.freebsd"
 
         mv "${TEMP_PROFILE}.freebsd" "$TEMP_PROFILE"
 
