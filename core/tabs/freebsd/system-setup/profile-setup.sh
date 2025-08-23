@@ -69,9 +69,42 @@ alias ls='ls -F --color=auto'
 alias ll='ls -la'
 alias la='ls -A'
 
-# Initialize tools if available (simple check without eval)
+# Initialize tools if available
 if command -v fastfetch >/dev/null 2>&1; then
     fastfetch
+fi
+
+# Initialize starship with proper shell integration
+if command -v starship >/dev/null 2>&1; then
+    echo "Starship found, initializing..." >&2
+
+    # Method 1: Try traditional starship init (most reliable)
+    if starship_init=$(starship init bash 2>/dev/null) && [ -n "$starship_init" ]; then
+        echo "Using starship init bash method" >&2
+        eval "$starship_init"
+    else
+        # Method 2: Direct function approach (fallback)
+        echo "Using direct function method" >&2
+        starship_prompt() {
+            starship prompt --status "$?" --path "$PWD"
+        }
+        PS1='$(starship_prompt)'
+    fi
+
+    # Set starship environment variables
+    export STARSHIP_CONFIG="${HOME}/.config/starship.toml"
+    export STARSHIP_SHELL="bash"
+else
+    echo "Starship not found in PATH" >&2
+fi
+
+# Initialize zoxide if available
+if command -v zoxide >/dev/null 2>&1; then
+    echo "Setting up zoxide..." >&2
+    zoxide_init=$(zoxide init bash 2>/dev/null)
+    if [ -n "$zoxide_init" ]; then
+        eval "$zoxide_init"
+    fi
 fi
 
 # Source additional configs if they exist
