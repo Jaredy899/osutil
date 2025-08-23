@@ -87,13 +87,25 @@ install_rust_targets() {
     echo "Installing required Rust targets..."
 
     # Install musl targets for cross-compilation
+    echo "Installing Linux musl targets..."
     rustup target add x86_64-unknown-linux-musl
     rustup target add aarch64-unknown-linux-musl
     rustup target add armv7-unknown-linux-musleabihf
 
-    # Install FreeBSD targets for cross-compilation
-    rustup target add x86_64-unknown-freebsd
-    rustup target add aarch64-unknown-freebsd
+    # Install FreeBSD targets for cross-compilation (with error handling)
+    echo "Installing FreeBSD targets..."
+    if rustup target add x86_64-unknown-freebsd 2>/dev/null; then
+        echo "✓ x86_64-unknown-freebsd target installed"
+    else
+        echo "⚠ x86_64-unknown-freebsd target not available"
+    fi
+
+    # Try aarch64 FreeBSD target, but don't fail if it's not supported
+    if rustup target add aarch64-unknown-freebsd 2>/dev/null; then
+        echo "✓ aarch64-unknown-freebsd target installed"
+    else
+        echo "⚠ aarch64-unknown-freebsd target not supported in stable Rust - skipping"
+    fi
 
     # Install cross-rs for better cross-compilation
     if ! command -v cross >/dev/null 2>&1; then
@@ -104,7 +116,7 @@ install_rust_targets() {
         echo "✓ cross-rs already installed"
     fi
 
-    echo "✓ Rust targets installed"
+    echo "✓ Rust targets installation completed"
 }
 
 # Function to build for a specific target
@@ -194,11 +206,20 @@ build_target "armv7-unknown-linux-musleabihf" "osutil-armv7l"
 # Build for FreeBSD architectures
 echo "Building for FreeBSD architectures..."
 
-# Build FreeBSD x86_64 (cross-compiled)
-build_target "x86_64-unknown-freebsd" "osutil-freebsd-x86_64" || echo "⚠ FreeBSD x86_64 build failed - cross-compilation may not be available"
+# Check if FreeBSD targets are available before building
+if rustc --print target-list | grep -q "x86_64-unknown-freebsd"; then
+    # Build FreeBSD x86_64 (cross-compiled)
+    build_target "x86_64-unknown-freebsd" "osutil-freebsd-x86_64" || echo "⚠ FreeBSD x86_64 build failed"
+else
+    echo "⚠ x86_64-unknown-freebsd target not available - skipping FreeBSD x86_64 build"
+fi
 
-# Build FreeBSD aarch64 (cross-compiled)
-build_target "aarch64-unknown-freebsd" "osutil-freebsd-aarch64" || echo "⚠ FreeBSD aarch64 build failed - cross-compilation may not be available"
+if rustc --print target-list | grep -q "aarch64-unknown-freebsd"; then
+    # Build FreeBSD aarch64 (cross-compiled)
+    build_target "aarch64-unknown-freebsd" "osutil-freebsd-aarch64" || echo "⚠ FreeBSD aarch64 build failed"
+else
+    echo "⚠ aarch64-unknown-freebsd target not supported - skipping FreeBSD aarch64 build"
+fi
 
 echo ""
 echo "Build completed! Binaries in $BUILD_DIR/:"
@@ -209,12 +230,27 @@ echo "Build Summary:"
 echo "- Linux x86_64: $BUILD_DIR/osutil"
 echo "- Linux aarch64: $BUILD_DIR/osutil-aarch64"
 echo "- Linux armv7l: $BUILD_DIR/osutil-armv7l"
-echo "- FreeBSD x86_64: $BUILD_DIR/osutil-freebsd-x86_64"
-echo "- FreeBSD aarch64: $BUILD_DIR/osutil-freebsd-aarch64"
+
+# Only show FreeBSD binaries if they were built
+if [ -f "$BUILD_DIR/osutil-freebsd-x86_64" ]; then
+    echo "- FreeBSD x86_64: $BUILD_DIR/osutil-freebsd-x86_64"
+else
+    echo "- FreeBSD x86_64: Not built (target not available)"
+fi
+
+if [ -f "$BUILD_DIR/osutil-freebsd-aarch64" ]; then
+    echo "- FreeBSD aarch64: $BUILD_DIR/osutil-freebsd-aarch64"
+else
+    echo "- FreeBSD aarch64: Not built (target not supported in stable Rust)"
+fi
+
 echo ""
 echo "To install system-wide on Linux, run:"
 echo "sudo cp $BUILD_DIR/osutil /usr/local/bin/"
-echo ""
-echo "To test FreeBSD binaries with QEMU:"
-echo "qemu-x86_64-static $BUILD_DIR/osutil-freebsd-x86_64 --help"
-echo "qemu-aarch64-static $BUILD_DIR/osutil-freebsd-aarch64 --help" 
+
+if [ -f "$BUILD_DIR/osutil-freebsd-x86_64" ] || [ -f "$BUILD_DIR/osutil-freebsd-aarch64" ]; then
+    echo ""
+    echo "To test FreeBSD binaries with QEMU:"
+    [ -f "$BUILD_DIR/osutil-freebsd-x86_64" ] && echo "qemu-x86_64-static $BUILD_DIR/osutil-freebsd-x86_64 --help"
+    [ -f "$BUILD_DIR/osutil-freebsd-aarch64" ] && echo "qemu-aarch64-static $BUILD_DIR/osutil-freebsd-aarch64 --help"
+fi 
