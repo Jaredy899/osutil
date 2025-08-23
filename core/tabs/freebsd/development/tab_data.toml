@@ -1,0 +1,25 @@
+name = "Development"
+
+[[data]]
+name = "Rust (rustup)"
+description = "Installs the latest stable Rust toolchain via rustup and adds rustfmt and clippy."
+script = "rust.sh"
+task_list = "I"
+
+[[data]]
+name = "Go (golang)"
+description = "Installs the latest stable Go from the official tarball into /usr/local and configures PATH."
+script = "go.sh"
+task_list = "I"
+
+[[data]]
+name = "Node.js (NVM)"
+description = "Installs NVM and the latest Node.js, sets it as default, and enables Corepack (Yarn/pnpm)."
+script = "node.sh"
+task_list = "I"
+
+[[data]]
+name = "Java (OpenJDK)"
+description = "Installs OpenJDK (prefers 21, falls back to 17) using the system package manager."
+script = "java.sh"
+task_list = "I"

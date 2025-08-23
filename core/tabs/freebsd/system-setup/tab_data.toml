@@ -1,0 +1,13 @@
+name = "System Setup"
+
+[[data]]
+name = "Update System"
+description = "Updates the package database, upgrades all packages, and updates the ports tree."
+script = "update-system.sh"
+task_list = "I"
+
+[[data]]
+name = "Install Ports Tree"
+description = "Installs or updates the FreeBSD ports tree for building packages from source."
+script = "install-ports.sh"
+task_list = "I"
