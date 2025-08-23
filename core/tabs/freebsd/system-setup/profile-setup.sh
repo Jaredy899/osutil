@@ -24,27 +24,17 @@ downloadProfile() {
         # Adapt the profile for FreeBSD compatibility
         printf "%b\n" "${YELLOW}Adapting profile for FreeBSD compatibility...${RC}"
 
-        # Create FreeBSD-compatible version using awk for safer text processing
-        awk '
-        # Replace Alpine-specific networking commands with FreeBSD equivalents
-        /ip route/ {
-            print "    dev=$(route -n get default 2>/dev/null | awk '\''/interface:/ {print $2}'\'')"
-            next
-        }
-        /ip -4 -o addr show/ {
-            print "    ifconfig \"$dev\" | awk '\''/inet / {print $2; exit}'\'' 2>/dev/null || echo \"N/A\""
-            next
-        }
-        /netstat -nape --inet/ {
-            print "alias openports='\''netstat -an -p tcp'\''"
-            next
-        }
-        # Remove Alpine-specific files
-        /\/etc\/alpine-release/ { next }
-        /\/etc\/profile\.d/ { next }
-        # Keep everything else unchanged
-        { print }
-        ' "$TEMP_PROFILE" > "${TEMP_PROFILE}.freebsd"
+        # Create FreeBSD-compatible version using a simpler approach
+        cp "$TEMP_PROFILE" "${TEMP_PROFILE}.freebsd"
+
+        # Use sed for simple replacements that are less likely to break syntax
+        sed -i \
+            -e 's/ip route/route -n get default/g' \
+            -e 's/ip -4 -o addr show/ifconfig/g' \
+            -e 's/netstat -nape --inet/netstat -an -p tcp/g' \
+            -e '/\/etc\/alpine-release/d' \
+            -e '/\/etc\/profile\.d/d' \
+            "${TEMP_PROFILE}.freebsd"
 
         mv "${TEMP_PROFILE}.freebsd" "$TEMP_PROFILE"
 
