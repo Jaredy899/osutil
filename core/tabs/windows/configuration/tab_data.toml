@@ -1,7 +1,5 @@
 name = "Configurations"
 
-# Removed: Enable Sudo (Inline) — handled by Windows 11 sudo and not needed in the TUI
-
 [[data]]
 name = "Chris Titus Tech Windows Utility"
 description = "Invokes Chris Titus Tech's Windows Utility (opens in a separate PowerShell window for full interactivity)"
@@ -61,9 +59,3 @@ name = "SSH Key Manager"
 description = "Manage SSH keys for administrators (TUI-friendly numeric menu)"
 script = "ssh-key-manager.ps1"
 task_list = "I"
-
-# [[data]]
-# name = "First Setup"
-# description = "Initial Windows system setup and configuration"
-# script = "first-setup.ps1"
-# task_list = "I"
