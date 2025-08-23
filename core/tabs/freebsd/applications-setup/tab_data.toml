@@ -11,3 +11,10 @@ name = "XFCE Desktop"
 description = "Installs XFCE desktop environment with SLiM login manager."
 script = "xfce.sh"
 task_list = "I"
+
+[[data]]
+name = "Fastfetch"
+description = "Installs and configures Fastfetch system information tool."
+script = "fastfetch-setup.sh"
+task_list = "I"
+
