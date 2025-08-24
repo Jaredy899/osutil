@@ -1,3 +1,7 @@
+# Optimized for speed: Uses best tool for each platform
+# - mingw-w64 + standard cargo for Windows (fastest native)
+# - cargo-zigbuild for Linux/musl and macOS (excellent performance)
+# - cross for FreeBSD (cargo-zigbuild doesn't support FreeBSD)
 name: Multi-Platform Release (Linux-only)
 
 on:
@@ -23,12 +27,9 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config curl git
-          
-          # Install Docker using official script
-          curl -fsSL https://get.docker.com | sudo sh
+          sudo apt-get install -y build-essential pkg-config curl git gcc-mingw-w64-x86-64
 
-      # Install Zig (actively maintained action)
+      # Install Zig (for Linux/musl and macOS builds)
       - name: Install Zig
         uses: mlugg/setup-zig@v2
         with:
@@ -51,7 +52,7 @@ jobs:
       - name: Install cargo tools
         run: |
           cargo install cargo-zigbuild --locked
-          cargo install cross --locked
+          cargo install cross --locked  # For FreeBSD cross-compilation
 
       - name: Cache Cargo registry
         uses: actions/cache@v4
@@ -83,11 +84,8 @@ jobs:
           cp target/armv7-unknown-linux-musleabihf/release/osutil dist/osutil-linux-armv7
 
           echo "==> Windows (GNU)"
-          if cross build --release --target x86_64-pc-windows-gnu; then
-            cp target/x86_64-pc-windows-gnu/release/osutil.exe dist/osutil-windows-x86_64-gnu.exe
-          else
-            echo "⚠️ Windows GNU build failed"
-          fi
+          cargo build --release --target x86_64-pc-windows-gnu
+          cp target/x86_64-pc-windows-gnu/release/osutil.exe dist/osutil-windows-x86_64-gnu.exe
 
           echo "==> macOS (Darwin)"
           cargo zigbuild --release --target x86_64-apple-darwin
@@ -97,11 +95,8 @@ jobs:
           cp target/aarch64-apple-darwin/release/osutil dist/osutil-macos-arm64
 
           echo "==> FreeBSD (x86_64)"
-          if cross build --release --target x86_64-unknown-freebsd; then
-            cp target/x86_64-unknown-freebsd/release/osutil dist/osutil-freebsd-x86_64
-          else
-            echo "⚠️ FreeBSD build failed (expected under act). Build natively on FreeBSD for releases."
-          fi
+          cross build --release --target x86_64-unknown-freebsd
+          cp target/x86_64-unknown-freebsd/release/osutil dist/osutil-freebsd-x86_64
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
