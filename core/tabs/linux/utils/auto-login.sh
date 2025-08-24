@@ -2,39 +2,128 @@
 
 . ../common-script.sh   
 
-# Function to list common session options
-list_sessions() {
-    printf "%b\n" "Select the session:"
-    printf "%b\n" "1) GNOME (gnome.desktop)"
-    printf "%b\n" "2) KDE Plasma (plasma.desktop)"
-    printf "%b\n" "3) XFCE (xfce.desktop)"
-    printf "%b\n" "4) LXDE (LXDE.desktop)"
-    printf "%b\n" "5) LXQt (lxqt.desktop)"
-    printf "%b\n" "6) Cinnamon (cinnamon.desktop)"
-    printf "%b\n" "7) MATE (mate.desktop)"
-    printf "%b\n" "8) Openbox (openbox.desktop)"
-    printf "%b\n" "9) i3 (i3.desktop)"
-    printf "%b\n" "10) Custom session"
-    printf "%b" "Enter your choice (1-10): "
-    read -r session_choice
-
-    case "$session_choice" in
-        1) session="gnome.desktop" ;;
-        2) session="plasma.desktop" ;;
-        3) session="xfce.desktop" ;;
-        4) session="LXDE.desktop" ;;
-        5) session="lxqt.desktop" ;;
-        6) session="cinnamon.desktop" ;;
-        7) session="mate.desktop" ;;
-        8) session="openbox.desktop" ;;
-        9) session="i3.desktop" ;;
-        10) 
-            printf "%b" "Enter custom session name (e.g., mysession): "
-            read -r session ;;
-        *) 
-            printf "%b\n" "Invalid option selected."
-            exit 1 ;;
+# Helper function to map desktop environment names to session files
+map_desktop_to_session() {
+    case "$1" in
+        *gnome*) echo "gnome.desktop" ;;
+        *plasma*) echo "plasma.desktop" ;;
+        *xfce*) echo "xfce.desktop" ;;
+        *lxde*) echo "LXDE.desktop" ;;
+        *lxqt*) echo "lxqt.desktop" ;;
+        *cinnamon*) echo "cinnamon.desktop" ;;
+        *mate*) echo "mate.desktop" ;;
+        *openbox*) echo "openbox.desktop" ;;
+        *i3*) echo "i3.desktop" ;;
+        *) echo "" ;;
     esac
+}
+
+# Helper function to check if process is running
+process_running() {
+    pgrep -f "$1" > /dev/null 2>&1
+}
+
+# Function to detect current desktop session
+detect_session() {
+    printf "%b\n" "Detecting current desktop session..."
+
+    # Method 1: Check environment variables
+    for env_var in "$XDG_CURRENT_DESKTOP" "$DESKTOP_SESSION" "$GDMSESSION"; do
+        if [ -n "$env_var" ]; then
+            session=$(map_desktop_to_session "$env_var")
+            [ -n "$session" ] && break
+        fi
+    done
+
+    # Method 2: Check running processes
+    if [ -z "$session" ]; then
+        for process in "gnome-shell" "plasmashell" "xfce4-session" "lxsession" "lxqt-session" \
+                      "cinnamon-session" "mate-session" "openbox-session" "i3"; do
+            if process_running "$process"; then
+                session=$(map_desktop_to_session "$process")
+                [ -n "$session" ] && break
+            fi
+        done
+    fi
+
+    if [ -n "$session" ]; then
+        printf "%b\n" "Detected session: $session"
+    else
+        printf "%b\n" "Could not detect desktop session automatically."
+        printf "%b" "Enter session name (e.g., gnome.desktop, plasma.desktop): "
+        read -r session
+    fi
+}
+
+# Helper function to check if service is active
+service_active() {
+    systemctl is-active --quiet "$1" 2>/dev/null
+}
+
+# Helper function to check if file exists
+file_exists() {
+    [ -f "$1" ]
+}
+
+# Function to detect current display manager
+detect_display_manager() {
+    printf "%b\n" "Detecting current display manager..."
+
+    # Method 1: Check running processes
+    for dm_name in "lightdm" "gdm" "sddm" "lxdm"; do
+        if process_running "$dm_name"; then
+            dm="$dm_name"
+            break
+        fi
+    done
+
+    # Method 2: Check active services
+    if [ -z "$dm" ]; then
+        for dm_name in "lightdm" "gdm" "sddm" "lxdm"; do
+            if service_active "$dm_name"; then
+                dm="$dm_name"
+                break
+            fi
+        done
+    fi
+
+    # Method 3: Check configuration files
+    if [ -z "$dm" ]; then
+        if file_exists "/etc/lightdm/lightdm.conf"; then dm="lightdm"
+        elif file_exists "/etc/gdm/custom.conf"; then dm="gdm"
+        elif file_exists "/etc/sddm.conf"; then dm="sddm"
+        elif file_exists "/etc/lxdm/lxdm.conf"; then dm="lxdm"
+        fi
+    fi
+
+    # Method 4: Check XDG_SESSION environment variable
+    if [ -z "$dm" ] && [ -n "$XDG_SESSION_DESKTOP" ]; then
+        for dm_name in "lightdm" "gdm" "sddm" "lxdm"; do
+            case "$XDG_SESSION_DESKTOP" in
+                *"$dm_name"*) dm="$dm_name" && break ;;
+            esac
+        done
+    fi
+
+    if [ -n "$dm" ]; then
+        printf "%b\n" "Detected display manager: $dm"
+    else
+        printf "%b\n" "Could not detect display manager automatically."
+        printf "%b\n" "Available display managers:"
+        printf "%b\n" "1) LightDM"
+        printf "%b\n" "2) GDM"
+        printf "%b\n" "3) SDDM"
+        printf "%b\n" "4) LXDM"
+        printf "%b" "Enter your choice (1-4): "
+        read -r dm_choice
+        case "$dm_choice" in
+            1) dm="lightdm" ;;
+            2) dm="gdm" ;;
+            3) dm="sddm" ;;
+            4) dm="lxdm" ;;
+            *) printf "%b\n" "Invalid choice. Exiting..." && exit 1 ;;
+        esac
+    fi
 }
 
 # Function to configure LightDM
@@ -84,7 +173,7 @@ configure_sddm() {
     printf "%b\n" "Configuring SDDM for autologin..."
     printf "%b" "Enter username for SDDM autologin: "
     read -r user
-    list_sessions  # Show session options
+    detect_session  # Auto-detect session
 
     printf "%b\n" '[Autologin]' | "$ESCALATION_TOOL" tee -a /etc/sddm.conf
     printf "%s\n" "User=$user" | "$ESCALATION_TOOL" tee -a /etc/sddm.conf
@@ -105,8 +194,8 @@ configure_lxdm() {
     printf "%b\n" "Configuring LXDM for autologin..."
     printf "%b" "Enter username for LXDM autologin: "
     read -r user
-    list_sessions  # Show session options
-    
+    detect_session  # Auto-detect session
+
     "$ESCALATION_TOOL" sed -i'' "s/^#.*autologin=.*$/autologin=${user}/" /etc/lxdm/lxdm.conf
     "$ESCALATION_TOOL" sed -i'' "s|^#.*session=.*$|session=/usr/bin/${session}|; s|^session=.*$|session=/usr/bin/${session}|" /etc/lxdm/lxdm.conf
 
@@ -129,42 +218,32 @@ configure_or_remove_autologin() {
     printf "%b" "Enter your choice (1-2): "
     read -r action_choice
 
-    if [ "$action_choice" = "1" ]; then
-        printf "%b\n" "Choose the display manager to configure:"
-        printf "%b\n" "1) LightDM"
-        printf "%b\n" "2) GDM"
-        printf "%b\n" "3) SDDM"
-        printf "%b\n" "4) LXDM"
-        printf "%b" "Enter your choice (1-4): "
-        read -r choice
-
-        case "$choice" in
-            1) configure_lightdm ;;
-            2) configure_gdm ;;
-            3) configure_sddm ;;
-            4) configure_lxdm ;;
-            *) printf "%b\n" "Invalid option selected." ;;
-        esac
-    elif [ "$action_choice" = "2" ]; then
-        printf "%b\n" "Choose the display manager to remove autologin:"
-        printf "%b\n" "1) LightDM"
-        printf "%b\n" "2) GDM"
-        printf "%b\n" "3) SDDM"
-        printf "%b\n" "4) LXDM"
-        printf "%b" "Enter your choice (1-4): "
-        read -r choice
-
-        case "$choice" in
-            1) remove_lightdm_autologin ;;
-            2) remove_gdm_autologin ;;
-            3) remove_sddm_autologin ;;
-            4) remove_lxdm_autologin ;;
-            *) printf "%b\n" "Invalid option selected." ;;
-        esac
-    else
-        printf "%b\n" "Invalid choice. Exiting..."
-        exit 1
-    fi
+    case "$action_choice" in
+        1)
+            detect_display_manager
+            case "$dm" in
+                lightdm) configure_lightdm ;;
+                gdm) configure_gdm ;;
+                sddm) configure_sddm ;;
+                lxdm) configure_lxdm ;;
+                *) printf "%b\n" "Unsupported display manager: $dm" && exit 1 ;;
+            esac
+            ;;
+        2)
+            detect_display_manager
+            case "$dm" in
+                lightdm) remove_lightdm_autologin ;;
+                gdm) remove_gdm_autologin ;;
+                sddm) remove_sddm_autologin ;;
+                lxdm) remove_lxdm_autologin ;;
+                *) printf "%b\n" "Unsupported display manager: $dm" && exit 1 ;;
+            esac
+            ;;
+        *)
+            printf "%b\n" "Invalid choice. Exiting..."
+            exit 1
+            ;;
+    esac
 
     printf "%b\n" "Action completed. Exiting..."
     exit 0
