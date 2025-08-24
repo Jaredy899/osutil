@@ -19,11 +19,34 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install dependencies
+      # Install system dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config curl git zig docker.io
-          sudo systemctl start docker
+          sudo apt-get install -y build-essential pkg-config curl git docker.io
+
+      # Install Zig (actively maintained action)
+      - name: Install Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.1
+
+      # Install Rust toolchain
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: >
+            x86_64-unknown-linux-musl,
+            aarch64-unknown-linux-musl,
+            armv7-unknown-linux-musleabihf,
+            x86_64-pc-windows-gnu,
+            x86_64-apple-darwin,
+            aarch64-apple-darwin,
+            x86_64-unknown-freebsd
+
+      # Install cargo tools
+      - name: Install cargo tools
+        run: |
           cargo install cargo-zigbuild --locked
           cargo install cross --locked
 
@@ -40,18 +63,6 @@ jobs:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-index-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: >
-            x86_64-unknown-linux-musl,
-            aarch64-unknown-linux-musl,
-            armv7-unknown-linux-musleabihf,
-            x86_64-pc-windows-gnu,
-            x86_64-apple-darwin,
-            aarch64-apple-darwin,
-            x86_64-unknown-freebsd
 
       - name: Build all targets
         run: |
@@ -86,7 +97,7 @@ jobs:
           if cross build --release --target x86_64-unknown-freebsd; then
             cp target/x86_64-unknown-freebsd/release/osutil dist/osutil-freebsd-x86_64
           else
-            echo "⚠️ FreeBSD build failed"
+            echo "⚠️ FreeBSD build failed (expected under act). Build natively on FreeBSD for releases."
           fi
 
       - name: Upload artifacts
@@ -136,7 +147,7 @@ jobs:
             
             ## Installation
             
-            ### macOS & Linux
+            ### macOS, Linux, & FreeBSD
             ```bash
             sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh)
             ```
