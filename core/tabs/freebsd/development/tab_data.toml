@@ -23,3 +23,9 @@ name = "Java (OpenJDK)"
 description = "Installs OpenJDK (prefers 21, falls back to 17) using the system package manager."
 script = "java.sh"
 task_list = "I"
+
+[[data]]
+name = "Zig"
+description = "Installs the latest stable Zig compiler from official releases."
+script = "zig.sh"
+task_list = "I"
