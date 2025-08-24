@@ -5,16 +5,19 @@ A powerful cross-platform system utility tool with a modern TUI interface that s
 ## 🚀 How to Run
 
 ### **macOS & Linux**
+
 ```bash
 sh <(curl -fsSL https://jaredcervantes.com/os)
 ```
 
 ### **Windows**
+
 ```powershell
 irm https://jaredcervantes.com/winos | iex
 ```
 
 ### **FreeBSD & Linux**
+
 ```bash
 curl -fsSL jaredcervantes.com/os | sh
 ```
@@ -22,6 +25,7 @@ curl -fsSL jaredcervantes.com/os | sh
 ## 📖 Usage
 
 **Navigation:**
+
 - **Arrow Keys**: Navigate through menus and options
 - **Enter**: Select/execute scripts
 - **Esc**: Go back to previous menu
@@ -32,11 +36,13 @@ curl -fsSL jaredcervantes.com/os | sh
 OSutil is a modern TUI-based system utility that simplifies system administration tasks across multiple platforms. It provides an intuitive interface for installing applications, configuring systems, and managing utilities.
 
 ### **Supported Platforms**
+
 - **Windows**: PowerShell-based system optimization and application management
 - **macOS**: Homebrew-based development tools and system utilities
 - **Linux**: Multi-distribution support with intelligent package manager detection
 
 ### **Supported Linux Distributions**
+
 - **Arch Linux** (pacman)
 - **Debian/Ubuntu** (apt)
 - **Fedora** (dnf)
@@ -48,12 +54,15 @@ OSutil is a modern TUI-based system utility that simplifies system administratio
 ## 📸 Screenshots
 
 ### Linux
+
 ![Linux Interface](.github/Linux.png)
 
-### macOS  
+### macOS
+
 ![macOS Interface](.github/Mac.png)
 
 ### Windows
+
 ![Windows Interface](.github/Windows.png)
 
 ## ⚙️ Configuration
@@ -77,15 +86,18 @@ size_bypass = true
 ## 🛠️ Development
 
 ### **Prerequisites**
+
 - Rust 1.70+
 - Cargo
 
 ### **Build**
+
 ```bash
 cargo build --release
 ```
 
 ### **Development Mode**
+
 ```bash
 cargo run
 ```
@@ -95,6 +107,7 @@ For detailed build instructions and multi-platform setup, see [MULTI_PLATFORM_SE
 ## 🤝 Contributing
 
 OSutil is designed to be easily extensible. Add new scripts by:
+
 1. Creating scripts in the appropriate platform directory
 2. Adding entries to the corresponding `tab_data.toml` file
 3. Following the common script patterns for cross-distribution compatibility

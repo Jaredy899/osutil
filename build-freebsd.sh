@@ -119,7 +119,7 @@ build_target "aarch64-unknown-freebsd" "osutil-freebsd-aarch64"
 
 echo ""
 echo "Build completed! Binaries in $BUILD_DIR/:"
-ls -la "$BUILD_DIR/" | grep freebsd
+ls -la "$BUILD_DIR/"*freebsd* 2>/dev/null || true
 
 echo ""
 echo "Build Summary:"
