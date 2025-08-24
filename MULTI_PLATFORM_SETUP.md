@@ -163,7 +163,7 @@ The project uses the MSVC toolchain for Windows builds:
 
 ## File Structure
 
-```
+```text
 ├── .github/workflows/Release.yml    # Multi-architecture CI/CD
 ├── install.sh                       # Unified installer (macOS & Linux)
 ├── install-windows.ps1              # Windows installer
@@ -215,4 +215,4 @@ cargo xtask build-linux
 - Installers check for the correct platform before running
 - The system gracefully handles PATH configuration
 - GitHub Actions builds are cached for faster builds
-- All scripts are executable and ready for distribution 
+- All scripts are executable and ready for distribution

@@ -1,0 +1,25 @@
+name = "System Setup"
+
+[[data]]
+name = "Update System"
+description = "Updates the package database, upgrades all packages, and updates the ports tree."
+script = "update-system.sh"
+task_list = "I"
+
+[[data]]
+name = "Install Ports Tree"
+description = "Installs or updates the FreeBSD ports tree for building packages from source."
+script = "install-ports.sh"
+task_list = "I"
+
+[[data]]
+name = "Profile Setup"
+description = "Sets up custom shell profile with fastfetch, starship, zoxide, and other utilities."
+script = "profile-setup.sh"
+task_list = "I"
+
+[[data]]
+name = "FreeBSD Upgrade"
+description = "Manages FreeBSD version upgrades and package repository switching."
+script = "freebsd-upgrade.sh"
+task_list = "I"
