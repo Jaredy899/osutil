@@ -3,6 +3,20 @@ set -euo pipefail
 
 APP_NAME="osutil"
 OUT_DIR="dist"
+
+# Install required tools
+echo "==> Installing required tools..."
+cargo install cargo-zigbuild cross 2>/dev/null || true
+
+# Install mingw-w64 for Windows builds
+if ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
+    if command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64
+    elif command -v brew >/dev/null 2>&1; then
+        brew install mingw-w64
+    fi
+fi
+
 mkdir -p "$OUT_DIR"
 
 echo "==> Ensuring Rust targets are installed"
@@ -32,11 +46,8 @@ cp target/armv7-unknown-linux-musleabihf/release/$APP_NAME "$OUT_DIR/${APP_NAME}
 # Windows (GNU)
 ########################################
 echo "==> Building Windows (GNU)"
-if cross build --release --target x86_64-pc-windows-gnu; then
-  cp target/x86_64-pc-windows-gnu/release/${APP_NAME}.exe "$OUT_DIR/${APP_NAME}-windows-x86_64-gnu.exe"
-else
-  echo "⚠️  Windows GNU build failed. Use Windows CI (MSVC) for official builds."
-fi
+cargo build --release --target x86_64-pc-windows-gnu
+cp target/x86_64-pc-windows-gnu/release/${APP_NAME}.exe "$OUT_DIR/${APP_NAME}-windows-x86_64-gnu.exe"
 
 ########################################
 # macOS (Darwin)
@@ -52,11 +63,8 @@ cp target/aarch64-apple-darwin/release/$APP_NAME "$OUT_DIR/${APP_NAME}-macos-arm
 # FreeBSD
 ########################################
 echo "==> Building FreeBSD (x86_64)"
-if cross build --release --target x86_64-unknown-freebsd; then
-  cp target/x86_64-unknown-freebsd/release/$APP_NAME "$OUT_DIR/${APP_NAME}-freebsd-x86_64"
-else
-  echo "⚠️  FreeBSD build failed. Consider building natively on FreeBSD or using Cirrus CI."
-fi
+cross build --release --target x86_64-unknown-freebsd
+cp target/x86_64-unknown-freebsd/release/$APP_NAME "$OUT_DIR/${APP_NAME}-freebsd-x86_64"
 
 ########################################
 # Done
