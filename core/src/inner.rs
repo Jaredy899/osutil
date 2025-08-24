@@ -433,6 +433,8 @@ impl TabDirectories {
             "windows"
         } else if cfg!(target_os = "macos") {
             "macos"
+        } else if cfg!(target_os = "freebsd") {
+            "freebsd"
         } else {
             "linux"
         }

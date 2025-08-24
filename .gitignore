@@ -5,6 +5,7 @@
 rust/target/
 rust/build/
 /build/osutil
+/dist
 
 # Rust generated files
 **/*.rs.bk
