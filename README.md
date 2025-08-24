@@ -14,6 +14,11 @@ sh <(curl -fsSL https://jaredcervantes.com/os)
 irm https://jaredcervantes.com/winos | iex
 ```
 
+### **FreeBSD & Linux**
+```bash
+curl -fsSL jaredcervantes.com/os | sh
+```
+
 ## 📖 Usage
 
 **Navigation:**

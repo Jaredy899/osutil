@@ -21,13 +21,13 @@ case "$OS" in
   Linux)
     case "$ARCH" in
       x86_64|amd64)
-        URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil"
+        URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-linux-x86_64"
         ;;
       aarch64|arm64)
-        URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-aarch64"
+        URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-linux-aarch64"
         ;;
       armv7l)
-        URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-armv7l"
+        URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-linux-armv7"
         ;;
       *)
         echo "Unsupported architecture: $ARCH"
