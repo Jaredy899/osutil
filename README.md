@@ -1,25 +1,25 @@
 # OSutil
 
-A powerful cross-platform system utility tool with a modern TUI interface that simplifies system administration across Windows, macOS, and Linux distributions.
+A powerful cross-platform system utility tool with a modern TUI interface that simplifies system administration across Windows, macOS, Linux, and FreeBSD distributions.
 
 ## 🚀 How to Run
+
+### **Linux & FreeBSD**
+
+```bash
+curl -fsSL jaredcervantes.com/os | sh
+```
 
 ### **macOS & Linux**
 
 ```bash
-sh <(curl -fsSL https://jaredcervantes.com/os)
+sh <(curl -fsSL jaredcervantes.com/os)
 ```
 
 ### **Windows**
 
 ```powershell
-irm https://jaredcervantes.com/winos | iex
-```
-
-### **FreeBSD & Linux**
-
-```bash
-curl -fsSL jaredcervantes.com/os | sh
+irm jaredcervantes.com/os | iex
 ```
 
 ## 📖 Usage
@@ -40,6 +40,7 @@ OSutil is a modern TUI-based system utility that simplifies system administratio
 - **Windows**: PowerShell-based system optimization and application management
 - **macOS**: Homebrew-based development tools and system utilities
 - **Linux**: Multi-distribution support with intelligent package manager detection
+- **FreeBSD**: Limited support for FreeBSD. ***Still in active development.***
 
 ### **Supported Linux Distributions**
 
