@@ -36,6 +36,12 @@ sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.
 irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
 ```
 
+### FreeBSD
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh | sh
+```
+
 ## Local Development
 
 To build for all platforms locally:
@@ -49,5 +55,3 @@ To build for the current platform only:
 ```bash
 cargo build --release
 ```
-
-For detailed build instructions and multi-platform setup, see [MULTI_PLATFORM_SETUP.md](MULTI_PLATFORM_SETUP.md).
