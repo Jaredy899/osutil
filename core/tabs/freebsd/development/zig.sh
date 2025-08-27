@@ -61,7 +61,7 @@ installZig() {
     tar -xf "zig.tar.xz"
 
     # Find the extracted directory
-    ZIG_DIR=$(ls -d */ | head -n1 | sed 's|/$||')
+    ZIG_DIR=$(find . -maxdepth 1 -type d -name "*" ! -name "." | head -n1 | sed 's|^\./||')
 
     if [ -z "$ZIG_DIR" ]; then
         printf "%b\n" "${RED}Failed to find extracted Zig directory${RC}"

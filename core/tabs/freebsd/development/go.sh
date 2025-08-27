@@ -42,7 +42,7 @@ installGo() {
     if ! grep -q "/usr/local/go/bin" "$HOME/.bashrc" 2>/dev/null; then
         {
             printf "%s\n" ''
-            printf "%s\n" 'export PATH="/usr/local/go/bin:$PATH"'
+            printf "%s\n" "export PATH=\"/usr/local/go/bin:\$PATH\""
         } >> "$HOME/.bashrc"
     fi
 

@@ -60,15 +60,15 @@ upgradeFreeBSD() {
 
             # Set quarterly branch
             "$ESCALATION_TOOL" mkdir -p /usr/local/etc/pkg/repos
-            "$ESCALATION_TOOL" sh -c 'cat > /usr/local/etc/pkg/repos/FreeBSD.conf << EOF
+            "$ESCALATION_TOOL" sh -c "cat > /usr/local/etc/pkg/repos/FreeBSD.conf << EOF
 FreeBSD: {
-  url: "pkg+http://pkg.FreeBSD.org/${ABI}/quarterly",
-  mirror_type: "srv",
-  signature_type: "fingerprints",
-  fingerprints: "/usr/share/keys/pkg",
+  url: \"pkg+http://pkg.FreeBSD.org/\${ABI}/quarterly\",
+  mirror_type: \"srv\",
+  signature_type: \"fingerprints\",
+  fingerprints: \"/usr/share/keys/pkg\",
   enabled: yes
 }
-EOF'
+EOF"
 
             # Update repositories
             "$ESCALATION_TOOL" "$PACKAGER" update
@@ -85,15 +85,15 @@ EOF'
 
             # Set latest branch
             "$ESCALATION_TOOL" mkdir -p /usr/local/etc/pkg/repos
-            "$ESCALATION_TOOL" sh -c 'cat > /usr/local/etc/pkg/repos/FreeBSD.conf << EOF
+            "$ESCALATION_TOOL" sh -c "cat > /usr/local/etc/pkg/repos/FreeBSD.conf << EOF
 FreeBSD: {
-  url: "pkg+http://pkg.FreeBSD.org/${ABI}/latest",
-  mirror_type: "srv",
-  signature_type: "fingerprints",
-  fingerprints: "/usr/share/keys/pkg",
+  url: \"pkg+http://pkg.FreeBSD.org/\${ABI}/latest\",
+  mirror_type: \"srv\",
+  signature_type: \"fingerprints\",
+  fingerprints: \"/usr/share/keys/pkg\",
   enabled: yes
 }
-EOF'
+EOF"
 
             # Update repositories
             "$ESCALATION_TOOL" "$PACKAGER" update
