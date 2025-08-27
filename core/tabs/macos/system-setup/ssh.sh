@@ -3,7 +3,6 @@
 . ../common-script.sh
 
 installSSHDepend() {
-    DEPENDENCIES='openssh curl'
     printf "%b\n" "${YELLOW}Installing SSH dependencies...${RC}"
 
     if ! command_exists "brew"; then
@@ -16,8 +15,7 @@ installSSHDepend() {
     brew update
 
     printf "%b\n" "${CYAN}Installing SSH tools...${RC}"
-    # shellcheck disable=SC2086
-    brew install $DEPENDENCIES
+    brew install openssh curl
 
     printf "%b\n" "${GREEN}SSH dependencies installed!${RC}"
 }
