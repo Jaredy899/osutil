@@ -2,28 +2,17 @@
 
 . ../../common-script.sh
 
-gitpath="$HOME/.local/share/neovim"
-
-cloneNeovim() {
-    # Check if the dir exists before attempting to clone into it.
-    if [ -d "$gitpath" ]; then
-        rm -rf "$gitpath"
-    fi
-    mkdir -p "$HOME/.local/share" # Only create the dir if it doesn't exist.
-    cd "$HOME" && git clone https://github.com/ChrisTitusTech/neovim.git "$HOME/.local/share/neovim"
-}
-
 installNeovim() {
     if ! command_exists neovim ripgrep git fzf; then
-    printf "%b\n" "${YELLOW}Installing Neovim...${RC}"
+    printf "%b\n" "${YELLOW}Installing Neovim with LazyVim...${RC}"
     case "$PACKAGER" in
         pacman)
             "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm neovim ripgrep fzf python-virtualenv luarocks go shellcheck git
             ;;
         apt-get|nala)
-            # Check the candidate version from the repos and install from the package manager if >= 0.10
+            # Check the candidate version from the repos and install from the package manager if >= 0.9.0
             CANDIDATE_VERSION=$(apt-cache policy neovim | awk '/Candidate:/ {print $2}')
-            if [ -n "$CANDIDATE_VERSION" ] && [ "$CANDIDATE_VERSION" != "(none)" ] && dpkg --compare-versions "$CANDIDATE_VERSION" ge "0.10"; then
+            if [ -n "$CANDIDATE_VERSION" ] && [ "$CANDIDATE_VERSION" != "(none)" ] && dpkg --compare-versions "$CANDIDATE_VERSION" ge "0.9.0"; then
                 "$ESCALATION_TOOL" "$PACKAGER" install -y neovim ripgrep fd-find fzf python3-venv luarocks golang-go shellcheck git
             else
                 "$ESCALATION_TOOL" "$PACKAGER" install -y ripgrep fd-find fzf python3-venv luarocks golang-go shellcheck git ninja-build gettext cmake unzip curl
@@ -64,15 +53,23 @@ backupNeovimConfig() {
     rm -rf "$HOME/.config/nvim"
 }
 
-linkNeovimConfig() {
-    printf "%b\n" "${YELLOW}Linking Neovim configuration files...${RC}"
-    mkdir -p "$HOME/.config/nvim"
-    ln -s "$gitpath/titus-kickstart/"* "$HOME/.config/nvim/" # Wild card is used here to link all contents of titus-kickstart.
+installLazyVim() {
+    printf "%b\n" "${CYAN}Installing LazyVim starter template...${RC}"
+    if ! git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"; then
+        printf "%b\n" "${RED}Failed to clone LazyVim starter template. Please check your internet connection and try again.${RC}"
+        exit 1
+    fi
+    
+    # Remove the .git folder so it can be added to user's own repo later
+    rm -rf "$HOME/.config/nvim/.git"
+    
+    printf "%b\n" "${GREEN}LazyVim setup completed successfully!${RC}"
+    printf "%b\n" "${CYAN}You can now start Neovim with 'nvim' to begin using LazyVim.${RC}"
+    printf "%b\n" "${YELLOW}Tip: Run ':LazyHealth' after starting Neovim to check if everything is working correctly.${RC}"
 }
 
 checkEnv
 checkEscalationTool
 installNeovim
-cloneNeovim
 backupNeovimConfig
-linkNeovimConfig
+installLazyVim

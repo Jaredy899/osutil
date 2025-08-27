@@ -3,7 +3,7 @@
 . ../../common-script.sh
 
 installNeovim() {
-    printf "%b\n" "${YELLOW}Setting up Neovim...${RC}"
+    printf "%b\n" "${YELLOW}Setting up Neovim with LazyVim...${RC}"
     
     # Install Neovim and dependencies with brew
     printf "%b\n" "${CYAN}Installing Neovim and dependencies...${RC}"
@@ -20,14 +20,20 @@ installNeovim() {
     
     # Clear existing config
     rm -rf "$HOME/.config/nvim"
-    mkdir -p "$HOME/.config/nvim"
     
-    # Clone Titus kickstart config directly to .config/nvim
-    printf "%b\n" "${CYAN}Applying Titus Kickstart config...${RC}"
-    git clone --depth 1 https://github.com/ChrisTitusTech/neovim.git /tmp/neovim
-    cp -r /tmp/neovim/titus-kickstart/* "$HOME/.config/nvim/"
-    rm -rf /tmp/neovim
-    printf "%b\n" "${GREEN}Neovim setup completed.${RC}"
+    # Clone LazyVim starter template
+    printf "%b\n" "${CYAN}Installing LazyVim starter template...${RC}"
+    if ! git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"; then
+        printf "%b\n" "${RED}Failed to clone LazyVim starter template. Please check your internet connection and try again.${RC}"
+        exit 1
+    fi
+    
+    # Remove the .git folder so it can be added to user's own repo later
+    rm -rf "$HOME/.config/nvim/.git"
+    
+    printf "%b\n" "${GREEN}LazyVim setup completed successfully!${RC}"
+    printf "%b\n" "${CYAN}You can now start Neovim with 'nvim' to begin using LazyVim.${RC}"
+    printf "%b\n" "${YELLOW}Tip: Run ':LazyHealth' after starting Neovim to check if everything is working correctly.${RC}"
 }
 
 checkEnv
