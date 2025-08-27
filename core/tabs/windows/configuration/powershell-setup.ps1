@@ -177,28 +177,36 @@ Initialize-CustomShortcuts
 
 # Neovim config
 function Initialize-NeovimConfig {
-    Write-Host "${Cyan}Setting up Neovim configuration...${Reset}"
+    Write-Host "${Cyan}Setting up Neovim with LazyVim...${Reset}"
     $nvimConfigDir = "$env:LOCALAPPDATA\nvim"
-    if (-not (Test-Path -Path $nvimConfigDir)) { New-Item -ItemType Directory -Path $nvimConfigDir -Force | Out-Null } else {
+    
+    # Backup existing config if it exists
+    if (Test-Path -Path $nvimConfigDir) {
         $backupDir = "$nvimConfigDir.backup.$(Get-Date -Format 'yyyyMMdd_HHmmss')"
         Copy-Item -Path $nvimConfigDir -Destination $backupDir -Recurse -Force
-        Remove-Item -Path "$nvimConfigDir\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "${Yellow}Backed up existing Neovim config to: $backupDir${Reset}"
+        Remove-Item -Path $nvimConfigDir -Recurse -Force
     }
-    $tempDir = Join-Path $env:TEMP 'nvim_download'
-    if (Test-Path $tempDir) { Remove-Item -Path $tempDir -Recurse -Force }
-    New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-    $zipUrl = 'https://github.com/Jaredy899/win/archive/refs/heads/main.zip'
-    $zipPath = Join-Path $tempDir 'repo.zip'
+    
+    # Create nvim config directory
+    New-Item -ItemType Directory -Path $nvimConfigDir -Force | Out-Null
+    
+    # Clone LazyVim starter template
     try {
-        Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
-        Expand-Archive -Path $zipPath -DestinationPath $tempDir -Force
-        $extractedNvimPath = Join-Path $tempDir 'win-main\my_powershell\nvim'
-        if (Test-Path $extractedNvimPath) {
-            Copy-Item -Path (Join-Path $extractedNvimPath '*') -Destination $nvimConfigDir -Recurse -Force
-            Write-Host "${Green}Neovim configuration installed.${Reset}"
-        } else { Write-Host "${Red}nvim folder not found in repository.${Reset}" }
-    } catch { Write-Host "${Red}Error setting up Neovim config.`n$_${Reset}" }
-    finally { if (Test-Path $tempDir) { Remove-Item -Path $tempDir -Recurse -Force } }
+        Write-Host "${Cyan}Cloning LazyVim starter template...${Reset}"
+        git clone https://github.com/LazyVim/starter $nvimConfigDir
+        
+        # Remove the .git folder so it can be added to user's own repo later
+        $gitDir = Join-Path $nvimConfigDir '.git'
+        if (Test-Path $gitDir) {
+            Remove-Item -Path $gitDir -Recurse -Force
+        }
+        
+        Write-Host "${Green}LazyVim installed successfully. Run 'nvim' to start, then ':LazyHealth' to verify setup.${Reset}"
+    } catch {
+        Write-Host "${Red}Failed to clone LazyVim starter template. Please check your internet connection and try again.${Reset}"
+        Write-Host "${Red}Error: $($_.Exception.Message)${Reset}"
+    }
 }
 Initialize-NeovimConfig
 
