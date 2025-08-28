@@ -69,13 +69,17 @@ case "$PKG_MGR" in
     REMOVE_CMD="sudo pacman -R --noconfirm"
     INSTALLED_LIST=$(pacman -Qq)
     ;;
-  dnf)
-    LIST_CMD="dnf list available | awk '{print \$1}'"
-    INFO_CMD="dnf info {1}"
-    INSTALL_CMD="sudo dnf install -y"
-    REMOVE_CMD="sudo dnf remove -y"
-    INSTALLED_LIST=$(dnf list installed | awk '{print $1}')
-    ;;
+    dnf)
+      LIST_CMD="dnf_repoquery"
+      INFO_CMD="dnf info {1}"
+      INSTALL_CMD="sudo dnf install -y"
+      REMOVE_CMD="sudo dnf remove -y"
+      INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
+
+      dnf_repoquery() {
+        dnf repoquery --qf '%{name}'
+      }
+      ;;
   zypper)
     LIST_CMD="zypper se -s | awk 'NR>2 {print \$2; print \$3}' | grep -v '^[|]' | sort -u"
     INFO_CMD="zypper info {1}"
@@ -84,11 +88,11 @@ case "$PKG_MGR" in
     INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
     ;;
   apk)
-    LIST_CMD="apk search -v | awk '{print \$1}'"
+    LIST_CMD="apk search -v | awk -F'-[0-9]' '{print \$1}'"
     INFO_CMD="apk info -d {1}"
-    INSTALL_CMD="sudo apk add"
-    REMOVE_CMD="sudo apk del"
-    INSTALLED_LIST=$(apk info)
+    INSTALL_CMD="doas apk add"
+    REMOVE_CMD="doas apk del"
+    INSTALLED_LIST=$(apk info | awk -F'-[0-9]' '{print $1}')
     ;;
   eopkg)
     LIST_CMD="eopkg list-available | awk '{print \$1}'"
@@ -169,9 +173,15 @@ if [[ -s /tmp/pkg-tui-action && -s /tmp/pkg-tui-mode ]]; then
 fi
 EOF
 
-    "$ESCALATION_TOOL" mv "$tmpfile" /usr/local/bin/pkg-tui
-    "$ESCALATION_TOOL" chmod +x /usr/local/bin/pkg-tui
-    printf "%b\n" "${GREEN}pkg-tui script installed to /usr/local/bin/pkg-tui${RC}"
+    if [ "$PACKAGER" = "eopkg" ]; then
+        "$ESCALATION_TOOL" mv "$tmpfile" /usr/bin/pkg-tui
+        "$ESCALATION_TOOL" chmod +x /usr/bin/pkg-tui
+        printf "%b\n" "${GREEN}pkg-tui script installed to /usr/bin/pkg-tui${RC}"
+    else
+        "$ESCALATION_TOOL" mv "$tmpfile" /usr/local/bin/pkg-tui
+        "$ESCALATION_TOOL" chmod +x /usr/local/bin/pkg-tui
+        printf "%b\n" "${GREEN}pkg-tui script installed to /usr/local/bin/pkg-tui${RC}"
+    fi
 }
 
 addAlias() {
