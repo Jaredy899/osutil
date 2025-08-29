@@ -17,8 +17,7 @@ setupFastfetchConfig() {
         cp -r "${HOME}/.config/fastfetch" "${HOME}/.config/fastfetch-bak"
     fi
     mkdir -p "${HOME}/.config/fastfetch/"
-    curl -sSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes/config.jsonc
-    if [ $? -eq 0 ]; then
+    if curl -sSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes/config.jsonc; then
         printf "%b\n" "${GREEN}Fastfetch config downloaded successfully${RC}"
     else
         printf "%b\n" "${YELLOW}Could not download config file, using default configuration${RC}"

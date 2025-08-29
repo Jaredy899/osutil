@@ -25,7 +25,7 @@ installJava() {
         {
             printf "%s\n" ''
             printf "%s\n" "export JAVA_HOME=\"$JAVA_HOME\""
-            printf "%s\n" 'export PATH="$JAVA_HOME/bin:$PATH"'
+            printf "%s\n" "export PATH=\"\$JAVA_HOME/bin:\$PATH\""
         } >> "$HOME/.bashrc"
     fi
 

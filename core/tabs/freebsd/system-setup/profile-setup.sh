@@ -127,7 +127,6 @@ EOF
         # Install user-specific profile
         mv "$TEMP_PROFILE" "$USER_PROFILE"
         printf "%b\n" "${GREEN}FreeBSD-adapted profile installed to $USER_PROFILE${RC}"
-        PROFILE_INSTALLED="$USER_PROFILE"
     else
         printf "%b\n" "${RED}Failed to download profile${RC}"
         exit 1
