@@ -410,6 +410,12 @@ data = "command_exists"
 values = ["linutil"]
 
 [[data]]
+name = "Package Installer"
+description = "An fzf installer based on Omarchy"
+script = "package-finder.sh"
+task_list = "I FM"
+
+[[data]]
 name = "Rofi"
 description = "Rofi is a window switcher, run dialog, ssh-launcher and dmenu replacement that started as a clone of simpleswitcher, written by Sean Pringle and later expanded by Dave Davenport. This command installs and configures rofi with configuration from CTT's DWM repo. https://github.com/ChrisTitusTech/dwm-titus"
 script = "rofi-setup.sh"
