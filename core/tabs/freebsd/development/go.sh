@@ -9,7 +9,7 @@ installGo() {
     "$ESCALATION_TOOL" "$PACKAGER" install -y curl gtar
 
     # Get latest Go version
-    GO_VERSION=$(curl -s https://golang.org/dl/ | grep -o 'go[0-9]\+\.[0-9]\+\.[0-9]\+' | head -n1)
+    GO_VERSION=$(curl -fsSL https://go.dev/VERSION?m=text | head -n1)
     if [ -z "$GO_VERSION" ]; then
         printf "%b\n" "${RED}Could not determine latest Go version${RC}"
         exit 1

@@ -17,3 +17,9 @@ name = "FreeBSD Upgrade"
 description = "Manages FreeBSD version upgrades and package repository switching."
 script = "freebsd-upgrade.sh"
 task_list = "I"
+
+[[data]]
+name = "Ports Setup"
+description = "Sets up the FreeBSD Ports Collection with git-based management."
+script = "ports.sh"
+task_list = "I"
