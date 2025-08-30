@@ -8,10 +8,12 @@ OUT_DIR="dist"
 echo "==> Installing required tools..."
 cargo install cargo-zigbuild cross 2>/dev/null || true
 
-# Install mingw-w64 for Windows builds
-if ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
+# Install mingw-w64 for Windows builds (or ensure zig is available)
+if ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1 && ! (command -v zig >/dev/null 2>&1 && zig targets | grep -q x86_64-windows); then
     if command -v apt-get >/dev/null 2>&1; then
         sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64
+    elif command -v pacman >/dev/null 2>&1; then
+        sudo pacman -S --noconfirm mingw-w64-gcc
     elif command -v brew >/dev/null 2>&1; then
         brew install mingw-w64
     fi
