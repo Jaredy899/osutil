@@ -69,17 +69,17 @@ case "$PKG_MGR" in
     REMOVE_CMD="sudo pacman -R --noconfirm"
     INSTALLED_LIST=$(pacman -Qq)
     ;;
-    dnf)
-      LIST_CMD="dnf_repoquery"
-      INFO_CMD="dnf info {1}"
-      INSTALL_CMD="sudo dnf install -y"
-      REMOVE_CMD="sudo dnf remove -y"
-      INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
+  dnf)
+    LIST_CMD="dnf_repoquery"
+    INFO_CMD="dnf info {1}"
+    INSTALL_CMD="sudo dnf install -y"
+    REMOVE_CMD="sudo dnf remove -y"
+    INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
 
-      dnf_repoquery() {
-        dnf repoquery --qf '%{name}'
-      }
-      ;;
+    dnf_repoquery() {
+      dnf repoquery --qf '%{name}'
+    }
+    ;;
   zypper)
     LIST_CMD="zypper se -s | awk 'NR>2 {print \$2; print \$3}' | grep -v '^[|]' | sort -u"
     INFO_CMD="zypper info {1}"
