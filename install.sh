@@ -1,16 +1,27 @@
 #!/bin/sh
 
-# ANSI color codes
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
+# Color support (POSIX compliant)
+RC='\033[0m'
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+BLUE='\033[34m'
+PURPLE='\033[35m'
+CYAN='\033[36m'
 BOLD='\033[1m'
-NC='\033[0m' # No Color
 
-echo -e "${BOLD}${CYAN}Starting OSutil${NC}"
+# Check if colors should be used
+use_colors() {
+    # Use colors if stdout is a terminal and TERM is set (not 'dumb')
+    [ -t 1 ] && [ "${TERM:-dumb}" != "dumb" ]
+}
+
+# Starting message
+if use_colors; then
+    printf "%b\n" "${CYAN}${BOLD}Starting OSutil${RC}"
+else
+    printf "Starting OSutil\n"
+fi
 
 OS=$(uname)
 ARCH=$(uname -m)
@@ -25,7 +36,11 @@ case "$OS" in
         URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-macos-arm64"
         ;;
       *)
-        echo -e "${RED}❌ Unsupported macOS architecture: $ARCH${NC}"
+        if use_colors; then
+            printf "%b\n" "${RED}Unsupported macOS architecture: $ARCH${RC}"
+        else
+            printf "Unsupported macOS architecture: %s\n" "$ARCH"
+        fi
         exit 1
         ;;
     esac
@@ -42,7 +57,11 @@ case "$OS" in
         URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-linux-armv7"
         ;;
       *)
-        echo -e "${RED}❌ Unsupported architecture: $ARCH${NC}"
+        if use_colors; then
+            printf "%b\n" "${RED}Unsupported architecture: $ARCH${RC}"
+        else
+            printf "Unsupported architecture: %s\n" "$ARCH"
+        fi
         exit 1
         ;;
     esac
@@ -53,13 +72,21 @@ case "$OS" in
         URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-freebsd-x86_64"
         ;;
       *)
-        echo -e "${RED}❌ Unsupported FreeBSD architecture: $ARCH${NC}"
+        if use_colors; then
+            printf "%b\n" "${RED}Unsupported FreeBSD architecture: $ARCH${RC}"
+        else
+            printf "Unsupported FreeBSD architecture: %s\n" "$ARCH"
+        fi
         exit 1
         ;;
     esac
     ;;
   *)
-    echo -e "${RED}❌ Unsupported OS: $OS${NC}"
+    if use_colors; then
+        printf "%b\n" "${RED}Unsupported OS: $OS${RC}"
+    else
+        printf "Unsupported OS: %s\n" "$OS"
+    fi
     exit 1
     ;;
 esac
