@@ -32,6 +32,8 @@ jobs:
       # Install Zig (for Linux/musl and macOS builds)
       - name: Install Zig
         uses: mlugg/setup-zig@v2
+        with:
+          version: latest
 
       # Install Rust toolchain
       - name: Install Rust
