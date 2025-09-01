@@ -9,6 +9,21 @@ $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
+# Function to clear input buffer (helps with SSH session input buffering issues)
+function Clear-InputBuffer {
+    try {
+        # Try to read and discard any pending input from stdin
+        $stdin = [System.Console]::OpenStandardInput()
+        while ($stdin.ReadByte() -ne -1) {
+            # Discard bytes until no more are available
+        }
+    }
+    catch {
+        # Fallback for older PowerShell versions or when stdin isn't available
+        Start-Sleep -Milliseconds 100
+    }
+}
+
 # Check if running as administrator
 function Test-Administrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -82,6 +97,7 @@ function Add-UniqueKey {
 
 function Import-GitHubKeys {
     Write-Host "${Cyan}`nEnter GitHub username: ${Reset}" -NoNewline
+    Clear-InputBuffer
     $githubUsername = Read-Host
     if (-not $githubUsername) { return }
     Write-Host "${Yellow}`nFetching keys from GitHub...${Reset}"
@@ -111,6 +127,7 @@ function Import-GitHubKeys {
     }
 
     Write-Host "${Cyan}`nEnter a number to add a key, 'a' to add all, or press Enter to cancel: ${Reset}" -NoNewline
+    Clear-InputBuffer
     $selection = Read-Host
     if (-not $selection) { return }
     if ($selection -eq 'a') {
@@ -127,6 +144,7 @@ function Import-GitHubKeys {
 
 function Add-ManualKey {
     Write-Host "${Cyan}`nPaste your public key: ${Reset}"
+    Clear-InputBuffer
     $manualKey = Read-Host
     if ($manualKey) { Add-UniqueKey -key $manualKey }
 }
@@ -171,6 +189,7 @@ Write-Host "${Cyan}`nWindows SSH Key Manager${Reset}"
 Write-Host "1) Import keys from GitHub"
 Write-Host "2) Enter key manually"
 Write-Host "${Cyan}Select an option (1-2), or press Enter to cancel: ${Reset}" -NoNewline
+Clear-InputBuffer
 $choice = Read-Host
 switch ($choice) {
     '1' { Import-GitHubKeys }

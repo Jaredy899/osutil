@@ -7,6 +7,21 @@ $Red   = "${esc}[31m"
 $Blue  = "${esc}[34m"
 $Reset = "${esc}[0m"
 
+# Function to clear input buffer (helps with SSH session input buffering issues)
+function Clear-InputBuffer {
+    try {
+        # Try to read and discard any pending input from stdin
+        $stdin = [System.Console]::OpenStandardInput()
+        while ($stdin.ReadByte() -ne -1) {
+            # Discard bytes until no more are available
+        }
+    }
+    catch {
+        # Fallback for older PowerShell versions or when stdin isn't available
+        Start-Sleep -Milliseconds 100
+    }
+}
+
 # Cross-version secure password reader
 # Tries true no-echo console read first (no masking characters),
 # then falls back to host/UI methods if a console is not available.
@@ -109,6 +124,7 @@ function Set-UserPassword {
 # Ask if the user wants to change the password
 Write-Host "${Cyan}Do you want to change your password? ${Reset}" -NoNewline
 Write-Host "(yes/y/enter for yes, no/n for no)"
+Clear-InputBuffer
 $changePassword = Read-Host
 
 if ($changePassword -eq "yes" -or $changePassword -eq "y" -or [string]::IsNullOrEmpty($changePassword)) {

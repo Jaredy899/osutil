@@ -12,6 +12,21 @@ $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
+# Function to clear input buffer (helps with SSH session input buffering issues)
+function Clear-InputBuffer {
+    try {
+        # Try to read and discard any pending input from stdin
+        $stdin = [System.Console]::OpenStandardInput()
+        while ($stdin.ReadByte() -ne -1) {
+            # Discard bytes until no more are available
+        }
+    }
+    catch {
+        # Fallback for older PowerShell versions or when stdin isn't available
+        Start-Sleep -Milliseconds 100
+    }
+}
+
 $ErrorActionPreference = 'Stop'
 
 # Ensure TLS 1.2 for GitHub
@@ -34,6 +49,7 @@ New-Item -ItemType Directory -Path $extractRoot -Force | Out-Null
 try {
     if (Test-Path $backgroundsPath) {
         if (-not $Force) {
+            Clear-InputBuffer
             $ans = Read-Host "Nord backgrounds folder exists at '$backgroundsPath'. Overwrite? (y/n)"
             if ($ans -ne 'y') { Write-Host 'Skipping Nord backgrounds download.'; return }
         } else {

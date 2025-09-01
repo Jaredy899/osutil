@@ -8,6 +8,21 @@ $Red   = "${esc}[31m"
 $Blue  = "${esc}[34m"
 $Reset = "${esc}[0m"
 
+# Function to clear input buffer (helps with SSH session input buffering issues)
+function Clear-InputBuffer {
+    try {
+        # Try to read and discard any pending input from stdin
+        $stdin = [System.Console]::OpenStandardInput()
+        while ($stdin.ReadByte() -ne -1) {
+            # Discard bytes until no more are available
+        }
+    }
+    catch {
+        # Fallback for older PowerShell versions or when stdin isn't available
+        Start-Sleep -Milliseconds 100
+    }
+}
+
 $ErrorActionPreference = 'Stop'
 
 function Test-WingetAvailable {
@@ -85,6 +100,7 @@ Write-Host "1) Backup installed packages"
 Write-Host "2) Restore packages from backup"
 Write-Host "3) Update all packages"
 Write-Host "${Cyan}Select an option (1-3), or press Enter to cancel: ${Reset}" -NoNewline
+Clear-InputBuffer
 $choice = Read-Host
 
 switch ($choice) {
