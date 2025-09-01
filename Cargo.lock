@@ -578,6 +578,7 @@ dependencies = [
  "time",
  "tree-sitter-bash",
  "tree-sitter-highlight",
+ "tree-sitter-powershell",
  "tui-term",
  "unicode-width 0.2.0",
  "vt100-ctt",
@@ -1073,6 +1074,16 @@ name = "tree-sitter-language"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4013970217383f67b18aef68f6fb2e8d409bc5755227092d32efb0422ba24b8"
+
+[[package]]
+name = "tree-sitter-powershell"
+version = "0.25.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d76347b6c5300ae20622847aa53c88005d13b6999708ffbe4618b509ddb45178"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
 
 [[package]]
 name = "tui-term"

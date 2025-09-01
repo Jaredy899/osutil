@@ -9,6 +9,8 @@ use ratatui::{
 #[cfg(feature = "syntax-highlighting")]
 use tree_sitter_bash as hl_bash;
 #[cfg(feature = "syntax-highlighting")]
+use tree_sitter_powershell as hl_powershell;
+#[cfg(feature = "syntax-highlighting")]
 use tree_sitter_highlight::{self as hl, HighlightEvent};
 
 #[cfg(feature = "syntax-highlighting")]
@@ -68,8 +70,8 @@ impl<'a> FloatingText<'a> {
         let processed_text = if let Command::LocalFile { file, .. } = command {
             if let Some(extension) = file.extension() {
                 if extension == "ps1" {
-                    // For PowerShell files, don't apply bash syntax highlighting
-                    Text::from(src)
+                    // For PowerShell files, apply PowerShell syntax highlighting
+                    Self::get_powershell_highlighted_string(&src).unwrap_or_else(|| Text::from(src))
                 } else {
                     // For other files, try bash syntax highlighting
                     Self::get_highlighted_string(&src).unwrap_or_else(|| Text::from(src))
@@ -94,6 +96,11 @@ impl<'a> FloatingText<'a> {
 
     #[cfg(feature = "syntax-highlighting")]
     fn get_highlighted_string(s: &str) -> Option<Text<'a>> {
+        // Check if query is available
+        if hl_bash::HIGHLIGHT_QUERY.is_empty() {
+            return None;
+        }
+
         let matched_tokens = SYNTAX_HIGHLIGHT_STYLES
             .iter()
             .map(|hl| hl.0)
@@ -159,8 +166,85 @@ impl<'a> FloatingText<'a> {
         Some(Text::from(lines))
     }
 
+    #[cfg(feature = "syntax-highlighting")]
+    fn get_powershell_highlighted_string(s: &str) -> Option<Text<'a>> {
+        // Check if PowerShell query is available
+        if hl_powershell::HIGHLIGHTS_QUERY.is_empty() {
+            return None;
+        }
+
+        let matched_tokens = SYNTAX_HIGHLIGHT_STYLES
+            .iter()
+            .map(|hl| hl.0)
+            .collect::<Vec<_>>();
+
+        let mut lines = Vec::with_capacity(s.lines().count());
+        let mut current_line = Vec::new();
+        let mut style_stack = vec![Style::default()];
+
+        let mut hl_conf = hl::HighlightConfiguration::new(
+            hl_powershell::LANGUAGE.into(),
+            "powershell",
+            hl_powershell::HIGHLIGHTS_QUERY,
+            "",
+            "",
+        )
+        .ok()?;
+
+        hl_conf.configure(&matched_tokens);
+
+        let mut hl = hl::Highlighter::new();
+        let events = hl.highlight(&hl_conf, s.as_bytes(), None, |_| None).ok()?;
+
+        for event in events {
+            match event.ok()? {
+                HighlightEvent::HighlightStart(h) => {
+                    style_stack.push(SYNTAX_HIGHLIGHT_STYLES.get(h.0)?.1);
+                }
+
+                HighlightEvent::HighlightEnd => {
+                    style_stack.pop();
+                }
+
+                HighlightEvent::Source { start, end } => {
+                    let style = *style_stack.last()?;
+                    let content = &s[start..end];
+
+                    for part in content.split_inclusive('\n') {
+                        if let Some(stripped) = part.strip_suffix('\n') {
+                            // Push the text that is before '\n' and then start a new line
+                            // After a new line clear the current line to start a new one
+                            current_line.push(Span::styled(stripped.to_owned(), style));
+                            lines.push(Line::from(current_line.to_owned()));
+                            current_line.clear();
+                        } else {
+                            current_line.push(Span::styled(part.to_owned(), style));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Makes sure last line of the file is pushed
+        // If no newline at the end of the file we need to push the last line
+        if !current_line.is_empty() {
+            lines.push(Line::from(current_line));
+        }
+
+        if lines.is_empty() {
+            return None;
+        }
+
+        Some(Text::from(lines))
+    }
+
     #[cfg(not(feature = "syntax-highlighting"))]
     fn get_highlighted_string(_s: &str) -> Option<Text<'a>> {
+        None
+    }
+
+    #[cfg(not(feature = "syntax-highlighting"))]
+    fn get_powershell_highlighted_string(_s: &str) -> Option<Text<'a>> {
         None
     }
 

@@ -35,37 +35,37 @@ rustup target add \
 # Linux (musl)
 ########################################
 echo "==> Building Linux (musl)"
-cargo zigbuild --release --target x86_64-unknown-linux-musl
+cargo zigbuild --release --target x86_64-unknown-linux-musl --all-features
 cp target/x86_64-unknown-linux-musl/release/$APP_NAME "$OUT_DIR/${APP_NAME}-linux-x86_64"
 
-cargo zigbuild --release --target aarch64-unknown-linux-musl
+cargo zigbuild --release --target aarch64-unknown-linux-musl --all-features
 cp target/aarch64-unknown-linux-musl/release/$APP_NAME "$OUT_DIR/${APP_NAME}-linux-aarch64"
 
-cargo zigbuild --release --target armv7-unknown-linux-musleabihf
+cargo zigbuild --release --target armv7-unknown-linux-musleabihf --all-features
 cp target/armv7-unknown-linux-musleabihf/release/$APP_NAME "$OUT_DIR/${APP_NAME}-linux-armv7"
 
 ########################################
 # Windows (GNU)
 ########################################
 echo "==> Building Windows (GNU)"
-cargo build --release --target x86_64-pc-windows-gnu
+cargo build --release --target x86_64-pc-windows-gnu --features syntax-highlighting
 cp target/x86_64-pc-windows-gnu/release/${APP_NAME}.exe "$OUT_DIR/${APP_NAME}-windows-x86_64-gnu.exe"
 
 ########################################
 # macOS (Darwin)
 ########################################
 echo "==> Building macOS (Darwin)"
-cargo zigbuild --release --target x86_64-apple-darwin
+cargo zigbuild --release --target x86_64-apple-darwin --all-features
 cp target/x86_64-apple-darwin/release/$APP_NAME "$OUT_DIR/${APP_NAME}-macos-x86_64"
 
-cargo zigbuild --release --target aarch64-apple-darwin
+cargo zigbuild --release --target aarch64-apple-darwin --all-features
 cp target/aarch64-apple-darwin/release/$APP_NAME "$OUT_DIR/${APP_NAME}-macos-arm64"
 
 ########################################
 # FreeBSD
 ########################################
 echo "==> Building FreeBSD (x86_64)"
-cross build --release --target x86_64-unknown-freebsd
+cross build --release --target x86_64-unknown-freebsd --all-features
 cp target/x86_64-unknown-freebsd/release/$APP_NAME "$OUT_DIR/${APP_NAME}-freebsd-x86_64"
 
 ########################################
