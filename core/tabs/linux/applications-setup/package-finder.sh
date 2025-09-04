@@ -95,7 +95,9 @@ case "$PKG_MGR" in
     INSTALLED_LIST=$(apk info | awk -F'-[0-9]' '{print $1}')
     ;;
   eopkg)
-    LIST_CMD="eopkg list-available | awk '{print \$1}'"
+    LIST_CMD="eopkg list-available \
+  | sed -r 's/\x1B\[[0-9;]*m//g' \
+  | awk 'NF>0 && !/Repository/ && !/^Installed packages/ { sub(/^[ \t]+/, \"\"); print \$1 }'"
     INFO_CMD="eopkg info {1}"
     INSTALL_CMD="sudo eopkg install -y"
     REMOVE_CMD="sudo eopkg remove -y"
@@ -122,14 +124,30 @@ done <<< "$INSTALLED_LIST"
 
 # Package list function
 list_names() {
-  eval "$LIST_CMD" | sort | while read -r pkg; do
-    [[ -z "$pkg" ]] && continue
-    if [[ -n ${installed[$pkg]} ]]; then
-      printf "\033[32m%s ✅\033[0m\n" "$pkg"
-    else
-      echo "$pkg"
-    fi
-  done
+  if [[ "$PKG_MGR" == "eopkg" ]]; then
+    eval "$LIST_CMD" \
+      | sed -r 's/\x1B\[[0-9;]*m//g' \
+      | awk 'NF>0 {print $1}' \
+      | sed 's/[[:space:]]\+$//' \
+      | sort -u \
+      | while read -r name; do
+          [[ -z "$name" ]] && continue
+          if grep -Fxq "$name" <<<"$INSTALLED_CACHE"; then
+            printf "\033[32m%s ✅\033[0m\n" "$name"
+          else
+            echo "$name"
+          fi
+        done
+  else
+    eval "$LIST_CMD" | sort | while read -r pkg; do
+      [[ -z "$pkg" ]] && continue
+      if [[ -n ${installed[$pkg]} ]]; then
+        printf "\033[32m%s ✅\033[0m\n" "$pkg"
+      else
+        echo "$pkg"
+      fi
+    done
+  fi
 }
 
 # fzf args
