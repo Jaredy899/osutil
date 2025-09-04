@@ -168,8 +168,9 @@ fzf_args=(
   --tiebreak=begin,length
   --preview "$INFO_CMD"
   --preview-window 'down:30%:wrap'
-  --bind 'enter:execute-silent(echo {+1} > /tmp/pkg-tui-action && echo install > /tmp/pkg-tui-mode)+accept,alt-i:execute-silent(echo {+1} > /tmp/pkg-tui-action && echo install > /tmp/pkg-tui-mode)+accept,alt-r:execute-silent(echo {+1} > /tmp/pkg-tui-action && echo remove > /tmp/pkg-tui-mode)+accept'
-  --header "🔎 $PKG_MGR Package Manager | Enter/Alt-i: Install | Alt-r: Remove"
+  --bind 'enter:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
+  --bind 'alt-i:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
+  --bind 'alt-r:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo remove > /tmp/pkg-tui-mode)+accept'  --header "🔎 $PKG_MGR Package Manager | Enter/Alt-i: Install | Alt-r: Remove"
   --color 'pointer:green,marker:green'
 )
 
