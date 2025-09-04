@@ -116,11 +116,21 @@ case "$PKG_MGR" in
     ;;
 esac
 
-# Build installed hash set (skip empty lines)
+# After case/esac
 declare -A installed
-while read -r pkg; do
-  [[ -n "$pkg" ]] && installed["$pkg"]=1
-done <<< "$INSTALLED_LIST"
+if [[ "$PKG_MGR" == "eopkg" ]]; then
+  INSTALLED_CACHE="$(
+    eopkg list-installed 2>/dev/null \
+      | sed -r 's/\x1B\[[0-9;]*m//g' \
+      | awk 'NF>0 {print $1}' \
+      | sed 's/[[:space:]]\+$//' \
+      | sort -u
+  )"
+else
+  while read -r pkg; do
+    [[ -n "$pkg" ]] && installed["$pkg"]=1
+  done <<<"$INSTALLED_LIST"
+fi
 
 # Package list function
 list_names() {
