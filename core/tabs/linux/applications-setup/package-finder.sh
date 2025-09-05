@@ -43,7 +43,7 @@ set -e
 
 # Detect first available package manager
 detect_pkg_mgr() {
-  for mgr in apt pacman dnf zypper apk eopkg xbps-install; do
+  for mgr in nala apt pacman dnf zypper apk eopkg xbps-install; do
     if command -v "$mgr" >/dev/null 2>&1; then
       echo "$mgr"
       return
@@ -55,11 +55,18 @@ detect_pkg_mgr() {
 PKG_MGR=$(detect_pkg_mgr)
 
 case "$PKG_MGR" in
+  nala)
+    LIST_CMD="apt-cache pkgnames"
+    INFO_CMD="nala show {1} 2>/dev/null"
+    INSTALL_CMD="sudo nala install -y"
+    REMOVE_CMD="sudo nala remove -y"
+    INSTALLED_LIST=$(dpkg-query -W -f='${Package}\n')
+    ;;
   apt)
     LIST_CMD="apt-cache pkgnames"
     INFO_CMD="apt show {1} 2>/dev/null"
-    INSTALL_CMD="sudo apt install"
-    REMOVE_CMD="sudo apt remove"
+    INSTALL_CMD="sudo apt install -y"
+    REMOVE_CMD="sudo apt autoremove -y"
     INSTALLED_LIST=$(dpkg-query -W -f='${Package}\n')
     ;;
   pacman)
