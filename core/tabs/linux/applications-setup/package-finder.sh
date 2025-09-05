@@ -178,7 +178,7 @@ fzf_args=(
 pkg=$(list_names | fzf "${fzf_args[@]}")
 
 if [[ -s /tmp/pkg-tui-action && -s /tmp/pkg-tui-mode ]]; then
-  pkg_names=$(sed 's/ ✅//; s/\x1b\[[0-9;]*m//g' /tmp/pkg-tui-action | awk '{print $1}' | tr '\n' ' ')
+  pkg_names=$(sed 's/ ✅//; s/\x1b\[[0-9;]*m//g' /tmp/pkg-tui-action | awk '{print $1}' | tr -d '"'"'" | tr '\n' ' ')
   action=$(cat /tmp/pkg-tui-mode)
 
   case "$action" in
