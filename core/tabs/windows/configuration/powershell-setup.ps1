@@ -5,6 +5,39 @@ $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
+# Fix for backspace issue in Windows Terminal
+# Set PSReadLine options for better input handling
+if (Get-Module -ListAvailable -Name PSReadLine) {
+    Import-Module PSReadLine -Force
+    Set-PSReadLineOption -EditMode Windows
+    Set-PSReadLineOption -PredictionSource None
+}
+
+# Alternative input function that works better in Windows Terminal
+function Read-InputWithBackspace {
+    param(
+        [string]$Prompt = ""
+    )
+    
+    if ($Prompt) {
+        Write-Host $Prompt -NoNewline
+    }
+    
+    # Use Read-Host with error handling to prevent backspace overflow issues
+    $originalErrorAction = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'SilentlyContinue'
+        $result = Read-Host
+        $ErrorActionPreference = $originalErrorAction
+        return $result
+    } catch {
+        $ErrorActionPreference = $originalErrorAction
+        # If Read-Host fails due to backspace overflow, return empty string
+        Write-Host ""
+        return ""
+    }
+}
+
 function Save-RemoteFile {
     param(
         [Parameter(Mandatory=$true)][string]$Url,
@@ -149,8 +182,7 @@ Install-TerminalIcons
 
 # Optional: AutoHotkey shortcuts
 function Initialize-CustomShortcuts {
-    Write-Host "${Cyan}Set up custom AutoHotkey shortcuts? (y/n) ${Reset}" -NoNewline
-    $response = Read-Host
+    $response = Read-InputWithBackspace -Prompt "${Cyan}Set up custom AutoHotkey shortcuts? (y/n) ${Reset}"
     if ($response.ToLower() -ne 'y') { Write-Host "${Yellow}Skipped.${Reset}"; return }
     Write-Host "${Yellow}Installing AutoHotkey and setting up shortcuts...${Reset}"
     winget install -e --id AutoHotkey.AutoHotkey

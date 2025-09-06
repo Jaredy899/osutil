@@ -10,6 +10,39 @@ $Reset = "${esc}[0m"
 
 $ErrorActionPreference = 'Stop'
 
+# Fix for backspace issue in Windows Terminal
+# Set PSReadLine options for better input handling
+if (Get-Module -ListAvailable -Name PSReadLine) {
+    Import-Module PSReadLine -Force
+    Set-PSReadLineOption -EditMode Windows
+    Set-PSReadLineOption -PredictionSource None
+}
+
+# Alternative input function that works better in Windows Terminal
+function Read-InputWithBackspace {
+    param(
+        [string]$Prompt = ""
+    )
+    
+    if ($Prompt) {
+        Write-Host $Prompt -NoNewline
+    }
+    
+    # Use Read-Host with error handling to prevent backspace overflow issues
+    $originalErrorAction = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'SilentlyContinue'
+        $result = Read-Host
+        $ErrorActionPreference = $originalErrorAction
+        return $result
+    } catch {
+        $ErrorActionPreference = $originalErrorAction
+        # If Read-Host fails due to backspace overflow, return empty string
+        Write-Host ""
+        return ""
+    }
+}
+
 function Test-WingetAvailable {
     $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
     if (-not $cmd) { $cmd = Get-Command winget -ErrorAction SilentlyContinue }
@@ -84,8 +117,7 @@ Write-Host "${Cyan}`nWinget Backup/Restore/Update${Reset}"
 Write-Host "1) Backup installed packages"
 Write-Host "2) Restore packages from backup"
 Write-Host "3) Update all packages"
-Write-Host "${Cyan}Select an option (1-3), or press Enter to cancel: ${Reset}" -NoNewline
-$choice = Read-Host
+$choice = Read-InputWithBackspace -Prompt "${Cyan}Select an option (1-3), or press Enter to cancel: ${Reset}"
 
 switch ($choice) {
     '1' { Invoke-WingetBackup }

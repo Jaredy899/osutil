@@ -6,6 +6,39 @@ $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
+# Fix for backspace issue in Windows Terminal
+# Set PSReadLine options for better input handling
+if (Get-Module -ListAvailable -Name PSReadLine) {
+    Import-Module PSReadLine -Force
+    Set-PSReadLineOption -EditMode Windows
+    Set-PSReadLineOption -PredictionSource None
+}
+
+# Alternative input function that works better in Windows Terminal
+function Read-InputWithBackspace {
+    param(
+        [string]$Prompt = ""
+    )
+    
+    if ($Prompt) {
+        Write-Host $Prompt -NoNewline
+    }
+    
+    # Use Read-Host with error handling to prevent backspace overflow issues
+    $originalErrorAction = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'SilentlyContinue'
+        $result = Read-Host
+        $ErrorActionPreference = $originalErrorAction
+        return $result
+    } catch {
+        $ErrorActionPreference = $originalErrorAction
+        # If Read-Host fails due to backspace overflow, return empty string
+        Write-Host ""
+        return ""
+    }
+}
+
 # Check if running as administrator
 function Test-Administrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -94,7 +127,7 @@ function Set-TimeSettings {
             }
 
             # Prompt the user to select a time zone
-            $selection = Read-Host "Enter the number corresponding to your time zone"
+            $selection = Read-InputWithBackspace -Prompt "Enter the number corresponding to your time zone: "
 
             # Validate input and set the time zone
             if ($selection -match '^\d+$' -and $selection -gt 0 -and $selection -le $timeZones.Count) {
