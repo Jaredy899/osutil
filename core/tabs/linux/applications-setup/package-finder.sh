@@ -77,15 +77,11 @@ case "$PKG_MGR" in
     INSTALLED_LIST=$(pacman -Qq)
     ;;
   dnf)
-    LIST_CMD="dnf_repoquery"
+    LIST_CMD="dnf repoquery --qf '%{name}\n' --quiet"
     INFO_CMD="dnf info {1}"
     INSTALL_CMD="sudo dnf install -y"
     REMOVE_CMD="sudo dnf remove -y"
     INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
-
-    dnf_repoquery() {
-      dnf repoquery --qf '%{name}\n'
-    }
     ;;
   zypper)
     LIST_CMD="zypper se -s | awk 'NR>2 {print \$2; print \$3}' | grep -v '^[|]' | sort -u"
@@ -177,7 +173,8 @@ fzf_args=(
   --preview-window 'down:30%:wrap'
   --bind 'enter:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
   --bind 'alt-i:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
-  --bind 'alt-r:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo remove > /tmp/pkg-tui-mode)+accept'  --header "🔎 $PKG_MGR Package Manager | Enter/Alt-i: Install | Alt-r: Remove"
+  --bind 'alt-r:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo remove > /tmp/pkg-tui-mode)+accept'
+  --header "🔎 $PKG_MGR | Enter/Alt-i: Install | Alt-r: Remove"
   --color 'pointer:green,marker:green'
 )
 
