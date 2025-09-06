@@ -19,7 +19,10 @@ struct WindowsStdin(Arc<Mutex<std::process::ChildStdin>>);
 impl Write for WindowsStdin {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         if let Ok(mut guard) = self.0.lock() {
-            guard.write(buf)
+            let result = guard.write(buf);
+            // Ensure immediate flush for interactive input
+            let _ = guard.flush();
+            result
         } else {
             Ok(0)
         }
