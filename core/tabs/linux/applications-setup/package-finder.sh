@@ -84,7 +84,7 @@ case "$PKG_MGR" in
     INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
 
     dnf_repoquery() {
-      dnf repoquery --qf '%{name}'
+      dnf repoquery --qf '%{name}\n'
     }
     ;;
   zypper)
