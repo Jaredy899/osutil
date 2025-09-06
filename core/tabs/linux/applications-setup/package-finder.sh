@@ -43,7 +43,7 @@ set -e
 
 # Detect first available package manager
 detect_pkg_mgr() {
-  for mgr in apt pacman dnf zypper apk eopkg xbps-install; do
+  for mgr in nala apt pacman dnf zypper apk eopkg xbps-install; do
     if command -v "$mgr" >/dev/null 2>&1; then
       echo "$mgr"
       return
@@ -55,11 +55,18 @@ detect_pkg_mgr() {
 PKG_MGR=$(detect_pkg_mgr)
 
 case "$PKG_MGR" in
+  nala)
+    LIST_CMD="apt-cache pkgnames"
+    INFO_CMD="nala show {1} 2>/dev/null"
+    INSTALL_CMD="sudo nala install -y"
+    REMOVE_CMD="sudo nala remove -y"
+    INSTALLED_LIST=$(dpkg-query -W -f='${Package}\n')
+    ;;
   apt)
     LIST_CMD="apt-cache pkgnames"
     INFO_CMD="apt show {1} 2>/dev/null"
-    INSTALL_CMD="sudo apt install"
-    REMOVE_CMD="sudo apt remove"
+    INSTALL_CMD="sudo apt install -y"
+    REMOVE_CMD="sudo apt autoremove -y"
     INSTALLED_LIST=$(dpkg-query -W -f='${Package}\n')
     ;;
   pacman)
@@ -70,15 +77,11 @@ case "$PKG_MGR" in
     INSTALLED_LIST=$(pacman -Qq)
     ;;
   dnf)
-    LIST_CMD="dnf_repoquery"
+    LIST_CMD="dnf repoquery --qf '%{name}\n' --quiet"
     INFO_CMD="dnf info {1}"
     INSTALL_CMD="sudo dnf install -y"
     REMOVE_CMD="sudo dnf remove -y"
     INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
-
-    dnf_repoquery() {
-      dnf repoquery --qf '%{name}'
-    }
     ;;
   zypper)
     LIST_CMD="zypper se -s | awk 'NR>2 {print \$2; print \$3}' | grep -v '^[|]' | sort -u"
@@ -95,7 +98,9 @@ case "$PKG_MGR" in
     INSTALLED_LIST=$(apk info | awk -F'-[0-9]' '{print $1}')
     ;;
   eopkg)
-    LIST_CMD="eopkg list-available | awk '{print \$1}'"
+    LIST_CMD="eopkg list-available \
+  | sed -r 's/\x1B\[[0-9;]*m//g' \
+  | awk 'NF>0 && !/Repository/ && !/^Installed packages/ { sub(/^[ \t]+/, \"\"); print \$1 }'"
     INFO_CMD="eopkg info {1}"
     INSTALL_CMD="sudo eopkg install -y"
     REMOVE_CMD="sudo eopkg remove -y"
@@ -114,22 +119,48 @@ case "$PKG_MGR" in
     ;;
 esac
 
-# Build installed hash set (skip empty lines)
+# After case/esac
 declare -A installed
-while read -r pkg; do
-  [[ -n "$pkg" ]] && installed["$pkg"]=1
-done <<< "$INSTALLED_LIST"
+if [[ "$PKG_MGR" == "eopkg" ]]; then
+  INSTALLED_CACHE="$(
+    eopkg list-installed 2>/dev/null \
+      | sed -r 's/\x1B\[[0-9;]*m//g' \
+      | awk 'NF>0 {print $1}' \
+      | sed 's/[[:space:]]\+$//' \
+      | sort -u
+  )"
+else
+  while read -r pkg; do
+    [[ -n "$pkg" ]] && installed["$pkg"]=1
+  done <<<"$INSTALLED_LIST"
+fi
 
 # Package list function
 list_names() {
-  eval "$LIST_CMD" | sort | while read -r pkg; do
-    [[ -z "$pkg" ]] && continue
-    if [[ -n ${installed[$pkg]} ]]; then
-      printf "\033[32m%s ✅\033[0m\n" "$pkg"
-    else
-      echo "$pkg"
-    fi
-  done
+  if [[ "$PKG_MGR" == "eopkg" ]]; then
+    eval "$LIST_CMD" \
+      | sed -r 's/\x1B\[[0-9;]*m//g' \
+      | awk 'NF>0 {print $1}' \
+      | sed 's/[[:space:]]\+$//' \
+      | sort -u \
+      | while read -r name; do
+          [[ -z "$name" ]] && continue
+          if grep -Fxq "$name" <<<"$INSTALLED_CACHE"; then
+            printf "\033[32m%s ✅\033[0m\n" "$name"
+          else
+            echo "$name"
+          fi
+        done
+  else
+    eval "$LIST_CMD" | sort | while read -r pkg; do
+      [[ -z "$pkg" ]] && continue
+      if [[ -n ${installed[$pkg]} ]]; then
+        printf "\033[32m%s ✅\033[0m\n" "$pkg"
+      else
+        echo "$pkg"
+      fi
+    done
+  fi
 }
 
 # fzf args
@@ -140,8 +171,10 @@ fzf_args=(
   --tiebreak=begin,length
   --preview "$INFO_CMD"
   --preview-window 'down:30%:wrap'
-  --bind 'enter:execute-silent(echo {+1} > /tmp/pkg-tui-action && echo install > /tmp/pkg-tui-mode)+accept,alt-i:execute-silent(echo {+1} > /tmp/pkg-tui-action && echo install > /tmp/pkg-tui-mode)+accept,alt-r:execute-silent(echo {+1} > /tmp/pkg-tui-action && echo remove > /tmp/pkg-tui-mode)+accept'
-  --header "🔎 $PKG_MGR Package Manager | Enter/Alt-i: Install | Alt-r: Remove"
+  --bind 'enter:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
+  --bind 'alt-i:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
+  --bind 'alt-r:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo remove > /tmp/pkg-tui-mode)+accept'
+  --header "🔎 $PKG_MGR | Enter/Alt-i: Install | Alt-r: Remove"
   --color 'pointer:green,marker:green'
 )
 
@@ -149,7 +182,7 @@ fzf_args=(
 pkg=$(list_names | fzf "${fzf_args[@]}")
 
 if [[ -s /tmp/pkg-tui-action && -s /tmp/pkg-tui-mode ]]; then
-  pkg_names=$(sed 's/ ✅//; s/\x1b\[[0-9;]*m//g' /tmp/pkg-tui-action | awk '{print $1}' | tr '\n' ' ')
+  pkg_names=$(sed 's/ ✅//; s/\x1b\[[0-9;]*m//g' /tmp/pkg-tui-action | awk '{print $1}' | tr -d '"'"'" | tr '\n' ' ')
   action=$(cat /tmp/pkg-tui-mode)
 
   case "$action" in
@@ -165,12 +198,13 @@ if [[ -s /tmp/pkg-tui-action && -s /tmp/pkg-tui-mode ]]; then
 
   rm -f /tmp/pkg-tui-action /tmp/pkg-tui-mode
 
-  if command -v notify-send >/dev/null; then
-    notify-send "pkg-tui" "Action '$action' complete for: $pkg_names"
-  else
-    echo "✅ Action '$action' complete for: $pkg_names"
-  fi
+  echo "✅ Action '$action' complete for: $pkg_names"
+  
+  exit 0
 fi
+
+# Exit if no packages were selected
+exit 0
 EOF
 
     if [ "$PACKAGER" = "eopkg" ]; then
