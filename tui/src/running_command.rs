@@ -635,7 +635,7 @@ impl RunningCommand {
                 {
                     vec![0x7f]
                 }
-            },
+            }
             KeyCode::Left => vec![27, 91, 68],
             KeyCode::Right => vec![27, 91, 67],
             KeyCode::Up => vec![27, 91, 65],
@@ -658,12 +658,12 @@ impl RunningCommand {
         if let Err(e) = self.writer.flush() {
             eprintln!("Failed to flush terminal: {}", e);
         }
-        
+
         // Small delay after Enter key to ensure PowerShell processes the input
         if key.code == KeyCode::Enter {
             std::thread::sleep(std::time::Duration::from_millis(10));
         }
-        
+
         // Longer delay after Backspace key to prevent rapid key repeats from causing issues
         if key.code == KeyCode::Backspace {
             std::thread::sleep(std::time::Duration::from_millis(100));
