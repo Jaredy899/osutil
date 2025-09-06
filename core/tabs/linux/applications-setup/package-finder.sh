@@ -201,12 +201,13 @@ if [[ -s /tmp/pkg-tui-action && -s /tmp/pkg-tui-mode ]]; then
 
   rm -f /tmp/pkg-tui-action /tmp/pkg-tui-mode
 
-  if command -v notify-send >/dev/null; then
-    notify-send "pkg-tui" "Action '$action' complete for: $pkg_names"
-  else
-    echo "✅ Action '$action' complete for: $pkg_names"
-  fi
+  echo "✅ Action '$action' complete for: $pkg_names"
+  
+  exit 0
 fi
+
+# Exit if no packages were selected
+exit 0
 EOF
 
     if [ "$PACKAGER" = "eopkg" ]; then
