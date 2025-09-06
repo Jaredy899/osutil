@@ -9,9 +9,9 @@ use ratatui::{
 #[cfg(feature = "syntax-highlighting")]
 use tree_sitter_bash as hl_bash;
 #[cfg(feature = "syntax-highlighting")]
-use tree_sitter_powershell as hl_powershell;
-#[cfg(feature = "syntax-highlighting")]
 use tree_sitter_highlight::{self as hl, HighlightEvent};
+#[cfg(feature = "syntax-highlighting")]
+use tree_sitter_powershell as hl_powershell;
 
 #[cfg(feature = "syntax-highlighting")]
 macro_rules! style {
