@@ -9,16 +9,10 @@ $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
-# Fix for backspace issue in Windows Terminal
-# Set PSReadLine options for better input handling
-if (Get-Module -ListAvailable -Name PSReadLine) {
-    Import-Module PSReadLine -Force
-    Set-PSReadLineOption -EditMode Windows
-    Set-PSReadLineOption -PredictionSource None
-}
+# Ensure clean input handling for TUI environment
 
-# Alternative input function that works better in Windows Terminal
-function Read-InputWithBackspace {
+# Simple input function that works reliably in TUI
+function Read-UserInput {
     param(
         [string]$Prompt = ""
     )
@@ -27,19 +21,8 @@ function Read-InputWithBackspace {
         Write-Host $Prompt -NoNewline
     }
     
-    # Use Read-Host with error handling to prevent backspace overflow issues
-    $originalErrorAction = $ErrorActionPreference
-    try {
-        $ErrorActionPreference = 'SilentlyContinue'
-        $result = Read-Host
-        $ErrorActionPreference = $originalErrorAction
-        return $result
-    } catch {
-        $ErrorActionPreference = $originalErrorAction
-        # If Read-Host fails due to backspace overflow, return empty string
-        Write-Host ""
-        return ""
-    }
+    # Use standard Read-Host which works reliably in most environments
+    return Read-Host
 }
 
 # Check if running as administrator
@@ -114,7 +97,7 @@ function Add-UniqueKey {
 }
 
 function Import-GitHubKeys {
-    $githubUsername = Read-InputWithBackspace -Prompt "${Cyan}`nEnter GitHub username: ${Reset}"
+    $githubUsername = Read-UserInput -Prompt "${Cyan}`nEnter GitHub username: ${Reset}"
     if (-not $githubUsername) { return }
     Write-Host "${Yellow}`nFetching keys from GitHub...${Reset}"
     $keys = Get-GitHubKeys -username $githubUsername
@@ -142,7 +125,7 @@ function Import-GitHubKeys {
         }
     }
 
-    $selection = Read-InputWithBackspace -Prompt "${Cyan}`nEnter a number to add a key, 'a' to add all, or press Enter to cancel: ${Reset}"
+    $selection = Read-UserInput -Prompt "${Cyan}`nEnter a number to add a key, 'a' to add all, or press Enter to cancel: ${Reset}"
     if (-not $selection) { return }
     if ($selection -eq 'a') {
         foreach ($entry in $keys) { Add-UniqueKey -key $entry.key }
@@ -157,7 +140,7 @@ function Import-GitHubKeys {
 }
 
 function Add-ManualKey {
-    $manualKey = Read-InputWithBackspace -Prompt "${Cyan}`nPaste your public key: ${Reset}"
+    $manualKey = Read-UserInput -Prompt "${Cyan}`nPaste your public key: ${Reset}"
     if ($manualKey) { Add-UniqueKey -key $manualKey }
 }
 
@@ -200,11 +183,24 @@ Initialize-SshEnvironment
 Write-Host "${Cyan}`nWindows SSH Key Manager${Reset}"
 Write-Host "1) Import keys from GitHub"
 Write-Host "2) Enter key manually"
-$choice = Read-InputWithBackspace -Prompt "${Cyan}Select an option (1-2), or press Enter to cancel: ${Reset}"
+Write-Host ""
+$choice = Read-UserInput -Prompt "${Cyan}Select an option (1-2), or press Enter to cancel: ${Reset}"
 switch ($choice) {
-    '1' { Import-GitHubKeys }
-    '2' { Add-ManualKey }
-    default { Write-Host "${Yellow}Cancelled.${Reset}"; return }
+    '1' { 
+        Write-Host ""
+        Import-GitHubKeys 
+        Write-Host ""
+    }
+    '2' { 
+        Write-Host ""
+        Add-ManualKey 
+        Write-Host ""
+    }
+    default { 
+        Write-Host "${Yellow}Cancelled.${Reset}"
+        Write-Host ""
+        return 
+    }
 }
 
 Write-Host "${Yellow}`nSetting permissions...${Reset}"

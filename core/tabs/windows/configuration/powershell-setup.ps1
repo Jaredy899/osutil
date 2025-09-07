@@ -5,16 +5,10 @@ $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
-# Fix for backspace issue in Windows Terminal
-# Set PSReadLine options for better input handling
-if (Get-Module -ListAvailable -Name PSReadLine) {
-    Import-Module PSReadLine -Force
-    Set-PSReadLineOption -EditMode Windows
-    Set-PSReadLineOption -PredictionSource None
-}
+# Ensure clean input handling for TUI environment
 
-# Alternative input function that works better in Windows Terminal
-function Read-InputWithBackspace {
+# Simple input function that works reliably in TUI
+function Read-UserInput {
     param(
         [string]$Prompt = ""
     )
@@ -23,19 +17,8 @@ function Read-InputWithBackspace {
         Write-Host $Prompt -NoNewline
     }
     
-    # Use Read-Host with error handling to prevent backspace overflow issues
-    $originalErrorAction = $ErrorActionPreference
-    try {
-        $ErrorActionPreference = 'SilentlyContinue'
-        $result = Read-Host
-        $ErrorActionPreference = $originalErrorAction
-        return $result
-    } catch {
-        $ErrorActionPreference = $originalErrorAction
-        # If Read-Host fails due to backspace overflow, return empty string
-        Write-Host ""
-        return ""
-    }
+    # Use standard Read-Host which works reliably in most environments
+    return Read-Host
 }
 
 function Save-RemoteFile {
@@ -182,8 +165,12 @@ Install-TerminalIcons
 
 # Optional: AutoHotkey shortcuts
 function Initialize-CustomShortcuts {
-    $response = Read-InputWithBackspace -Prompt "${Cyan}Set up custom AutoHotkey shortcuts? (y/n) ${Reset}"
-    if ($response.ToLower() -ne 'y') { Write-Host "${Yellow}Skipped.${Reset}"; return }
+    $response = Read-UserInput -Prompt "${Cyan}Set up custom AutoHotkey shortcuts? (y/n) ${Reset}"
+    if ($response.ToLower() -ne 'y') { 
+        Write-Host "${Yellow}Skipped.${Reset}"
+        Write-Host ""
+        return 
+    }
     Write-Host "${Yellow}Installing AutoHotkey and setting up shortcuts...${Reset}"
     winget install -e --id AutoHotkey.AutoHotkey
     $startupFolder = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"

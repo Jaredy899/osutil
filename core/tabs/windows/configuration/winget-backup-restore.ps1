@@ -10,16 +10,10 @@ $Reset = "${esc}[0m"
 
 $ErrorActionPreference = 'Stop'
 
-# Fix for backspace issue in Windows Terminal
-# Set PSReadLine options for better input handling
-if (Get-Module -ListAvailable -Name PSReadLine) {
-    Import-Module PSReadLine -Force
-    Set-PSReadLineOption -EditMode Windows
-    Set-PSReadLineOption -PredictionSource None
-}
+# Ensure clean input handling for TUI environment
 
-# Alternative input function that works better in Windows Terminal
-function Read-InputWithBackspace {
+# Simple input function that works reliably in TUI
+function Read-UserInput {
     param(
         [string]$Prompt = ""
     )
@@ -28,19 +22,8 @@ function Read-InputWithBackspace {
         Write-Host $Prompt -NoNewline
     }
     
-    # Use Read-Host with error handling to prevent backspace overflow issues
-    $originalErrorAction = $ErrorActionPreference
-    try {
-        $ErrorActionPreference = 'SilentlyContinue'
-        $result = Read-Host
-        $ErrorActionPreference = $originalErrorAction
-        return $result
-    } catch {
-        $ErrorActionPreference = $originalErrorAction
-        # If Read-Host fails due to backspace overflow, return empty string
-        Write-Host ""
-        return ""
-    }
+    # Use standard Read-Host which works reliably in most environments
+    return Read-Host
 }
 
 function Test-WingetAvailable {
@@ -117,13 +100,29 @@ Write-Host "${Cyan}`nWinget Backup/Restore/Update${Reset}"
 Write-Host "1) Backup installed packages"
 Write-Host "2) Restore packages from backup"
 Write-Host "3) Update all packages"
-$choice = Read-InputWithBackspace -Prompt "${Cyan}Select an option (1-3), or press Enter to cancel: ${Reset}"
+Write-Host ""
+$choice = Read-UserInput -Prompt "${Cyan}Select an option (1-3), or press Enter to cancel: ${Reset}"
 
 switch ($choice) {
-    '1' { Invoke-WingetBackup }
-    '2' { Invoke-WingetRestore }
-    '3' { Invoke-WingetUpgradeAll }
-    default { Write-Host "${Yellow}Cancelled.${Reset}" }
+    '1' { 
+        Write-Host ""
+        Invoke-WingetBackup 
+        Write-Host ""
+    }
+    '2' { 
+        Write-Host ""
+        Invoke-WingetRestore 
+        Write-Host ""
+    }
+    '3' { 
+        Write-Host ""
+        Invoke-WingetUpgradeAll 
+        Write-Host ""
+    }
+    default { 
+        Write-Host "${Yellow}Cancelled.${Reset}" 
+        Write-Host ""
+    }
 }
 
 

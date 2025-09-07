@@ -7,16 +7,10 @@ $Red   = "${esc}[31m"
 $Blue  = "${esc}[34m"
 $Reset = "${esc}[0m"
 
-# Fix for backspace issue in Windows Terminal
-# Set PSReadLine options for better input handling
-if (Get-Module -ListAvailable -Name PSReadLine) {
-    Import-Module PSReadLine -Force
-    Set-PSReadLineOption -EditMode Windows
-    Set-PSReadLineOption -PredictionSource None
-}
+# Ensure clean input handling for TUI environment
 
-# Alternative input function that works better in Windows Terminal
-function Read-InputWithBackspace {
+# Simple input function that works reliably in TUI
+function Read-UserInput {
     param(
         [string]$Prompt = ""
     )
@@ -25,19 +19,8 @@ function Read-InputWithBackspace {
         Write-Host $Prompt -NoNewline
     }
     
-    # Use Read-Host with error handling to prevent backspace overflow issues
-    $originalErrorAction = $ErrorActionPreference
-    try {
-        $ErrorActionPreference = 'SilentlyContinue'
-        $result = Read-Host
-        $ErrorActionPreference = $originalErrorAction
-        return $result
-    } catch {
-        $ErrorActionPreference = $originalErrorAction
-        # If Read-Host fails due to backspace overflow, return empty string
-        Write-Host ""
-        return ""
-    }
+    # Use standard Read-Host which works reliably in most environments
+    return Read-Host
 }
 
 # Cross-version secure password reader
@@ -142,7 +125,7 @@ function Set-UserPassword {
 # Ask if the user wants to change the password
 Write-Host "${Cyan}Do you want to change your password? ${Reset}" -NoNewline
 Write-Host "(yes/y/enter for yes, no/n for no)"
-$changePassword = Read-InputWithBackspace
+$changePassword = Read-UserInput
 
 if ($changePassword -eq "yes" -or $changePassword -eq "y" -or [string]::IsNullOrEmpty($changePassword)) {
     $passwordsMatch = $false
