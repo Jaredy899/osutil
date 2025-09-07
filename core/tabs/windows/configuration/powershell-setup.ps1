@@ -5,6 +5,22 @@ $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
+# Ensure clean input handling for TUI environment
+
+# Simple input function that works reliably in TUI
+function Read-UserInput {
+    param(
+        [string]$Prompt = ""
+    )
+    
+    if ($Prompt) {
+        Write-Host $Prompt -NoNewline
+    }
+    
+    # Use standard Read-Host which works reliably in most environments
+    return Read-Host
+}
+
 function Save-RemoteFile {
     param(
         [Parameter(Mandatory=$true)][string]$Url,
@@ -149,9 +165,12 @@ Install-TerminalIcons
 
 # Optional: AutoHotkey shortcuts
 function Initialize-CustomShortcuts {
-    Write-Host "${Cyan}Set up custom AutoHotkey shortcuts? (y/n) ${Reset}" -NoNewline
-    $response = Read-Host
-    if ($response.ToLower() -ne 'y') { Write-Host "${Yellow}Skipped.${Reset}"; return }
+    $response = Read-UserInput -Prompt "${Cyan}Set up custom AutoHotkey shortcuts? (y/n) ${Reset}"
+    if ($response.ToLower() -ne 'y') { 
+        Write-Host "${Yellow}Skipped.${Reset}"
+        Write-Host ""
+        return 
+    }
     Write-Host "${Yellow}Installing AutoHotkey and setting up shortcuts...${Reset}"
     winget install -e --id AutoHotkey.AutoHotkey
     $startupFolder = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"

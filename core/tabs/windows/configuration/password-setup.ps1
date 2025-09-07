@@ -7,6 +7,22 @@ $Red   = "${esc}[31m"
 $Blue  = "${esc}[34m"
 $Reset = "${esc}[0m"
 
+# Ensure clean input handling for TUI environment
+
+# Simple input function that works reliably in TUI
+function Read-UserInput {
+    param(
+        [string]$Prompt = ""
+    )
+    
+    if ($Prompt) {
+        Write-Host $Prompt -NoNewline
+    }
+    
+    # Use standard Read-Host which works reliably in most environments
+    return Read-Host
+}
+
 # Cross-version secure password reader
 # Tries true no-echo console read first (no masking characters),
 # then falls back to host/UI methods if a console is not available.
@@ -109,7 +125,7 @@ function Set-UserPassword {
 # Ask if the user wants to change the password
 Write-Host "${Cyan}Do you want to change your password? ${Reset}" -NoNewline
 Write-Host "(yes/y/enter for yes, no/n for no)"
-$changePassword = Read-Host
+$changePassword = Read-UserInput
 
 if ($changePassword -eq "yes" -or $changePassword -eq "y" -or [string]::IsNullOrEmpty($changePassword)) {
     $passwordsMatch = $false

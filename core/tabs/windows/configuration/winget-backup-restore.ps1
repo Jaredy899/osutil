@@ -10,6 +10,22 @@ $Reset = "${esc}[0m"
 
 $ErrorActionPreference = 'Stop'
 
+# Ensure clean input handling for TUI environment
+
+# Simple input function that works reliably in TUI
+function Read-UserInput {
+    param(
+        [string]$Prompt = ""
+    )
+    
+    if ($Prompt) {
+        Write-Host $Prompt -NoNewline
+    }
+    
+    # Use standard Read-Host which works reliably in most environments
+    return Read-Host
+}
+
 function Test-WingetAvailable {
     $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
     if (-not $cmd) { $cmd = Get-Command winget -ErrorAction SilentlyContinue }
@@ -84,14 +100,29 @@ Write-Host "${Cyan}`nWinget Backup/Restore/Update${Reset}"
 Write-Host "1) Backup installed packages"
 Write-Host "2) Restore packages from backup"
 Write-Host "3) Update all packages"
-Write-Host "${Cyan}Select an option (1-3), or press Enter to cancel: ${Reset}" -NoNewline
-$choice = Read-Host
+Write-Host ""
+$choice = Read-UserInput -Prompt "${Cyan}Select an option (1-3), or press Enter to cancel: ${Reset}"
 
 switch ($choice) {
-    '1' { Invoke-WingetBackup }
-    '2' { Invoke-WingetRestore }
-    '3' { Invoke-WingetUpgradeAll }
-    default { Write-Host "${Yellow}Cancelled.${Reset}" }
+    '1' { 
+        Write-Host ""
+        Invoke-WingetBackup 
+        Write-Host ""
+    }
+    '2' { 
+        Write-Host ""
+        Invoke-WingetRestore 
+        Write-Host ""
+    }
+    '3' { 
+        Write-Host ""
+        Invoke-WingetUpgradeAll 
+        Write-Host ""
+    }
+    default { 
+        Write-Host "${Yellow}Cancelled.${Reset}" 
+        Write-Host ""
+    }
 }
 
 

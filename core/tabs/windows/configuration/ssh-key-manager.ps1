@@ -9,6 +9,22 @@ $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
+# Ensure clean input handling for TUI environment
+
+# Simple input function that works reliably in TUI
+function Read-UserInput {
+    param(
+        [string]$Prompt = ""
+    )
+    
+    if ($Prompt) {
+        Write-Host $Prompt -NoNewline
+    }
+    
+    # Use standard Read-Host which works reliably in most environments
+    return Read-Host
+}
+
 # Check if running as administrator
 function Test-Administrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -81,8 +97,7 @@ function Add-UniqueKey {
 }
 
 function Import-GitHubKeys {
-    Write-Host "${Cyan}`nEnter GitHub username: ${Reset}" -NoNewline
-    $githubUsername = Read-Host
+    $githubUsername = Read-UserInput -Prompt "${Cyan}`nEnter GitHub username: ${Reset}"
     if (-not $githubUsername) { return }
     Write-Host "${Yellow}`nFetching keys from GitHub...${Reset}"
     $keys = Get-GitHubKeys -username $githubUsername
@@ -110,8 +125,7 @@ function Import-GitHubKeys {
         }
     }
 
-    Write-Host "${Cyan}`nEnter a number to add a key, 'a' to add all, or press Enter to cancel: ${Reset}" -NoNewline
-    $selection = Read-Host
+    $selection = Read-UserInput -Prompt "${Cyan}`nEnter a number to add a key, 'a' to add all, or press Enter to cancel: ${Reset}"
     if (-not $selection) { return }
     if ($selection -eq 'a') {
         foreach ($entry in $keys) { Add-UniqueKey -key $entry.key }
@@ -126,8 +140,7 @@ function Import-GitHubKeys {
 }
 
 function Add-ManualKey {
-    Write-Host "${Cyan}`nPaste your public key: ${Reset}"
-    $manualKey = Read-Host
+    $manualKey = Read-UserInput -Prompt "${Cyan}`nPaste your public key: ${Reset}"
     if ($manualKey) { Add-UniqueKey -key $manualKey }
 }
 
@@ -170,12 +183,24 @@ Initialize-SshEnvironment
 Write-Host "${Cyan}`nWindows SSH Key Manager${Reset}"
 Write-Host "1) Import keys from GitHub"
 Write-Host "2) Enter key manually"
-Write-Host "${Cyan}Select an option (1-2), or press Enter to cancel: ${Reset}" -NoNewline
-$choice = Read-Host
+Write-Host ""
+$choice = Read-UserInput -Prompt "${Cyan}Select an option (1-2), or press Enter to cancel: ${Reset}"
 switch ($choice) {
-    '1' { Import-GitHubKeys }
-    '2' { Add-ManualKey }
-    default { Write-Host "${Yellow}Cancelled.${Reset}"; return }
+    '1' { 
+        Write-Host ""
+        Import-GitHubKeys 
+        Write-Host ""
+    }
+    '2' { 
+        Write-Host ""
+        Add-ManualKey 
+        Write-Host ""
+    }
+    default { 
+        Write-Host "${Yellow}Cancelled.${Reset}"
+        Write-Host ""
+        return 
+    }
 }
 
 Write-Host "${Yellow}`nSetting permissions...${Reset}"
