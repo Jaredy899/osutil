@@ -59,3 +59,9 @@ name = "SSH Key Manager"
 description = "Manage SSH keys for administrators (TUI-friendly numeric menu)"
 script = "ssh-key-manager.ps1"
 task_list = "I"
+
+[[data]]
+name = "WebApp Creator"
+description = "Interactive WebApp manager - create and remove web app shortcuts in Start Menu"
+script = "WebAppCreator.ps1"
+task_list = "I"
