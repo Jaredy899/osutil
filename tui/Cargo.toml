@@ -20,7 +20,7 @@ oneshot = { version = "0.1.8", features = ["std"], default-features = false }
 portable-pty = "0.9.0"
 ratatui = { version = "0.29.0", features = ["crossterm"], default-features = false }
 tui-term = { version = "0.2.0", default-features = false }
-time = { version = "0.3.42", features = ["formatting", "local-offset", "macros"], default-features = false }
+time = { version = "0.3.43", features = ["formatting", "local-offset", "macros"], default-features = false }
 unicode-width = { version = "0.2.0", default-features = false }
 osutil_core = { path = "../core" }
 tree-sitter-bash = { version = "0.25.0", optional = true }
