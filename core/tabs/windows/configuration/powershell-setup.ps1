@@ -99,16 +99,9 @@ function Save-RemoteFile {
     }
 }
 
-# Define the GitHub base URL for your setup scripts (keeping for shortcuts.ahk only)
-$githubBaseUrl = "https://raw.githubusercontent.com/Jaredy899/win/main/my_powershell"
+# Everything is now integrated - no external downloads needed!
 
-# URLs for setup scripts (none - everything integrated now)
-# $appsScriptUrl = "$githubBaseUrl/apps_install.ps1"  # Now integrated directly
-# $fontScriptUrl = "$githubBaseUrl/install_nerd_font.ps1"  # Commented out - using winget nerdfont
-# $wingetScriptUrl = "$githubBaseUrl/install_winget.ps1"  # Now integrated directly
-
-# Add new URL for shortcuts.ahk (keeping for AutoHotkey setup)
-$shortcutsAhkUrl = "$githubBaseUrl/shortcuts.ahk"
+# Everything is integrated - no external URLs needed!
 
 # Local paths where the scripts will be temporarily downloaded
 # $appsScriptPath = "$env:TEMP\apps_install.ps1"  # Now integrated directly
@@ -401,17 +394,30 @@ Install-TerminalIcons
 # Optional: AutoHotkey shortcuts
 function Initialize-CustomShortcuts {
     $response = Read-UserInput -Prompt "${Cyan}Set up custom AutoHotkey shortcuts? (y/n) ${Reset}"
-    if ($response.ToLower() -ne 'y') { 
+    if ($response.ToLower() -ne 'y') {
         Write-Host "${Yellow}Skipped.${Reset}"
         Write-Host ""
-        return 
+        return
     }
+
+    # Check if shortcuts.ahk exists in dotfiles repository
+    $sourceShortcutsPath = Join-Path $dotfilesDir "ahk\shortcuts.ahk"
+    if (-not (Test-Path -Path $sourceShortcutsPath)) {
+        Write-Host "${Yellow}shortcuts.ahk not found in dotfiles repository at: $sourceShortcutsPath${Reset}"
+        Write-Host "${Yellow}Skipping AutoHotkey shortcuts setup.${Reset}"
+        return
+    }
+
     Write-Host "${Yellow}Installing AutoHotkey and setting up shortcuts...${Reset}"
     winget install -e --id AutoHotkey.AutoHotkey
     $startupFolder = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
     $shortcutsPath = Join-Path $startupFolder 'shortcuts.ahk'
+
     try {
-        Start-BitsTransfer -Source $shortcutsAhkUrl -Destination $shortcutsPath -ErrorAction Stop
+        # Copy shortcuts.ahk from dotfiles repository
+        Copy-Item -Path $sourceShortcutsPath -Destination $shortcutsPath -Force
+        Write-Host "${Green}Copied shortcuts.ahk from dotfiles repository.${Reset}"
+
         # Create desktop shortcut
         $desktopPath = [Environment]::GetFolderPath('Desktop')
         $shortcutPath = Join-Path $desktopPath 'Custom Shortcuts.lnk'
@@ -466,13 +472,22 @@ Initialize-NeovimConfig
 
 # Final notes (concise)
 Write-Host ''
-Write-Host "${Cyan}Font setup:${Reset}"
-Write-Host "JetBrains Mono Nerd Font is installed via Winget. Set it in Windows Terminal > Settings." -ForegroundColor White
+Write-Host "${Cyan}🎉 COMPLETE SELF-CONTAINED SETUP!${Reset}"
+Write-Host "Everything uses your dotfiles repository - no external downloads needed!" -ForegroundColor White
 Write-Host ''
-Write-Host "${Cyan}Profile notes:${Reset}"
-Write-Host 'Everything is now self-contained and uses your dotfiles repository!' -ForegroundColor White
-Write-Host 'Profiles are symlinked to ~/.local/share/dotfiles/powershell/Microsoft.PowerShell_profile.ps1' -ForegroundColor White
-Write-Host 'All configs are symlinked - changes in your dotfiles repo are reflected immediately.' -ForegroundColor White
-Write-Host 'For personal customizations, edit files in your dotfiles repository.' -ForegroundColor White
+Write-Host "${Cyan}Font setup:${Reset}"
+Write-Host "JetBrains Mono Nerd Font is installed via Winget. Set it in Windows Terminal." -ForegroundColor White
+Write-Host ''
+Write-Host "${Cyan}Configuration:${Reset}"
+Write-Host '• PowerShell profiles: ~/.local/share/dotfiles/powershell/Microsoft.PowerShell_profile.ps1' -ForegroundColor White
+Write-Host '• Starship config: ~/.local/share/dotfiles/config/starship.toml' -ForegroundColor White
+Write-Host '• Fastfetch config: ~/.local/share/dotfiles/config/fastfetch/config.jsonc' -ForegroundColor White
+Write-Host '• AutoHotkey shortcuts: ~/.local/share/dotfiles/ahk/shortcuts.ahk' -ForegroundColor White
+Write-Host ''
+Write-Host "${Cyan}✨ Key Benefits:${Reset}"
+Write-Host '• All changes in your dotfiles repository are reflected immediately' -ForegroundColor White
+Write-Host '• Version controlled configurations across all your machines' -ForegroundColor White
+Write-Host '• No external dependencies - completely self-contained' -ForegroundColor White
+Write-Host '• One script transforms any Windows machine into your perfect dev environment' -ForegroundColor White
 
-Write-Host "${Green}`nDevelopment setup complete!${Reset}"
+Write-Host "${Green}`n🚀 Development environment setup complete!${Reset}"
