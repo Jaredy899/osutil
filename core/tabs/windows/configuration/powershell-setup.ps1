@@ -249,7 +249,8 @@ function Install-Apps {
         "Microsoft.PowerShell",
         "Neovim.Neovim",
         "Git.Git",
-        "DEVCOM.JetBrainsMonoNerdFont"
+        "DEVCOM.JetBrainsMonoNerdFont",
+        "jdx.mise"
     )
 
     Write-Host "${Cyan}=== Starting Application Installation ===${Reset}"
@@ -349,11 +350,13 @@ $ps7ProfilePath = "$env:UserProfile\Documents\PowerShell\Microsoft.PowerShell_pr
 Initialize-Profile -profilePath $ps5ProfilePath
 Initialize-Profile -profilePath $ps7ProfilePath
 
-# Config files (fastfetch, starship)
+# Config files (fastfetch, starship, mise)
 function Initialize-ConfigFiles {
     $userConfigDir = "$env:UserProfile\.config"
     $fastfetchConfigDir = "$userConfigDir\fastfetch"
+    $miseConfigDir = "$userConfigDir\mise"
     if (-not (Test-Path -Path $fastfetchConfigDir)) { New-Item -ItemType Directory -Path $fastfetchConfigDir -Force | Out-Null }
+    if (-not (Test-Path -Path $miseConfigDir)) { New-Item -ItemType Directory -Path $miseConfigDir -Force | Out-Null }
 
     # Symlink fastfetch config
     $sourceFastfetchConfig = Join-Path $dotfilesDir "config\fastfetch\windows.jsonc"
@@ -399,6 +402,29 @@ function Initialize-ConfigFiles {
         }
     } else {
         Write-Host "${Yellow}Starship config not found in dotfiles repo, skipping...${Reset}"
+    }
+
+    # Symlink mise config
+    $sourceMiseConfig = Join-Path $dotfilesDir "config\mise\config.toml"
+    $targetMiseConfig = Join-Path $miseConfigDir 'config.toml'
+    if (Test-Path -Path $sourceMiseConfig) {
+        if (Test-Path -Path $targetMiseConfig) {
+            $item = Get-Item $targetMiseConfig
+            if ($item.LinkType -ne "SymbolicLink") {
+                $backupPath = "$targetMiseConfig.bak"
+                Copy-Item -Path $targetMiseConfig -Destination $backupPath -Force
+                Write-Host "${Yellow}Backed up existing mise config to: $backupPath${Reset}"
+            }
+            Remove-Item -Path $targetMiseConfig -Force
+        }
+        try {
+            New-Item -ItemType SymbolicLink -Path $targetMiseConfig -Target $sourceMiseConfig -Force | Out-Null
+            Write-Host "${Green}Mise config symlinked.${Reset}"
+        } catch {
+            Write-Host "${Red}Failed to create symlink for mise config: $($_.Exception.Message)${Reset}"
+        }
+    } else {
+        Write-Host "${Yellow}Mise config not found in dotfiles repo, skipping...${Reset}"
     }
 }
 Initialize-ConfigFiles
@@ -505,7 +531,8 @@ Write-Host ''
 Write-Host "${Cyan}Configuration:${Reset}"
 Write-Host '• PowerShell profiles: ~/.local/share/dotfiles/powershell/Microsoft.PowerShell_profile.ps1' -ForegroundColor White
 Write-Host '• Starship config: ~/.local/share/dotfiles/config/starship.toml' -ForegroundColor White
-Write-Host '• Fastfetch config: ~/.local/share/dotfiles/config/fastfetch/config.jsonc' -ForegroundColor White
+Write-Host '• Fastfetch config: ~/.local/share/dotfiles/config/fastfetch/windows.jsonc' -ForegroundColor White
+Write-Host '• Mise config: ~/.local/share/dotfiles/config/mise/config.toml' -ForegroundColor White
 Write-Host '• AutoHotkey shortcuts: ~/.local/share/dotfiles/ahk/shortcuts.ahk' -ForegroundColor White
 Write-Host ''
 Write-Host "${Cyan}✨ Key Benefits:${Reset}"
