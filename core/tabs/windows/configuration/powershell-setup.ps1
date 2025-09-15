@@ -6,7 +6,7 @@ $Red   = "${esc}[31m"
 $Reset = "${esc}[0m"
 
 # Centralized dotfiles repository
-$dotfilesRepo = $env:DOTFILES_REPO ?? "https://github.com/Jaredy899/dotfiles.git"
+$dotfilesRepo = if ($env:DOTFILES_REPO) { $env:DOTFILES_REPO } else { "https://github.com/Jaredy899/dotfiles.git" }
 $dotfilesDir = "$env:USERPROFILE\.local\share\dotfiles"
 
 # Ensure clean input handling for TUI environment
@@ -283,6 +283,10 @@ function Install-Apps {
 Write-Host "${Cyan}Installing apps...${Reset}"
 Install-Apps
 
+# Refresh environment variables to make newly installed tools available
+Write-Host "${Cyan}Refreshing environment variables...${Reset}"
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+
 # Clone/update dotfiles repository (now that Git is installed)
 Write-Host "${Cyan}Setting up dotfiles...${Reset}"
 Invoke-CloneDotfiles
@@ -304,7 +308,7 @@ function Set-PermanentEnvironmentVariable {
         [Environment]::SetEnvironmentVariable($Name, $Value, [EnvironmentVariableTarget]::User)
         Write-Host "${Green}Set permanent environment variable: $Name=$Value${Reset}"
     } catch {
-        Write-Host "${Yellow}Failed to set permanent environment variable $Name: $($_.Exception.Message)${Reset}"
+        Write-Host "${Yellow}Failed to set permanent environment variable ${Name}: $($_.Exception.Message)${Reset}"
     }
 }
 
