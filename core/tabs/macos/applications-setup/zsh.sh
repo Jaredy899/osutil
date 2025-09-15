@@ -97,6 +97,22 @@ installZshDepend() {
     fi
 }
 
+installMise() {
+    if command_exists mise; then
+        printf "%b\n" "${GREEN}Mise already installed${RC}"
+        return
+    fi
+
+    printf "%b\n" "${CYAN}Installing mise...${RC}"
+    if ! curl -sSL https://mise.run | sh; then
+        printf "%b\n" "${RED}Failed to install mise${RC}"
+        exit 1
+    else
+        printf "%b\n" "${GREEN}Mise installed successfully!${RC}"
+        printf "%b\n" "${YELLOW}Please restart your shell to see the changes.${RC}"
+    fi
+}
+
 setupStarshipConfig() {
   printf "%b\n" "${YELLOW}Setting up Starship configuration...${RC}"
 
@@ -129,6 +145,22 @@ setupFastfetchConfig() {
     fi
 }
 
+setupMiseConfig() {
+    printf "%b\n" "${YELLOW}Setting up Mise configuration...${RC}"
+
+    # Symlink mise config from dotfiles repo
+    if [ -f "$DOTFILES_DIR/config/mise/config.toml" ]; then
+        mkdir -p "$HOME/.config/mise"
+        if [ -L "$HOME/.config/mise/config.toml" ] || [ -f "$HOME/.config/mise/config.toml" ]; then
+            rm -f "$HOME/.config/mise/config.toml"
+        fi
+        ln -sf "$DOTFILES_DIR/config/mise/config.toml" "$HOME/.config/mise/config.toml"
+        printf "%b\n" "${GREEN}Mise configuration symlinked successfully.${RC}"
+    else
+        printf "%b\n" "${YELLOW}Mise config not found in dotfiles repo, skipping...${RC}"
+    fi
+}
+
 # Function to setup zsh configuration
 setupZshConfig() {
   printf "%b\n" "${YELLOW}Setting up Zsh configuration...${RC}"
@@ -149,6 +181,8 @@ checkEnv
 cloneDotfiles
 backupZshConfig
 installZshDepend
+installMise
 setupStarshipConfig
 setupFastfetchConfig
+setupMiseConfig
 setupZshConfig

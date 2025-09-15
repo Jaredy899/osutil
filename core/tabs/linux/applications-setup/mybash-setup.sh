@@ -54,7 +54,7 @@ downloadConfigs() {
     printf "%b\n" "${YELLOW}Symlinking your custom config files from dotfiles...${RC}"
 
     # Create config directory if it doesn't exist
-    mkdir -p "$config_dir" "$config_dir/fastfetch"
+    mkdir -p "$config_dir" "$config_dir/fastfetch" "$config_dir/mise"
 
     # Symlink .bashrc from dotfiles repo
     if [ -f "$DOTFILES_DIR/bash/.bashrc" ]; then
@@ -87,6 +87,17 @@ downloadConfigs() {
         printf "%b\n" "${GREEN}Symlinked config.jsonc from dotfiles${RC}"
     else
         printf "%b\n" "${YELLOW}config.jsonc not found in dotfiles repo, skipping...${RC}"
+    fi
+
+    # Symlink mise config from dotfiles repo
+    if [ -f "$DOTFILES_DIR/config/mise/config.toml" ]; then
+        if [ -L "$config_dir/mise/config.toml" ] || [ -f "$config_dir/mise/config.toml" ]; then
+            rm -f "$config_dir/mise/config.toml"
+        fi
+        ln -sf "$DOTFILES_DIR/config/mise/config.toml" "$config_dir/mise/config.toml"
+        printf "%b\n" "${GREEN}Symlinked mise config from dotfiles${RC}"
+    else
+        printf "%b\n" "${YELLOW}mise config not found in dotfiles repo, skipping...${RC}"
     fi
 
     printf "%b\n" "${GREEN}All available config files symlinked successfully!${RC}"
@@ -154,6 +165,21 @@ installZoxide() {
     fi
 }
 
+installMise() {
+    if command_exists mise; then
+        printf "%b\n" "${GREEN}Mise already installed${RC}"
+        return
+    fi
+
+    if ! curl -sSL https://mise.run | sh; then
+        printf "%b\n" "${RED}Something went wrong during mise install!${RC}"
+        exit 1
+    else
+        printf "%b\n" "${GREEN}Mise installed successfully!${RC}"
+        printf "%b\n" "${YELLOW}Please restart your shell to see the changes.${RC}"
+    fi
+}
+
 backupExistingConfigs() {
     OLD_BASHRC="$HOME/.bashrc"
     if [ -e "$OLD_BASHRC" ] && [ ! -e "$HOME/.bashrc.bak" ]; then
@@ -186,3 +212,4 @@ downloadConfigs
 installFont
 installStarshipAndFzf
 installZoxide
+installMise

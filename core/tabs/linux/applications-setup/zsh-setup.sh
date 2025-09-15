@@ -90,6 +90,21 @@ installZoxide() {
     fi
 }
 
+installMise() {
+    if command_exists mise; then
+        printf "%b\n" "${GREEN}Mise already installed${RC}"
+        return
+    fi
+
+    if ! curl -sSL https://mise.run | sh; then
+        printf "%b\n" "${RED}Something went wrong during mise install!${RC}"
+        exit 1
+    else
+        printf "%b\n" "${GREEN}Mise installed successfully!${RC}"
+        printf "%b\n" "${YELLOW}Please restart your shell to see the changes.${RC}"
+    fi
+}
+
  
 
 cloneDotfiles() {
@@ -120,6 +135,7 @@ setupAndReplaceConfigs() {
     # Create necessary directories
     mkdir -p "$HOME/.config/zsh"
     mkdir -p "$HOME/.config/fastfetch"
+    mkdir -p "$HOME/.config/mise"
     mkdir -p "$HOME/.config"
 
     # Symlink .zshrc from dotfiles repo
@@ -160,6 +176,15 @@ setupAndReplaceConfigs() {
         printf "%b\n" "${GREEN}Symlinked starship config from dotfiles${RC}"
     fi
 
+    # Symlink mise config from dotfiles repo
+    if [ -f "$DOTFILES_DIR/config/mise/config.toml" ]; then
+        if [ -L "$HOME/.config/mise/config.toml" ] || [ -f "$HOME/.config/mise/config.toml" ]; then
+            rm -f "$HOME/.config/mise/config.toml"
+        fi
+        ln -sf "$DOTFILES_DIR/config/mise/config.toml" "$HOME/.config/mise/config.toml"
+        printf "%b\n" "${GREEN}Symlinked mise config from dotfiles${RC}"
+    fi
+
     printf "%b\n" "${GREEN}Zsh and other configurations set up successfully.${RC}"
 }
 
@@ -169,5 +194,6 @@ installZsh
 installFont
 installStarshipAndFzf
 installZoxide
+installMise
 cloneDotfiles
 setupAndReplaceConfigs
