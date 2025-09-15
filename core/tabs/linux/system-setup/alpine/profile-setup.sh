@@ -37,11 +37,11 @@ downloadProfile() {
     printf "%b\n" "${YELLOW}Symlinking your custom profile and configs...${RC}"
 
     # Symlink profile from dotfiles repo to /etc/profile
-    if [ -f "$DOTFILES_DIR/config/profile" ]; then
+    if [ -f "$DOTFILES_DIR/sh/profile" ]; then
         if [ -L "/etc/profile" ] || [ -f "/etc/profile" ]; then
             "$ESCALATION_TOOL" rm -f "/etc/profile"
         fi
-        "$ESCALATION_TOOL" ln -sf "$DOTFILES_DIR/config/profile" "/etc/profile"
+        "$ESCALATION_TOOL" ln -sf "$DOTFILES_DIR/sh/profile" "/etc/profile"
         printf "%b\n" "${GREEN}Symlinked profile from dotfiles${RC}"
     else
         printf "%b\n" "${YELLOW}Profile not found in dotfiles repo, skipping...${RC}"
