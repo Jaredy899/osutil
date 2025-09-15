@@ -117,12 +117,12 @@ setupFastfetchConfig() {
     printf "%b\n" "${YELLOW}Setting up Fastfetch configuration...${RC}"
 
     # Symlink fastfetch config from dotfiles repo
-    if [ -f "$DOTFILES_DIR/config/fastfetch/config.jsonc" ]; then
+    if [ -f "$DOTFILES_DIR/config/fastfetch/macos.jsonc" ]; then
         mkdir -p "$HOME/.config/fastfetch"
         if [ -L "$HOME/.config/fastfetch/config.jsonc" ] || [ -f "$HOME/.config/fastfetch/config.jsonc" ]; then
             rm -f "$HOME/.config/fastfetch/config.jsonc"
         fi
-        ln -sf "$DOTFILES_DIR/config/fastfetch/config.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+        ln -sf "$DOTFILES_DIR/config/fastfetch/macos.jsonc" "$HOME/.config/fastfetch/config.jsonc"
         printf "%b\n" "${GREEN}Fastfetch configuration symlinked successfully.${RC}"
     else
         printf "%b\n" "${YELLOW}Fastfetch config not found in dotfiles repo, skipping...${RC}"

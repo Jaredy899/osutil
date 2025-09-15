@@ -144,11 +144,11 @@ setupAndReplaceConfigs() {
     fi
 
     # Symlink fastfetch and starship configs from dotfiles repo
-    if [ -f "$DOTFILES_DIR/config/fastfetch/config.jsonc" ]; then
+    if [ -f "$DOTFILES_DIR/config/fastfetch/linux.jsonc" ]; then
         if [ -L "$HOME/.config/fastfetch/config.jsonc" ] || [ -f "$HOME/.config/fastfetch/config.jsonc" ]; then
             rm -f "$HOME/.config/fastfetch/config.jsonc"
         fi
-        ln -sf "$DOTFILES_DIR/config/fastfetch/config.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+        ln -sf "$DOTFILES_DIR/config/fastfetch/linux.jsonc" "$HOME/.config/fastfetch/config.jsonc"
         printf "%b\n" "${GREEN}Symlinked fastfetch config from dotfiles${RC}"
     fi
 

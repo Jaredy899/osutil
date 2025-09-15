@@ -79,11 +79,11 @@ downloadConfigs() {
     fi
 
     # Symlink config.jsonc from dotfiles repo
-    if [ -f "$DOTFILES_DIR/config/fastfetch/config.jsonc" ]; then
+    if [ -f "$DOTFILES_DIR/config/fastfetch/linux.jsonc" ]; then
         if [ -L "$config_dir/fastfetch/config.jsonc" ] || [ -f "$config_dir/fastfetch/config.jsonc" ]; then
             rm -f "$config_dir/fastfetch/config.jsonc"
         fi
-        ln -sf "$DOTFILES_DIR/config/fastfetch/config.jsonc" "$config_dir/fastfetch/config.jsonc"
+        ln -sf "$DOTFILES_DIR/config/fastfetch/linux.jsonc" "$config_dir/fastfetch/config.jsonc"
         printf "%b\n" "${GREEN}Symlinked config.jsonc from dotfiles${RC}"
     else
         printf "%b\n" "${YELLOW}config.jsonc not found in dotfiles repo, skipping...${RC}"
