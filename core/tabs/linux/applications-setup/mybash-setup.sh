@@ -4,8 +4,9 @@
 
 config_dir="$HOME/.config"
 
-# Centralized base URL for configuration files
-CONFIG_BASE_URL="${CONFIG_BASE_URL:-https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes}"
+# Centralized dotfiles repository
+DOTFILES_REPO="${DOTFILES_REPO:-https://github.com/Jaredy899/dotfiles.git}"
+DOTFILES_DIR="$HOME/.local/share/dotfiles"
 
 installDepend() {
     if [ ! -f "/usr/share/bash-completion/bash_completion" ] || ! command_exists bash tar bat tree unzip fc-list git; then
@@ -27,34 +28,68 @@ installDepend() {
     fi
 }
 
+cloneDotfiles() {
+    printf "%b\n" "${YELLOW}Cloning dotfiles repository...${RC}"
+
+    # Ensure the parent directory exists
+    mkdir -p "$HOME/.local/share"
+
+    if [ -d "$DOTFILES_DIR" ]; then
+        printf "%b\n" "${CYAN}Dotfiles directory already exists. Pulling latest changes...${RC}"
+        if ! (cd "$DOTFILES_DIR" && git pull); then
+            printf "%b\n" "${RED}Failed to update dotfiles repository${RC}"
+            exit 1
+        fi
+    else
+        if ! git clone "$DOTFILES_REPO" "$DOTFILES_DIR"; then
+            printf "%b\n" "${RED}Failed to clone dotfiles repository${RC}"
+            exit 1
+        fi
+    fi
+
+    printf "%b\n" "${GREEN}Dotfiles repository ready!${RC}"
+}
+
 downloadConfigs() {
-    printf "%b\n" "${YELLOW}Downloading your custom config files...${RC}"
-    
+    printf "%b\n" "${YELLOW}Symlinking your custom config files from dotfiles...${RC}"
+
     # Create config directory if it doesn't exist
     mkdir -p "$config_dir" "$config_dir/fastfetch"
-    
-    # Download .bashrc
-    printf "%b\n" "${YELLOW}Downloading .bashrc...${RC}"
-    if ! curl -fsSLo "$HOME/.bashrc" "$CONFIG_BASE_URL/.bashrc"; then
-        printf "%b\n" "${RED}Failed to download .bashrc${RC}"
-        exit 1
+
+    # Symlink .bashrc from dotfiles repo
+    if [ -f "$DOTFILES_DIR/bash/.bashrc" ]; then
+        if [ -L "$HOME/.bashrc" ] || [ -f "$HOME/.bashrc" ]; then
+            rm -f "$HOME/.bashrc"
+        fi
+        ln -sf "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
+        printf "%b\n" "${GREEN}Symlinked .bashrc from dotfiles${RC}"
+    else
+        printf "%b\n" "${YELLOW}.bashrc not found in dotfiles repo, skipping...${RC}"
     fi
-    
-    # Download starship.toml
-    printf "%b\n" "${YELLOW}Downloading starship.toml...${RC}"
-    if ! curl -fsSLo "$config_dir/starship.toml" "$CONFIG_BASE_URL/starship.toml"; then
-        printf "%b\n" "${RED}Failed to download starship.toml${RC}"
-        exit 1
+
+    # Symlink starship.toml from dotfiles repo
+    if [ -f "$DOTFILES_DIR/config/starship.toml" ]; then
+        if [ -L "$config_dir/starship.toml" ] || [ -f "$config_dir/starship.toml" ]; then
+            rm -f "$config_dir/starship.toml"
+        fi
+        ln -sf "$DOTFILES_DIR/config/starship.toml" "$config_dir/starship.toml"
+        printf "%b\n" "${GREEN}Symlinked starship.toml from dotfiles${RC}"
+    else
+        printf "%b\n" "${YELLOW}starship.toml not found in dotfiles repo, skipping...${RC}"
     fi
-    
-    # Download config.jsonc
-    printf "%b\n" "${YELLOW}Downloading config.jsonc...${RC}"
-    if ! curl -fsSLo "$config_dir/fastfetch/config.jsonc" "$CONFIG_BASE_URL/config.jsonc"; then
-        printf "%b\n" "${RED}Failed to download config.jsonc${RC}"
-        exit 1
+
+    # Symlink config.jsonc from dotfiles repo
+    if [ -f "$DOTFILES_DIR/config/fastfetch/config.jsonc" ]; then
+        if [ -L "$config_dir/fastfetch/config.jsonc" ] || [ -f "$config_dir/fastfetch/config.jsonc" ]; then
+            rm -f "$config_dir/fastfetch/config.jsonc"
+        fi
+        ln -sf "$DOTFILES_DIR/config/fastfetch/config.jsonc" "$config_dir/fastfetch/config.jsonc"
+        printf "%b\n" "${GREEN}Symlinked config.jsonc from dotfiles${RC}"
+    else
+        printf "%b\n" "${YELLOW}config.jsonc not found in dotfiles repo, skipping...${RC}"
     fi
-    
-    printf "%b\n" "${GREEN}All config files downloaded successfully!${RC}"
+
+    printf "%b\n" "${GREEN}All available config files symlinked successfully!${RC}"
 }
 
 installFont() {
@@ -145,6 +180,7 @@ backupExistingConfigs() {
 checkEnv
 checkEscalationTool
 installDepend
+cloneDotfiles
 backupExistingConfigs
 downloadConfigs
 installFont
