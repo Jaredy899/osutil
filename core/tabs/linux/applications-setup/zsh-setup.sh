@@ -6,7 +6,7 @@
 DOTFILES_REPO="${DOTFILES_REPO:-https://github.com/Jaredy899/dotfiles.git}"
 DOTFILES_DIR="$HOME/.local/share/dotfiles"
 
-# Function to install zsh
+# Function to install zsh and dependencies
 installZsh() {
     if ! command_exists zsh; then
         printf "%b\n" "${YELLOW}Installing Zsh...${RC}"
@@ -26,6 +26,47 @@ installZsh() {
         esac
     else
         printf "%b\n" "${GREEN}ZSH is already installed.${RC}"
+    fi
+}
+
+installDepend() {
+    if ! command_exists fastfetch; then
+        printf "%b\n" "${YELLOW}Installing Fastfetch...${RC}"
+        case "$PACKAGER" in
+            pacman)
+                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm fastfetch
+                ;;
+            apt-get|nala)
+                # Install fastfetch from GitHub for latest version
+                printf "%b\n" "${YELLOW}Installing Fastfetch from GitHub...${RC}"
+                case "$ARCH" in
+                    x86_64)
+                        DEB_FILE="fastfetch-linux-amd64.deb"
+                        ;;
+                    aarch64)
+                        DEB_FILE="fastfetch-linux-aarch64.deb"
+                        ;;
+                    *)
+                        printf "%b\n" "${RED}Unsupported architecture for deb install: $ARCH${RC}"
+                        exit 1
+                        ;;
+                esac
+                curl -sSLo "/tmp/fastfetch.deb" "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$DEB_FILE"
+                "$ESCALATION_TOOL" "$PACKAGER" install -y /tmp/fastfetch.deb
+                rm /tmp/fastfetch.deb
+                ;;
+            apk)
+                "$ESCALATION_TOOL" "$PACKAGER" add fastfetch
+                ;;
+            xbps-install)
+                "$ESCALATION_TOOL" "$PACKAGER" -Sy fastfetch
+                ;;
+            *)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y fastfetch
+                ;;
+        esac
+    else
+        printf "%b\n" "${GREEN}Fastfetch is already installed.${RC}"
     fi
 }
 
@@ -104,6 +145,7 @@ installMise() {
         printf "%b\n" "${YELLOW}Please restart your shell to see the changes.${RC}"
     fi
 }
+
 
  
 
@@ -191,6 +233,7 @@ setupAndReplaceConfigs() {
 checkEnv
 checkEscalationTool
 installZsh
+installDepend
 installFont
 installStarshipAndFzf
 installZoxide

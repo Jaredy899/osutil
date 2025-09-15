@@ -2,6 +2,10 @@
 
 . ../common-script.sh
 
+# Centralized dotfiles repository
+DOTFILES_REPO="${DOTFILES_REPO:-https://github.com/Jaredy899/dotfiles.git}"
+DOTFILES_DIR="$HOME/.local/share/dotfiles"
+
 installFastfetch() {
     if ! command_exists fastfetch; then
         printf "%b\n" "${YELLOW}Installing Fastfetch...${RC}"
@@ -41,13 +45,42 @@ installFastfetch() {
     fi
 }
 
-setupFastfetchConfig() {
-    printf "%b\n" "${YELLOW}Copying Fastfetch config files...${RC}"
-    if [ -d "${HOME}/.config/fastfetch" ] && [ ! -d "${HOME}/.config/fastfetch-bak" ]; then
-        cp -r "${HOME}/.config/fastfetch" "${HOME}/.config/fastfetch-bak"
+cloneDotfiles() {
+    printf "%b\n" "${YELLOW}Cloning dotfiles repository...${RC}"
+
+    # Ensure the parent directory exists
+    mkdir -p "$HOME/.local/share"
+
+    if [ -d "$DOTFILES_DIR" ]; then
+        printf "%b\n" "${CYAN}Dotfiles directory already exists. Pulling latest changes...${RC}"
+        if ! (cd "$DOTFILES_DIR" && git pull); then
+            printf "%b\n" "${RED}Failed to update dotfiles repository${RC}"
+            exit 1
+        fi
+    else
+        if ! git clone "$DOTFILES_REPO" "$DOTFILES_DIR"; then
+            printf "%b\n" "${RED}Failed to clone dotfiles repository${RC}"
+            exit 1
+        fi
     fi
-    mkdir -p "${HOME}/.config/fastfetch/"
-    curl -sSLo "${HOME}/.config/fastfetch/config.jsonc" https://raw.githubusercontent.com/Jaredy899/linux/refs/heads/main/config_changes/config.jsonc
+
+    printf "%b\n" "${GREEN}Dotfiles repository ready!${RC}"
+}
+
+setupFastfetchConfig() {
+    printf "%b\n" "${YELLOW}Setting up Fastfetch configuration...${RC}"
+
+    # Symlink fastfetch config from dotfiles repo
+    if [ -f "$DOTFILES_DIR/config/fastfetch/linux.jsonc" ]; then
+        mkdir -p "$HOME/.config/fastfetch"
+        if [ -L "$HOME/.config/fastfetch/config.jsonc" ] || [ -f "$HOME/.config/fastfetch/config.jsonc" ]; then
+            rm -f "$HOME/.config/fastfetch/config.jsonc"
+        fi
+        ln -sf "$DOTFILES_DIR/config/fastfetch/linux.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+        printf "%b\n" "${GREEN}Fastfetch configuration symlinked successfully.${RC}"
+    else
+        printf "%b\n" "${YELLOW}Fastfetch config not found in dotfiles repo, skipping...${RC}"
+    fi
 }
 
 setupFastfetchShell() {
@@ -95,6 +128,7 @@ setupFastfetchShell() {
 
 checkEnv
 checkEscalationTool
+cloneDotfiles
 installFastfetch
 setupFastfetchConfig
 setupFastfetchShell
