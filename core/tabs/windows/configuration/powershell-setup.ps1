@@ -332,7 +332,7 @@ function Initialize-ConfigFiles {
     if (-not (Test-Path -Path $fastfetchConfigDir)) { New-Item -ItemType Directory -Path $fastfetchConfigDir -Force | Out-Null }
 
     # Symlink fastfetch config
-    $sourceFastfetchConfig = Join-Path $dotfilesDir "config\fastfetch\config.jsonc"
+    $sourceFastfetchConfig = Join-Path $dotfilesDir "config\fastfetch\windows.jsonc"
     $targetFastfetchConfig = Join-Path $fastfetchConfigDir 'config.jsonc'
     if (Test-Path -Path $sourceFastfetchConfig) {
         if (Test-Path -Path $targetFastfetchConfig) {
