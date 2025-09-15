@@ -290,6 +290,27 @@ Invoke-CloneDotfiles
 # Write-Host "${Cyan}Installing Nerd Font...${Reset}"
 # Invoke-DownloadAndRunScript -url $fontScriptUrl -localPath $fontScriptPath
 
+# Set environment variable to suppress mise chpwd warning in PowerShell 5.1
+$env:MISE_PWSH_CHPWD_WARNING = "0"
+
+# Function to set environment variable permanently
+function Set-PermanentEnvironmentVariable {
+    param(
+        [string]$Name,
+        [string]$Value
+    )
+    try {
+        [Environment]::SetEnvironmentVariable($Name, $Value, [EnvironmentVariableTarget]::User)
+        Write-Host "${Green}Set permanent environment variable: $Name=$Value${Reset}"
+    } catch {
+        Write-Host "${Yellow}Failed to set permanent environment variable $Name: $($_.Exception.Message)${Reset}"
+    }
+}
+
+# Set the mise warning suppression permanently
+Set-PermanentEnvironmentVariable -Name "MISE_PWSH_CHPWD_WARNING" -Value "0"
+
+
 # Initialize PowerShell profiles (PS5 and PS7)
 function Initialize-Profile {
     param(
