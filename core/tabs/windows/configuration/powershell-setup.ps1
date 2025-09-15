@@ -122,8 +122,7 @@ function Invoke-DownloadAndRunScript {
     }
 }
 
-# Clone/update dotfiles repository
-Invoke-CloneDotfiles
+# Clone/update dotfiles repository will happen after Git is installed
 
 # Function to check Winget installation status
 function Get-WingetStatus {
@@ -282,6 +281,10 @@ function Install-Apps {
 
 Write-Host "${Cyan}Installing apps...${Reset}"
 Install-Apps
+
+# Clone/update dotfiles repository (now that Git is installed)
+Write-Host "${Cyan}Setting up dotfiles...${Reset}"
+Invoke-CloneDotfiles
 
 # Nerd Font installation (commented out - using winget nerdfont instead)
 # Write-Host "${Cyan}Installing Nerd Font...${Reset}"
