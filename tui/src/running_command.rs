@@ -623,19 +623,8 @@ impl RunningCommand {
                     _ => raw_utf8(),
                 }
             }
-            KeyCode::Enter => vec![b'\r', b'\n'],
-            KeyCode::Backspace => {
-                // Use backspace + space + backspace to properly clear character
-                #[cfg(windows)]
-                {
-                    // Send backspace + space + backspace to clear character and position cursor correctly
-                    vec![0x08, 0x20, 0x08]
-                }
-                #[cfg(not(windows))]
-                {
-                    vec![0x7f]
-                }
-            }
+            KeyCode::Enter => vec![b'\r'],
+            KeyCode::Backspace => vec![0x7f],
             KeyCode::Left => vec![27, 91, 68],
             KeyCode::Right => vec![27, 91, 67],
             KeyCode::Up => vec![27, 91, 65],
@@ -657,16 +646,6 @@ impl RunningCommand {
         // Ensure the data is flushed immediately, especially important for Enter key
         if let Err(e) = self.writer.flush() {
             eprintln!("Failed to flush terminal: {}", e);
-        }
-
-        // Small delay after Enter key to ensure PowerShell processes the input
-        if key.code == KeyCode::Enter {
-            std::thread::sleep(std::time::Duration::from_millis(10));
-        }
-
-        // Longer delay after Backspace key to prevent rapid key repeats from causing issues
-        if key.code == KeyCode::Backspace {
-            std::thread::sleep(std::time::Duration::from_millis(100));
         }
     }
 }
