@@ -10,17 +10,13 @@ installNeovim() {
             "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm neovim ripgrep fzf python-virtualenv luarocks go shellcheck git
             ;;
         apt-get|nala)
-            # Check the candidate version from the repos and install from the package manager if >= 0.9.0
-            CANDIDATE_VERSION=$(apt-cache policy neovim | awk '/Candidate:/ {print $2}')
-            if [ -n "$CANDIDATE_VERSION" ] && [ "$CANDIDATE_VERSION" != "(none)" ] && dpkg --compare-versions "$CANDIDATE_VERSION" ge "0.9.0"; then
-                "$ESCALATION_TOOL" "$PACKAGER" install -y neovim ripgrep fd-find fzf python3-venv luarocks golang-go shellcheck git
-            else
-                "$ESCALATION_TOOL" "$PACKAGER" install -y ripgrep fd-find fzf python3-venv luarocks golang-go shellcheck git ninja-build gettext cmake unzip curl
-                git clone --depth 1 https://github.com/neovim/neovim
-                cd neovim
-                make CMAKE_BUILD_TYPE=Release
-                "$ESCALATION_TOOL" make install
-            fi
+            "$ESCALATION_TOOL" "$PACKAGER" install -y ripgrep fd-find fzf python3-venv luarocks golang-go shellcheck git curl
+            # Download and install latest Neovim release
+            curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+            "$ESCALATION_TOOL" rm -rf /opt/nvim
+            "$ESCALATION_TOOL" tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+            "$ESCALATION_TOOL" ln -s /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
+            rm -f nvim-linux-x86_64.tar.gz
             ;;
         dnf)
             "$ESCALATION_TOOL" "$PACKAGER" install -y neovim ripgrep fzf python3-virtualenv luarocks golang ShellCheck git
