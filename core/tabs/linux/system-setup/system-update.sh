@@ -21,7 +21,7 @@ updateSystem() {
             "$ESCALATION_TOOL" "$PACKAGER" upgrade
             ;;
         xbps-install)
-            "$ESCALATION_TOOL" "$PACKAGER" -Syu base-system
+            "$ESCALATION_TOOL" "$PACKAGER" -Syu
             ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}${RC}"
