@@ -235,4 +235,4 @@ checkEnv
 checkEscalationTool
 installDependencies
 buildPkgTui
-addAlias
+# addAlias

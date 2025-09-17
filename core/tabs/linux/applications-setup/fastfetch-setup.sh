@@ -131,4 +131,4 @@ checkEscalationTool
 cloneDotfiles
 installFastfetch
 setupFastfetchConfig
-setupFastfetchShell
+# setupFastfetchShell
