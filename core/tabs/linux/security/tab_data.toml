@@ -12,6 +12,17 @@ data = "command_exists"
 values = [ "dnf", "zypper", "apk" ]
 
 [[data]]
+name = "UFW Docker Integration"
+description = "Fixes the Docker and UFW security flaw by properly integrating Docker with UFW firewall rules. This allows you to control access to Docker containers through UFW without disabling iptables. For more information visit: https://github.com/chaifeng/ufw-docker"
+script = "ufw-docker-setup.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = [ "docker" ]
+
+[[data]]
 name = "FirewallD Firewall Baselines (CTT)"
 description = "Configure FirewallD with CTT's recommended baseline rules for improved system security. For more information visit: https://christitus.com/linux-security-mistakes"
 script = "firewalld-baselines.sh"
