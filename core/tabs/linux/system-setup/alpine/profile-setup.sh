@@ -11,6 +11,22 @@ installDepend() {
     "$ESCALATION_TOOL" apk add curl zoxide fastfetch starship bat fzf
 }
 
+installMise() {
+    if command_exists mise; then
+        printf "%b\n" "${GREEN}Mise already installed${RC}"
+        return
+    fi
+
+    printf "%b\n" "${YELLOW}Installing mise...${RC}"
+    if ! curl -sSL https://mise.run | sh; then
+        printf "%b\n" "${RED}Something went wrong during mise install!${RC}"
+        exit 1
+    else
+        printf "%b\n" "${GREEN}Mise installed successfully!${RC}"
+        printf "%b\n" "${YELLOW}Please restart your shell to see the changes.${RC}"
+    fi
+}
+
 cloneDotfiles() {
     printf "%b\n" "${YELLOW}Cloning dotfiles repository...${RC}"
 
@@ -71,7 +87,19 @@ downloadProfile() {
         printf "%b\n" "${YELLOW}Starship config not found in dotfiles repo, skipping...${RC}"
     fi
 
-    printf "%b\n" "${GREEN}Profile, fastfetch, and starship configs symlinked successfully! Restart your shell to see the changes.${RC}"
+    # Symlink mise config from dotfiles repo
+    if [ -f "$DOTFILES_DIR/config/mise/config.toml" ]; then
+        mkdir -p "$HOME/.config/mise"
+        if [ -L "$HOME/.config/mise/config.toml" ] || [ -f "$HOME/.config/mise/config.toml" ]; then
+            rm -f "$HOME/.config/mise/config.toml"
+        fi
+        ln -sf "$DOTFILES_DIR/config/mise/config.toml" "$HOME/.config/mise/config.toml"
+        printf "%b\n" "${GREEN}Symlinked mise config from dotfiles${RC}"
+    else
+        printf "%b\n" "${YELLOW}Mise config not found in dotfiles repo, skipping...${RC}"
+    fi
+
+    printf "%b\n" "${GREEN}Profile, fastfetch, starship, and mise configs symlinked successfully! Restart your shell to see the changes.${RC}"
 }
 
 backupExistingProfile() {
@@ -95,11 +123,18 @@ backupExistingProfile() {
         printf "%b\n" "${YELLOW}Backing up existing starship config to $HOME/.config/starship.toml.bak${RC}"
         mv "$HOME/.config/starship.toml" "$HOME/.config/starship.toml.bak"
     fi
+
+    # Backup existing mise config if it exists (skip if it's already a symlink)
+    if [ -e "$HOME/.config/mise/config.toml" ] && [ ! -e "$HOME/.config/mise/config.toml.bak" ] && [ ! -L "$HOME/.config/mise/config.toml" ]; then
+        printf "%b\n" "${YELLOW}Backing up existing mise config to $HOME/.config/mise/config.toml.bak${RC}"
+        mv "$HOME/.config/mise/config.toml" "$HOME/.config/mise/config.toml.bak"
+    fi
 }
 
 checkEnv
 checkEscalationTool
 installDepend
+installMise
 cloneDotfiles
 backupExistingProfile
 downloadProfile
