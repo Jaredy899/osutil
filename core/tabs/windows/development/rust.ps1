@@ -1,4 +1,4 @@
-# Rust (rustup) installer for Windows (winget + rustup)
+# Rust installer via mise
 
 $esc   = [char]27
 $Yellow= "${esc}[33m"
@@ -8,31 +8,28 @@ $Reset = "${esc}[0m"
 
 function Test-CommandExists([string]$name) { Get-Command $name -ErrorAction SilentlyContinue }
 
-Write-Host "${Yellow}Installing Rust (rustup)...${Reset}"
+Write-Host "${Yellow}Installing Rust via mise...${Reset}"
 
-if (Test-CommandExists rustup) {
-  Write-Host "${Green}rustup already installed. Updating toolchain...${Reset}"
+# Install mise if not available
+if (-not (Test-CommandExists mise)) {
+  Write-Host "${Yellow}Installing mise...${Reset}"
   try {
-    rustup default stable
-    rustup update stable
-    rustup component add rustfmt clippy
-  } catch { Write-Host "${Red}Failed to update rustup toolchain: $($_.Exception.Message)${Reset}" }
-  exit 0
+    Invoke-WebRequest -Uri "https://mise.run/install.ps1" -OutFile "$env:TEMP\mise-install.ps1"
+    & "$env:TEMP\mise-install.ps1"
+    Remove-Item "$env:TEMP\mise-install.ps1" -ErrorAction SilentlyContinue
+  } catch { Write-Host "${Red}Failed to install mise: $($_.Exception.Message)${Reset}"; exit 1 }
 }
 
+# Install latest stable Rust
 try {
-  winget install -e --id Rustlang.Rustup -h --scope user
-} catch {
-  Write-Host "${Red}Failed to install rustup via winget: $($_.Exception.Message)${Reset}"; exit 1
-}
-
-try {
-  $env:Path = [System.Environment]::GetEnvironmentVariable('Path','User') + ';' + [System.Environment]::GetEnvironmentVariable('Path','Machine')
+  mise use -g rust@latest
+  
+  # Add rustfmt and clippy components
   if (Test-CommandExists rustup) {
-    rustup default stable
     rustup component add rustfmt clippy
   }
-  Write-Host "${Green}Rust installed/updated successfully.${Reset}"
-} catch { Write-Host "${Red}Rust post-install steps failed: $($_.Exception.Message)${Reset}" }
+  
+  Write-Host "${Green}Rust installed via mise. Restart your shell to use Rust.${Reset}"
+} catch { Write-Host "${Red}Failed to install Rust via mise: $($_.Exception.Message)${Reset}"; exit 1 }
 
 

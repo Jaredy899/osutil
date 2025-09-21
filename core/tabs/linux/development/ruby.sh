@@ -3,39 +3,20 @@
 . ../common-script.sh
 
 installRuby() {
-	printf "%b\n" "${YELLOW}Installing Ruby...${RC}"
+    printf "%b\n" "${YELLOW}Installing Ruby via mise...${RC}"
 
-	case "$PACKAGER" in
-		pacman)
-			"$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm ruby
-			;;
-		apt-get|nala)
-			"$ESCALATION_TOOL" "$PACKAGER" update
-			if ! "$ESCALATION_TOOL" "$PACKAGER" install -y ruby-full; then
-				"$ESCALATION_TOOL" "$PACKAGER" install -y ruby
-			fi
-			;;
-		dnf)
-			"$ESCALATION_TOOL" "$PACKAGER" -y install ruby
-			;;
-		zypper)
-			"$ESCALATION_TOOL" "$PACKAGER" --non-interactive install ruby
-			;;
-		apk)
-			"$ESCALATION_TOOL" "$PACKAGER" add ruby
-			;;
-		xbps-install)
-			"$ESCALATION_TOOL" "$PACKAGER" -Sy ruby
-			;;
-		eopkg)
-			"$ESCALATION_TOOL" "$PACKAGER" install -y ruby
-			;;
-		*)
-			"$ESCALATION_TOOL" "$PACKAGER" install -y ruby
-			;;
-	esac
+    # Install mise if not available
+    if ! command_exists mise; then
+        printf "%b\n" "${YELLOW}Installing mise...${RC}"
+        curl https://mise.run | sh
+        # Source mise in current shell
+        [ -f "$HOME/.local/share/mise/mise.sh" ] && . "$HOME/.local/share/mise/mise.sh"
+    fi
 
-	printf "%b\n" "${GREEN}Ruby installation complete.${RC}"
+    # Install latest stable Ruby
+    mise use -g ruby@latest
+
+    printf "%b\n" "${GREEN}Ruby installed via mise. Restart your shell or source your shell profile to use Ruby.${RC}"
 }
 
 checkEnv

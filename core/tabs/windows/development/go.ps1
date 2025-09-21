@@ -1,4 +1,4 @@
-# Go installer via winget
+# Go installer via mise
 
 $esc   = [char]27
 $Yellow= "${esc}[33m"
@@ -8,13 +8,22 @@ $Reset = "${esc}[0m"
 
 function Test-CommandExists([string]$name) { Get-Command $name -ErrorAction SilentlyContinue }
 
-Write-Host "${Yellow}Installing Go...${Reset}"
+Write-Host "${Yellow}Installing Go via mise...${Reset}"
 
-if (Test-CommandExists go) { Write-Host "${Green}Go already installed. Skipping.${Reset}"; exit 0 }
+# Install mise if not available
+if (-not (Test-CommandExists mise)) {
+  Write-Host "${Yellow}Installing mise...${Reset}"
+  try {
+    Invoke-WebRequest -Uri "https://mise.run/install.ps1" -OutFile "$env:TEMP\mise-install.ps1"
+    & "$env:TEMP\mise-install.ps1"
+    Remove-Item "$env:TEMP\mise-install.ps1" -ErrorAction SilentlyContinue
+  } catch { Write-Host "${Red}Failed to install mise: $($_.Exception.Message)${Reset}"; exit 1 }
+}
 
+# Install latest stable Go
 try {
-  winget install -e --id GoLang.Go --scope machine -h
-  Write-Host "${Green}Go installed.${Reset}"
-} catch { Write-Host "${Red}Failed to install Go: $($_.Exception.Message)${Reset}"; exit 1 }
+  mise use -g go@latest
+  Write-Host "${Green}Go installed via mise. Restart your shell to use Go.${Reset}"
+} catch { Write-Host "${Red}Failed to install Go via mise: $($_.Exception.Message)${Reset}"; exit 1 }
 
 
