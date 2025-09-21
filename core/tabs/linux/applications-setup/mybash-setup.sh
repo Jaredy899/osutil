@@ -167,7 +167,20 @@ installStarshipAndFzf() {
     fi
 
     if command_exists fzf; then
-        printf "%b\n" "${GREEN}Fzf already installed${RC}"
+        # Check if installed fzf version is before 0.48.0
+        FZF_VERSION=$(fzf --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        if [ -n "$FZF_VERSION" ]; then
+            # Compare version with 0.48.0
+            if [ "$(printf '%s\n' "0.48.0" "$FZF_VERSION" | sort -V | head -1)" = "0.48.0" ]; then
+                printf "%b\n" "${GREEN}Fzf already installed (version $FZF_VERSION)${RC}"
+            else
+                printf "%b\n" "${YELLOW}Fzf version $FZF_VERSION is older than 0.48.0, updating...${RC}"
+                git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+                ~/.fzf/install --all
+            fi
+        else
+            printf "%b\n" "${GREEN}Fzf already installed${RC}"
+        fi
     else
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
         ~/.fzf/install --all

@@ -1,4 +1,4 @@
-# Java (Temurin) installer via winget
+# Java installer via mise
 
 $esc   = [char]27
 $Yellow= "${esc}[33m"
@@ -8,20 +8,27 @@ $Reset = "${esc}[0m"
 
 function Test-CommandExists([string]$name) { Get-Command $name -ErrorAction SilentlyContinue }
 
-Write-Host "${Yellow}Installing Java (Temurin)...${Reset}"
+Write-Host "${Yellow}Installing Java via mise...${Reset}"
 
-if (Test-CommandExists java) { Write-Host "${Green}Java already installed. Skipping.${Reset}"; exit 0 }
-
-try {
-  # Prefer Temurin 21, fallback to 17
-  winget install -e --id EclipseAdoptium.Temurin.21.JDK -h --scope machine
-} catch {
+# Install mise if not available
+if (-not (Test-CommandExists mise)) {
+  Write-Host "${Yellow}Installing mise...${Reset}"
   try {
-    Write-Host "${Yellow}Temurin 21 failed, trying Temurin 17...${Reset}"
-    winget install -e --id EclipseAdoptium.Temurin.17.JDK -h --scope machine
-  } catch { Write-Host "${Red}Failed to install Temurin JDK: $($_.Exception.Message)${Reset}"; exit 1 }
+    Invoke-WebRequest -Uri "https://mise.run/install.ps1" -OutFile "$env:TEMP\mise-install.ps1"
+    & "$env:TEMP\mise-install.ps1"
+    Remove-Item "$env:TEMP\mise-install.ps1" -ErrorAction SilentlyContinue
+  } catch { Write-Host "${Red}Failed to install mise: $($_.Exception.Message)${Reset}"; exit 1 }
 }
 
-Write-Host "${Green}Java installed.${Reset}"
+# Install latest LTS Java (prefer 21, fallback to 17)
+try {
+  $javaVersions = mise ls-remote java
+  if ($javaVersions -match "21\.") {
+    mise use -g java@21
+  } else {
+    mise use -g java@17
+  }
+  Write-Host "${Green}Java installed via mise. Restart your shell to use Java.${Reset}"
+} catch { Write-Host "${Red}Failed to install Java via mise: $($_.Exception.Message)${Reset}"; exit 1 }
 
 

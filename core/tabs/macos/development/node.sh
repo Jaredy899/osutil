@@ -3,65 +3,27 @@
 . ../common-script.sh
 
 installNode() {
-    printf "%b\n" "${YELLOW}Installing Node.js via NVM (latest)...${RC}"
+    printf "%b\n" "${YELLOW}Installing Node.js via mise...${RC}"
 
-    if brewprogram_exists node; then
-        printf "%b\n" "${GREEN}Node.js already installed. Skipping.${RC}"
-        return 0
+    # Install mise if not available
+    if ! command_exists mise; then
+        printf "%b\n" "${YELLOW}Installing mise...${RC}"
+        curl https://mise.run | sh
+        # Source mise in current shell
+        [ -f "$HOME/.local/share/mise/mise.sh" ] && . "$HOME/.local/share/mise/mise.sh"
     fi
 
-    # Ensure dependencies for nvm install (idempotent)
-    if command -v brew >/dev/null 2>&1; then
-        brew install curl
-        brew install git
+    # Install latest Node.js
+    mise use -g node@latest
+
+    # Enable Corepack (yarn/pnpm)
+    if command_exists corepack; then
+        corepack enable || true
+        corepack prepare yarn@stable --activate || true
+        corepack prepare pnpm@latest --activate || true
     fi
 
-    NVM_DIR="$HOME/.nvm"
-    if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-        rm -rf "$NVM_DIR"
-        latest_tag=$(curl -fsSL https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -o '"tag_name"[: ][^,]*' | head -n1 | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\(v[^"[:space:]]*\)".*/\1/')
-        [ -z "$latest_tag" ] && latest_tag="master"
-        git clone --depth 1 --branch "$latest_tag" https://github.com/nvm-sh/nvm.git "$NVM_DIR"
-    fi
-
-    # shellcheck disable=SC1090
-    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-    if ! command -v nvm >/dev/null 2>&1; then
-        printf "%b\n" "${RED}nvm not available after installation.${RC}"
-        exit 1
-    fi
-
-    nvm install node
-    nvm use node
-    nvm alias default node
-
-    if command -v corepack >/dev/null 2>&1; then
-        if ! corepack enable; then
-            printf "%b\n" "${YELLOW}Corepack enable failed, continuing...${RC}"
-        fi
-        if ! corepack prepare yarn@stable --activate; then
-            printf "%b\n" "${YELLOW}Corepack yarn prepare failed, continuing...${RC}"
-        fi
-        if ! corepack prepare pnpm@latest --activate; then
-            printf "%b\n" "${YELLOW}Corepack pnpm prepare failed, continuing...${RC}"
-        fi
-    fi
-
-    SHELL_RC="${HOME}/.bashrc"
-    [ "$(basename "$SHELL")" = "zsh" ] && SHELL_RC="${HOME}/.zshrc"
-    if ! grep -q "NVM_DIR=\"\$HOME/.nvm\"" "$SHELL_RC" 2>/dev/null; then
-        {
-            printf "%s\n" ''
-            cat <<'RCAPPEND'
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
-RCAPPEND
-        } >> "$SHELL_RC"
-    fi
-
-    printf "%b\n" "${GREEN}Node.js (LTS) installed via NVM.${RC}"
+    printf "%b\n" "${GREEN}Node.js installed via mise. Restart your shell or source your shell profile to use Node.js.${RC}"
 }
 
 checkEnv

@@ -1,54 +1,81 @@
-# Ruby installer via winget
+# Ruby installer via mise
 
 $esc   = [char]27
 $Yellow= "${esc}[33m"
 $Green = "${esc}[32m"
 $Red   = "${esc}[31m"
+$Cyan  = "${esc}[36m"
 $Reset = "${esc}[0m"
 
 function Test-CommandExists([string]$name) { Get-Command $name -ErrorAction SilentlyContinue }
 
-Write-Host "${Yellow}Installing Ruby...${Reset}"
+function Install-BuildDependencies {
+    Write-Host "${Yellow}Checking Windows build environment...${Reset}"
+    
+    # Check for Visual Studio Build Tools or Visual Studio
+    $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    if (Test-Path $vsWhere) {
+        $vsInstall = & $vsWhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+        if ($vsInstall) {
+            Write-Host "${Cyan}Visual Studio Build Tools found at: $vsInstall${Reset}"
+        } else {
+            Write-Host "${Yellow}Visual Studio Build Tools not found. Installing via winget...${Reset}"
+            try {
+                winget install Microsoft.VisualStudio.2022.BuildTools --silent --accept-package-agreements --accept-source-agreements
+            } catch {
+                Write-Host "${Yellow}Failed to install via winget. Please install Visual Studio Build Tools manually.${Reset}"
+            }
+        }
+    } else {
+        Write-Host "${Yellow}Visual Studio Installer not found. Installing via winget...${Reset}"
+        try {
+            winget install Microsoft.VisualStudio.2022.BuildTools --silent --accept-package-agreements --accept-source-agreements
+        } catch {
+            Write-Host "${Yellow}Failed to install via winget. Please install Visual Studio Build Tools manually.${Reset}"
+        }
+    }
+    
+    # Install Git if not present (required for some Ruby gems)
+    if (-not (Test-CommandExists git)) {
+        Write-Host "${Yellow}Installing Git...${Reset}"
+        try {
+            winget install Git.Git --silent --accept-package-agreements --accept-source-agreements
+        } catch {
+            Write-Host "${Yellow}Failed to install Git via winget. Please install Git manually.${Reset}"
+        }
+    }
+    
+    Write-Host "${Cyan}Note: For native gem compilation, ensure you have Visual Studio Build Tools installed.${Reset}"
+    Write-Host "${Cyan}Ruby on Windows typically uses pre-compiled binaries, but some gems may need compilation.${Reset}"
+}
 
-if (Test-CommandExists ruby) { Write-Host "${Green}Ruby already installed. Skipping.${Reset}"; exit 0 }
+Write-Host "${Yellow}Installing Ruby via mise...${Reset}"
 
+# Install build dependencies first
+Install-BuildDependencies
+
+# Install mise if not available
+if (-not (Test-CommandExists mise)) {
+  Write-Host "${Yellow}Installing mise...${Reset}"
+  try {
+    Invoke-WebRequest -Uri "https://mise.run/install.ps1" -OutFile "$env:TEMP\mise-install.ps1"
+    & "$env:TEMP\mise-install.ps1"
+    Remove-Item "$env:TEMP\mise-install.ps1" -ErrorAction SilentlyContinue
+  } catch { Write-Host "${Red}Failed to install mise: $($_.Exception.Message)${Reset}"; exit 1 }
+}
+
+# Install latest stable Ruby
 try {
-  # Resolve latest major.minor Ruby (non-DevKit) dynamically from winget
-  $parsed = $null
-  $raw = winget search RubyInstallerTeam.Ruby --source winget --accept-source-agreements --output json 2>$null
-  if ($raw) {
-    $text = ($raw | Out-String).Trim()
-    $start = $text.IndexOf('[')
-    if ($start -lt 0) { $start = $text.IndexOf('{') }
-    if ($start -ge 0) {
-      $jsonText = $text.Substring($start)
-      try { $parsed = $jsonText | ConvertFrom-Json } catch { $parsed = $null }
-    }
-  }
-
-  $items = @()
-  if ($parsed) { if ($parsed.Data) { $items = $parsed.Data } else { $items = $parsed } }
-
-  # If JSON parse failed, fallback to parsing text output
-  if (-not $items -or $items.Count -eq 0) {
-    $rawText = winget search RubyInstallerTeam.Ruby --source winget 2>$null | Out-String
-    $matches = [regex]::Matches($rawText, 'RubyInstallerTeam\.Ruby\.(\d+\.\d+)')
-    if ($matches.Count -gt 0) {
-      $versions = $matches | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique | ForEach-Object { [version]$_ } | Sort-Object -Descending
-      if ($versions.Count -gt 0) { $pkg = 'RubyInstallerTeam.Ruby.' + ($versions[0].ToString()) }
-    }
-  } else {
-    $candidates = $items | Where-Object { $_.Id -match '^RubyInstallerTeam\.Ruby\.[0-9]+\.[0-9]+$' }
-    if ($candidates -and $candidates.Count -gt 0) {
-      $latest = $candidates | Sort-Object @{ Expression = { [version]($_.Id -replace '^[^.]+\.[^.]+\.', '') } } -Descending | Select-Object -First 1
-      $pkg = $latest.Id
-    }
-  }
-
-  if (-not $pkg) { throw 'No Ruby candidates found via winget.' }
-
-  winget install -e --id $pkg -h --scope user --accept-package-agreements --accept-source-agreements
-  Write-Host "${Green}Ruby installed.${Reset}"
-} catch { Write-Host "${Red}Failed to install Ruby: $($_.Exception.Message)${Reset}"; exit 1 }
+  mise use -g ruby@latest
+  Write-Host "${Green}Ruby installed via mise. Restart your shell to use Ruby.${Reset}"
+  Write-Host "${Cyan}Note: For native gem compilation, ensure Visual Studio Build Tools are installed.${Reset}"
+  
+  # Troubleshooting guidance
+  Write-Host "${Cyan}Troubleshooting tips:${Reset}"
+  Write-Host "${Cyan}- If gem compilation fails, ensure Visual Studio Build Tools are installed${Reset}"
+  Write-Host "${Cyan}- For 'C compiler cannot create executables' error, check build environment${Reset}"
+  Write-Host "${Cyan}- Some gems may require specific Windows SDK versions${Reset}"
+  Write-Host "${Cyan}- For more help, see: https://github.com/rbenv/ruby-build/wiki${Reset}"
+} catch { Write-Host "${Red}Failed to install Ruby via mise: $($_.Exception.Message)${Reset}"; exit 1 }
 
 

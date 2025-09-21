@@ -3,32 +3,25 @@
 . ../common-script.sh
 
 installRust() {
-    if brewprogram_exists rustup; then
-        printf "%b\n" "${YELLOW}rustup detected. Updating to latest stable...${RC}"
-        rustup default stable
-        rustup update stable
-        rustup component add rustfmt clippy
-        printf "%b\n" "${GREEN}Rust toolchain is up-to-date (stable).${RC}"
-        return 0
+    printf "%b\n" "${YELLOW}Installing Rust via mise...${RC}"
+
+    # Install mise if not available
+    if ! command_exists mise; then
+        printf "%b\n" "${YELLOW}Installing mise...${RC}"
+        curl https://mise.run | sh
+        # Source mise in current shell
+        [ -f "$HOME/.local/share/mise/mise.sh" ] && . "$HOME/.local/share/mise/mise.sh"
     fi
 
-    printf "%b\n" "${YELLOW}Installing rustup and setting stable toolchain...${RC}"
-    if ! brew install rustup-init; then
-        printf "%b\n" "${RED}Failed to install rustup-init with Homebrew.${RC}"
-        exit 1
+    # Install latest stable Rust
+    mise use -g rust@latest
+
+    # Add rustfmt and clippy components
+    if command_exists rustup; then
+        rustup component add rustfmt clippy || true
     fi
 
-    rustup-init -y
-
-    if [ -f "$HOME/.cargo/env" ]; then
-        # shellcheck disable=SC1091
-        . "$HOME/.cargo/env"
-    fi
-
-    rustup default stable
-    rustup component add rustfmt clippy
-
-    printf "%b\n" "${GREEN}Rust (stable) installed. Restart your shell or source \"$HOME/.cargo/env\" to update PATH.${RC}"
+    printf "%b\n" "${GREEN}Rust installed via mise. Restart your shell or source your shell profile to use Rust.${RC}"
 }
 
 checkEnv

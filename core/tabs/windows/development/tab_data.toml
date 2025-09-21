@@ -1,38 +1,38 @@
 name = "Development"
 
 [[data]]
-name = "Rust (rustup)"
-description = "Installs the latest stable Rust toolchain via rustup and adds rustfmt and clippy."
+name = "Rust (mise)"
+description = "Installs the latest stable Rust toolchain via mise and adds rustfmt and clippy."
 script = "rust.ps1"
 task_list = "I"
 
 [[data]]
-name = "Go (golang)"
-description = "Installs Go via winget."
+name = "Go (mise)"
+description = "Installs the latest stable Go via mise."
 script = "go.ps1"
 task_list = "I"
 
 [[data]]
-name = "Node.js (Current)"
-description = "Installs Node.js via nvm-windows (preferred) or winget (fallback). Sets latest as default."
+name = "Node.js (mise)"
+description = "Installs the latest Node.js via mise."
 script = "node.ps1"
 task_list = "I"
 
 [[data]]
-name = "Zig"
-description = "Installs Zig via winget."
+name = "Zig (mise)"
+description = "Installs the latest stable Zig via mise."
 script = "zig.ps1"
 task_list = "I"
 
 [[data]]
-name = "Java (Temurin JDK)"
-description = "Installs Temurin JDK 21 (fallback 17) via winget."
+name = "Java (mise)"
+description = "Installs OpenJDK (prefers 21, falls back to 17) via mise."
 script = "java.ps1"
 task_list = "I"
 
 [[data]]
-name = "Ruby"
-description = "Installs Ruby (with DevKit) via winget."
+name = "Ruby (mise)"
+description = "Installs the latest stable Ruby via mise."
 script = "ruby.ps1"
 task_list = "I"
 

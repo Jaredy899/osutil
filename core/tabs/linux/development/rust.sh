@@ -3,37 +3,25 @@
 . ../common-script.sh
 
 installRust() {
-    if command_exists rustup; then
-        printf "%b\n" "${YELLOW}rustup detected. Updating to latest stable...${RC}"
-        rustup default stable || true
-        rustup update stable
-        rustup component add rustfmt clippy || true
-        printf "%b\n" "${GREEN}Rust toolchain is up-to-date (stable).${RC}"
-        return 0
+    printf "%b\n" "${YELLOW}Installing Rust via mise...${RC}"
+
+    # Install mise if not available
+    if ! command_exists mise; then
+        printf "%b\n" "${YELLOW}Installing mise...${RC}"
+        curl https://mise.run | sh
+        # Source mise in current shell
+        [ -f "$HOME/.local/share/mise/mise.sh" ] && . "$HOME/.local/share/mise/mise.sh"
     fi
 
-    printf "%b\n" "${YELLOW}Installing rustup and setting stable toolchain...${RC}"
-    case "$PACKAGER" in
-        dnf)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y curl rustup man-pages man-db man || true
-            rustup-init -y
-            ;;
-        apk)
-            "$ESCALATION_TOOL" "$PACKAGER" add build-base rustup curl || true
-            rustup-init -y
-            ;;
-        *)
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-            ;;
-    esac
+    # Install latest stable Rust
+    mise use -g rust@latest
 
-    # shellcheck disable=SC1091
-    [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+    # Add rustfmt and clippy components
+    if command_exists rustup; then
+        rustup component add rustfmt clippy || true
+    fi
 
-    rustup default stable
-    rustup component add rustfmt clippy || true
-
-    printf "%b\n" "${GREEN}Rust (stable) installed. Restart your shell or source \"$HOME/.cargo/env\" to update PATH.${RC}"
+    printf "%b\n" "${GREEN}Rust installed via mise. Restart your shell or source your shell profile to use Rust.${RC}"
 }
 
 checkEnv

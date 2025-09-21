@@ -3,50 +3,24 @@
 . ../common-script.sh
 
 installJava() {
-	printf "%b\n" "${YELLOW}Installing Java (OpenJDK LTS)...${RC}"
+    printf "%b\n" "${YELLOW}Installing Java via mise...${RC}"
 
-	case "$PACKAGER" in
-		pacman)
-			"$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm jdk-openjdk
-			;;
-		apt-get|nala)
-			"$ESCALATION_TOOL" "$PACKAGER" update
-			"$ESCALATION_TOOL" "$PACKAGER" install -y default-jdk
-			;;
-		dnf)
-			if ! "$ESCALATION_TOOL" "$PACKAGER" -y install java-21-openjdk-devel; then
-				"$ESCALATION_TOOL" "$PACKAGER" -y install java-17-openjdk-devel
-			fi
-			;;
-		zypper)
-			if ! "$ESCALATION_TOOL" "$PACKAGER" --non-interactive install java-21-openjdk-devel; then
-				"$ESCALATION_TOOL" "$PACKAGER" --non-interactive install java-17-openjdk-devel
-			fi
-			;;
-		apk)
-			if ! "$ESCALATION_TOOL" "$PACKAGER" add openjdk21-jdk; then
-				"$ESCALATION_TOOL" "$PACKAGER" add openjdk17-jdk
-			fi
-			;;
-		xbps-install)
-			if ! "$ESCALATION_TOOL" "$PACKAGER" -Sy openjdk17; then
-				"$ESCALATION_TOOL" "$PACKAGER" -Sy openjdk11
-			fi
-			;;
-		eopkg)
-			if ! "$ESCALATION_TOOL" "$PACKAGER" install -y openjdk-21; then
-				"$ESCALATION_TOOL" "$PACKAGER" install -y openjdk-17
-			fi
-			;;
-		*)
-			# Best-effort generic fallbacks
-			if ! "$ESCALATION_TOOL" "$PACKAGER" install -y default-jdk; then
-				"$ESCALATION_TOOL" "$PACKAGER" install -y openjdk
-			fi
-			;;
-	esac
+    # Install mise if not available
+    if ! command_exists mise; then
+        printf "%b\n" "${YELLOW}Installing mise...${RC}"
+        curl https://mise.run | sh
+        # Source mise in current shell
+        [ -f "$HOME/.local/share/mise/mise.sh" ] && . "$HOME/.local/share/mise/mise.sh"
+    fi
 
-	printf "%b\n" "${GREEN}Java (OpenJDK) installation complete.${RC}"
+    # Install latest LTS Java (prefer 21, fallback to 17)
+    if mise ls-remote java | grep -q "21\."; then
+        mise use -g java@21
+    else
+        mise use -g java@17
+    fi
+
+    printf "%b\n" "${GREEN}Java installed via mise. Restart your shell or source your shell profile to use Java.${RC}"
 }
 
 checkEnv

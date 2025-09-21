@@ -1,38 +1,38 @@
 name = "Development"
 
 [[data]]
-name = "Rust (rustup)"
-description = "Installs the latest stable Rust toolchain via rustup and adds rustfmt and clippy."
+name = "Rust (mise)"
+description = "Installs the latest stable Rust toolchain via mise and adds rustfmt and clippy."
 script = "rust.sh"
 task_list = "I"
 
 [[data]]
-name = "Go (golang)"
-description = "Installs the latest stable Go from the official tarball into /usr/local and configures PATH."
+name = "Go (mise)"
+description = "Installs the latest stable Go via mise."
 script = "go.sh"
 task_list = "I"
 
 [[data]]
-name = "Node.js (NVM)"
-description = "Installs NVM and the latest LTS Node.js, sets it as default, and enables Corepack (Yarn/pnpm)."
+name = "Node.js (mise)"
+description = "Installs the latest Node.js via mise and enables Corepack (Yarn/pnpm)."
 script = "node.sh"
 task_list = "I"
 
 [[data]]
-name = "Zig"
-description = "Installs the latest stable Zig from the official releases and symlinks zig to /usr/local/bin."
+name = "Zig (mise)"
+description = "Installs the latest stable Zig via mise."
 script = "zig.sh"
 task_list = "I"
 
 [[data]]
-name = "Java (OpenJDK LTS)"
-description = "Installs OpenJDK (prefers 21, falls back to 17) using the system package manager."
+name = "Java (mise)"
+description = "Installs OpenJDK (prefers 21, falls back to 17) via mise."
 script = "java.sh"
 task_list = "I"
 
 [[data]]
-name = "Ruby"
-description = "Installs Ruby using the system package manager."
+name = "Ruby (mise)"
+description = "Installs the latest stable Ruby via mise."
 script = "ruby.sh"
 task_list = "I"
 
