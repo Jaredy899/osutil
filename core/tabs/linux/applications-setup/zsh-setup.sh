@@ -107,11 +107,19 @@ installStarshipAndFzf() {
         }
     fi
 
-    if command_exists fzf; then
-        printf "%b\n" "${GREEN}Fzf already installed${RC}"
-    else
+    # Check if fzf is installed via apt and remove it
+    if command_exists fzf && dpkg -l | grep -q "^ii.*fzf "; then
+        printf "%b\n" "${YELLOW}Removing apt-installed fzf...${RC}"
+        "$ESCALATION_TOOL" "$PACKAGER" remove -y fzf
+    fi
+    
+    if ! command_exists fzf; then
+        printf "%b\n" "${YELLOW}Installing fzf...${RC}"
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-        "$ESCALATION_TOOL" ~/.fzf/install
+        ~/.fzf/install --all
+        printf "%b\n" "${GREEN}Fzf installed successfully!${RC}"
+    else
+        printf "%b\n" "${GREEN}Fzf already installed${RC}"
     fi
 }
 
@@ -234,7 +242,7 @@ checkEnv
 checkEscalationTool
 installZsh
 installDepend
-installFont
+# installFont
 installStarshipAndFzf
 installZoxide
 installMise

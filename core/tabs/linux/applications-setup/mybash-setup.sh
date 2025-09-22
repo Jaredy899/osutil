@@ -241,7 +241,7 @@ installDepend
 cloneDotfiles
 backupExistingConfigs
 downloadConfigs
-installFont
+# installFont
 installStarshipAndFzf
 installZoxide
 installMise
