@@ -20,9 +20,6 @@ setupNetworkManager() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy NetworkManager iwd
                 ;;
-            pkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y NetworkManager
-                ;;
             *)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y network-manager
                 ;;

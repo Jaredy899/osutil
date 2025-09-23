@@ -33,8 +33,8 @@ installNeovim() {
                 printf "%b\n" "${GREEN}Fzf already installed${RC}"
             fi
             ;;
-        dnf|pkg)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd-find tree-sitter gcc
+        dnf)
+            "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd-find tree-sitter-cli gcc
             ;;
         zypper)
             "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd tree-sitter gcc
@@ -44,6 +44,9 @@ installNeovim() {
             ;;
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Sy neovim git fzf ripgrep fd tree-sitter gcc
+            ;;
+        pkg)
+            "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd-find tree-sitter gcc
             ;;
         eopkg)
             "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd tree-sitter gcc

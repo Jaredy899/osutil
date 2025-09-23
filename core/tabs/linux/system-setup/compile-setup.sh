@@ -57,6 +57,12 @@ installDepend() {
             "$ESCALATION_TOOL" "$PACKAGER" install -y tar tree unzip cmake make jq || true
             "$ESCALATION_TOOL" "$PACKAGER" install -y $COMPILEDEPS || true
             ;;
+        pkg)
+            COMPILEDEPS='gcc gmake autotools'
+            "$ESCALATION_TOOL" "$PACKAGER" update
+            "$ESCALATION_TOOL" "$PACKAGER" install -y xtar tree py311-trash-cli unzip cmake make++ jq || true
+            "$ESCALATION_TOOL" "$PACKAGER" install -y $COMPILEDEPS || true
+            ;;
         *)
             "$ESCALATION_TOOL" "$PACKAGER" install -y $DEPENDENCIES || true
             ;;
