@@ -1,161 +1,24 @@
-# Optimized for speed: Uses best tool for each platform
-# - mingw-w64 + standard cargo for Windows (fastest native)
-# - cargo-zigbuild for Linux/musl and macOS (excellent performance)
-# - cross for FreeBSD (cargo-zigbuild doesn't support FreeBSD)
-name: Multi-Platform Release (Linux-only)
+# Local Build + GitHub Release Upload
+# Build your packages locally, then upload them to GitHub releases
+# Use: ./build-and-release.sh
+name: Release Documentation
 
 on:
   push:
     tags:
       - 'v*'
 
-permissions:
-  contents: write
-  packages: write
-
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  build:
+  documentation:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v5
-
-      # Install system dependencies
-      - name: Install system dependencies
+      - name: Release Info
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config curl git gcc-mingw-w64-x86-64
-
-      # Install Zig (for Linux/musl and macOS builds)
-      - name: Install Zig
-        uses: mlugg/setup-zig@v2
-        with:
-          version: latest
-
-      # Install Rust toolchain
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: >
-            x86_64-unknown-linux-musl,
-            aarch64-unknown-linux-musl,
-            armv7-unknown-linux-musleabihf,
-            x86_64-pc-windows-gnu,
-            x86_64-apple-darwin,
-            aarch64-apple-darwin,
-            x86_64-unknown-freebsd
-
-      # Install cargo tools
-      - name: Install cargo tools
-        run: |
-          cargo install cargo-zigbuild --locked
-          cargo install cross --locked  # For FreeBSD cross-compilation
-
-      - name: Cache Cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-registry-
-
-      - name: Cache Cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-index-
-
-      - name: Build all targets
-        run: |
-          set -euo pipefail
-          mkdir -p dist
-
-          echo "==> Linux (musl)"
-          cargo zigbuild --release --target x86_64-unknown-linux-musl --all-features
-          cp target/x86_64-unknown-linux-musl/release/osutil dist/osutil-linux-x86_64
-
-          cargo zigbuild --release --target aarch64-unknown-linux-musl --all-features
-          cp target/aarch64-unknown-linux-musl/release/osutil dist/osutil-linux-aarch64
-
-          cargo zigbuild --release --target armv7-unknown-linux-musleabihf --all-features
-          cp target/armv7-unknown-linux-musleabihf/release/osutil dist/osutil-linux-armv7
-
-          echo "==> Windows (GNU)"
-          cargo build --release --target x86_64-pc-windows-gnu --features syntax-highlighting
-          cp target/x86_64-pc-windows-gnu/release/osutil.exe dist/osutil-windows-x86_64-gnu.exe
-
-          echo "==> macOS (Darwin)"
-          cargo zigbuild --release --target x86_64-apple-darwin --all-features
-          cp target/x86_64-apple-darwin/release/osutil dist/osutil-macos-x86_64
-
-          cargo zigbuild --release --target aarch64-apple-darwin --all-features
-          cp target/aarch64-apple-darwin/release/osutil dist/osutil-macos-arm64
-
-          echo "==> FreeBSD (x86_64)"
-          cross build --release --target x86_64-unknown-freebsd --all-features
-          cp target/x86_64-unknown-freebsd/release/osutil dist/osutil-freebsd-x86_64
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: binaries
-          path: dist/*
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
-        with:
-          name: binaries
-          path: dist
-
-      - name: Extract version
-        id: extract_version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref }}
-          name: Release ${{ steps.extract_version.outputs.version }}
-          body: |
-            ## Downloads
-            
-            ### Linux (musl)
-            - **x86_64**: `osutil-linux-x86_64`
-            - **aarch64**: `osutil-linux-aarch64`
-            - **armv7l**: `osutil-linux-armv7`
-            
-            ### macOS
-            - **x86_64**: `osutil-macos-x86_64`
-            - **arm64**: `osutil-macos-arm64`
-            
-            ### Windows
-            - **x86_64 (GNU)**: `osutil-windows-x86_64-gnu.exe`
-            
-            ### FreeBSD
-            - **x86_64**: `osutil-freebsd-x86_64`
-            
-            ## Installation
-            
-            ### macOS, Linux, & FreeBSD
-            ```bash
-            sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh)
-            ```
-            
-            ### Windows
-            ```powershell
-            irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
-            ```
-
-          files: dist/*
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Release ${{ github.ref_name }} created via local build script"
+          echo "View at: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          echo ""
+          echo "To create releases locally, use:"
+          echo "  git tag v1.0.0"
+          echo "  git push origin v1.0.0"
+          echo "  ./build-and-release.sh"
