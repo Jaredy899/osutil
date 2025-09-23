@@ -63,13 +63,18 @@ task_list = "I"
 [[data.entries.preconditions]]
 matches = false
 data = "command_exists"
-values = ["xbps-install", "eopkg"]
+values = ["xbps-install", "eopkg", "pkg"]
 
 [[data.entries]]
 name = "JetBrains Toolbox"
 description = "JetBrains Toolbox is a collection of tools and an app that help developers work with JetBrains products."
 script = "developer-tools/jetbrains-toolbox.sh"
 task_list = "I"
+
+[[data.entries.preconditions]]
+matches = false
+data = "command_exists"
+values = ["pkg"]
 
 [[data.entries]]
 name = "Meld"
@@ -98,7 +103,7 @@ task_list = "I"
 [[data.entries.preconditions]]
 matches = false
 data = "command_exists"
-values = ["xbps-install", "eopkg", "apk"]
+values = ["xbps-install", "eopkg", "apk", "pkg"]
 
 [[data.entries]]
 name = "VS Code"
@@ -106,17 +111,32 @@ description = "Visual Studio Code (VS Code) is a lightweight, open-source code e
 script = "developer-tools/vscode.sh"
 task_list = "I"
 
+[[data.entries.preconditions]]
+matches = false
+data = "command_exists"
+values = ["pkg"]
+
 [[data.entries]]
 name = "VS Codium"
 description = "VSCodium is a free, open-source version of Visual Studio Code (VS Code) that removes Microsoft-specific telemetry and branding."
 script = "developer-tools/vscodium.sh"
 task_list = "I"
 
+[[data.entries.preconditions]]
+matches = false
+data = "command_exists"
+values = ["pkg"]
+
 [[data.entries]]
 name = "Zed"
 description = "Zed is a next-generation code editor written in rust, designed for high-performance collaboration with humans and AI."
 script = "developer-tools/zed.sh"
 task_list = "I"
+
+[[data.entries.preconditions]]
+matches = false
+data = "command_exists"
+values = ["pkg"]
 
 [[data.entries]]
 name = "Zellij"
@@ -135,7 +155,7 @@ task_list = "I"
 [[data.entries.preconditions]]
 matches = false
 data = "command_exists"
-values = ["xbps-install", "eopkg", "apk"]
+values = ["xbps-install", "eopkg", "apk", "pkg"]
 
 [[data.entries]]
 name = "LibreOffice"
@@ -156,6 +176,11 @@ values = ["xbps-install", "eopkg", "apk"]
 name = "WPS Office"
 script = "office-suites/wpsoffice.sh"
 task_list = "I"
+
+[[data.entries.preconditions]]
+matches = false
+data = "command_exists"
+values = ["pkg"]
 
 [[data]]
 name = "PDF Suites"
@@ -197,7 +222,7 @@ task_list = "I FM MP"
 [[data.entries.preconditions]]
 matches = false
 data = "command_exists"
-values = ["apt-get", "nala", "apk", "dnf"]
+values = ["apt-get", "nala", "apk", "dnf", "pkg"]
 
 [[data.entries]]
 name = "Kitty"
@@ -211,11 +236,21 @@ description = "Termius is an SSH client and terminal how it should be. Connect w
 script = "terminal-emulators/termius-setup.sh"
 task_list = "I FM"
 
+[[data.entries.preconditions]]
+matches = false
+data = "command_exists"
+values = ["pkg"]
+
 [[data.entries]]
 name = "Warp"
 description = "Warp is the intelligent terminal with AI and your dev team's knowledge built-in."
 script = "terminal-emulators/warp-setup.sh"
 task_list = "I FM"
+
+[[data.entries.preconditions]]
+matches = false
+data = "command_exists"
+values = ["pkg"]
 
 [[data]]
 name = "Web Browsers"
@@ -236,6 +271,11 @@ name = "Chromium"
 description = "Chromium is an open-source web browser project started by Google, to provide the source code for the proprietary Google Chrome browser."
 script = "browsers/chromium.sh"
 task_list = "I"
+
+[[data.entries.preconditions]]
+matches = false
+data = "command_exists"
+values = ["pkg"]
 
 [[data.entries]]
 name = "Google Chrome"
@@ -275,7 +315,7 @@ task_list = "I"
 [[data.entries.preconditions]]
 matches = false
 data = "command_exists"
-values = ["xbps-install", "eopkg", "apk"]
+values = ["xbps-install", "eopkg", "apk", "pkg"]
 
 [[data.entries]]
 name = "Vivaldi"
@@ -286,7 +326,7 @@ task_list = "I"
 [[data.entries.preconditions]]
 matches = false
 data = "command_exists"
-values = ["xbps-install", "apk"]
+values = ["xbps-install", "apk", "pkg"]
 
 [[data.entries]]
 name = "Tor Browser"
@@ -310,6 +350,11 @@ name = "Zen Browser"
 description = "Zen Browser is a privacy-focused web browser designed for enhanced security and a seamless browsing experience."
 script = "browsers/zen-browser.sh"
 task_list = "I"
+
+[[data.entries.preconditions]]
+matches = false
+data = "command_exists"
+values = ["pkg"]
 
 [[data]]
 name = "Android Debloater"
@@ -440,7 +485,7 @@ values = ["wayland", "Wayland"]
 [[data.preconditions]]
 matches = false
 data = "command_exists"
-values = ["xbps-install", "eopkg", "apk", "zypper"]
+values = ["xbps-install", "eopkg", "apk", "zypper", "pkg"]
 
 [[data]]
 name = "ZSH Prompt"

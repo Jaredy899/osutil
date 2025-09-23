@@ -31,9 +31,6 @@ installSublime() {
                 fi
                 "$ESCALATION_TOOL" "$PACKAGER" install -y sublime-text
                 ;;
-            pkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y linux-sublime
-                ;;
             *)
                 printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
                 exit 1

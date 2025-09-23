@@ -19,6 +19,9 @@ installZsh() {
                 ;;
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy zsh
+                ;;  
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y zsh
                 ;;
             *)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y zsh
@@ -60,6 +63,9 @@ installDepend() {
                 ;;
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy fastfetch
+                ;;
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y fastfetch
                 ;;
             *)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y fastfetch
@@ -140,6 +146,12 @@ installZoxide() {
 }
 
 installMise() {
+        # Skip mise installation on FreeBSD
+    if [ "$DTYPE" = "freebsd" ]; then
+        printf "%b\n" "${YELLOW}Skipping mise installation on FreeBSD (use pkg instead)${RC}"
+        return
+    fi
+
     if command_exists mise; then
         printf "%b\n" "${GREEN}Mise already installed${RC}"
         return

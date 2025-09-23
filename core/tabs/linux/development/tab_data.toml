@@ -6,6 +6,11 @@ description = "Installs the latest stable Rust toolchain via mise and adds rustf
 script = "rust.sh"
 task_list = "I"
 
+[[data.preconditions]]
+matches = false
+data = { containing_file = "/etc/os-release" }
+values = ["ID=freebsd"]
+
 [[data]]
 name = "Rust (pkg)"
 description = "Installs the latest stable Rust toolchain via pkg and adds rustfmt and clippy."
@@ -22,6 +27,11 @@ name = "Go (mise)"
 description = "Installs the latest stable Go via mise."
 script = "go.sh"
 task_list = "I"
+
+[[data.preconditions]]
+matches = false
+data = { containing_file = "/etc/os-release" }
+values = ["ID=freebsd"]
 
 [[data]]
 name = "Go (pkg)"
@@ -40,6 +50,11 @@ description = "Installs the latest Node.js via mise and enables Corepack (Yarn/p
 script = "node.sh"
 task_list = "I"
 
+[[data.preconditions]]
+matches = false
+data = { containing_file = "/etc/os-release" }
+values = ["ID=freebsd"]
+
 [[data]]
 name = "Node.js (pkg)"
 description = "Installs the latest Node.js via pkg and enables Corepack (Yarn/pnpm)."
@@ -56,6 +71,11 @@ name = "Zig (mise)"
 description = "Installs the latest stable Zig via mise."
 script = "zig.sh"
 task_list = "I"
+
+[[data.preconditions]]
+matches = false
+data = { containing_file = "/etc/os-release" }
+values = ["ID=freebsd"]
 
 [[data]]
 name = "Zig (pkg)"
@@ -74,6 +94,11 @@ description = "Installs OpenJDK (prefers 21, falls back to 17) via mise."
 script = "java.sh"
 task_list = "I"
 
+[[data.preconditions]]
+matches = false
+data = { containing_file = "/etc/os-release" }
+values = ["ID=freebsd"]
+
 [[data]]
 name = "Java (pkg)"
 description = "Installs OpenJDK (prefers 21, falls back to 17) via pkg."
@@ -90,6 +115,11 @@ name = "Ruby (mise)"
 description = "Installs the latest stable Ruby via mise."
 script = "ruby.sh"
 task_list = "I"
+
+[[data.preconditions]]
+matches = false
+data = { containing_file = "/etc/os-release" }
+values = ["ID=freebsd"]
 
 
 

@@ -128,7 +128,7 @@ case "$PKG_MGR" in
     INFO_CMD="pkg info {1}"
     INSTALL_CMD="sudo pkg install -y"
     REMOVE_CMD="sudo pkg remove -y"
-    INSTALLED_LIST=$(pkg query -e '%n')
+    INSTALLED_LIST=$(pkg query -a '%n')
     ;;
   none)
     echo "❌ No supported package manager found (apt, pacman, dnf, zypper, apk, eopkg, xbps, pkg)."
