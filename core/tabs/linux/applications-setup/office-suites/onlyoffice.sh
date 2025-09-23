@@ -17,6 +17,9 @@ installOnlyOffice() {
             pacman)
                 "$AUR_HELPER" -S --needed --noconfirm onlyoffice
                 ;;
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y onlyoffice-documentserver
+                ;;
             *)
                 printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
                 exit 1

@@ -34,7 +34,7 @@ install_docker() {
             zypper)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y docker docker-compose docker-compose-switch
                 ;;
-            eopkg)
+            eopkg|pkg)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y docker docker-compose
                 ;;
             apk)

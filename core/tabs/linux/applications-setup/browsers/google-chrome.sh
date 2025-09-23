@@ -23,6 +23,9 @@ installChrome() {
                 "$ESCALATION_TOOL" "$PACKAGER" config-manager --set-enabled google-chrome
                 "$ESCALATION_TOOL" "$PACKAGER" install -y google-chrome-stable
                 ;;
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y linux-chrome
+                ;;
             *)
                 printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
                 exit 1

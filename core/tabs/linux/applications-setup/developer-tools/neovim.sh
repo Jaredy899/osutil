@@ -3,43 +3,58 @@
 . ../../common-script.sh
 
 installNeovim() {
-    if ! command_exists neovim ripgrep git fzf; then
-    printf "%b\n" "${YELLOW}Installing Neovim with LazyVim...${RC}"
+    printf "%b\n" "${YELLOW}Installing Neovim with essential dependencies...${RC}"
     case "$PACKAGER" in
         pacman)
-            "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm neovim ripgrep fzf python-virtualenv luarocks go shellcheck git
+            "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm neovim git fzf ripgrep fd tree-sitter gcc
             ;;
         apt-get|nala)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y ripgrep fd-find fzf python3-venv luarocks golang-go shellcheck git curl
-            # Download and install latest Neovim release
+            # Install system packages
+            "$ESCALATION_TOOL" "$PACKAGER" install -y git ripgrep fd-find tree-sitter-cli gcc
+            # Download and install latest Neovim release (>= 0.11.2)
             curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
             "$ESCALATION_TOOL" rm -rf /opt/nvim
             "$ESCALATION_TOOL" tar -C /opt -xzf nvim-linux-x86_64.tar.gz
-            "$ESCALATION_TOOL" ln -s /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
+            "$ESCALATION_TOOL" ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
             rm -f nvim-linux-x86_64.tar.gz
+            
+            # Install fzf from git (better version)
+            if command_exists fzf && dpkg -l | grep -q "^ii.*fzf "; then
+                printf "%b\n" "${YELLOW}Removing apt-installed fzf...${RC}"
+                "$ESCALATION_TOOL" "$PACKAGER" remove -y fzf
+            fi
+            
+            if ! command_exists fzf; then
+                printf "%b\n" "${YELLOW}Installing fzf from git...${RC}"
+                git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+                ~/.fzf/install --all
+                printf "%b\n" "${GREEN}Fzf installed successfully!${RC}"
+            else
+                printf "%b\n" "${GREEN}Fzf already installed${RC}"
+            fi
             ;;
-        dnf)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y neovim ripgrep fzf python3-virtualenv luarocks golang ShellCheck git
+        dnf|pkg)
+            "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd-find tree-sitter gcc
             ;;
         zypper)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y neovim ripgrep fzf python3-virtualenv lua53-luarocks golang ShellCheck git
+            "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd tree-sitter gcc
             ;;
         apk)
-            "$ESCALATION_TOOL" "$PACKAGER" add neovim ripgrep fzf py3-virtualenv luarocks go shellcheck git
+            "$ESCALATION_TOOL" "$PACKAGER" add neovim git fzf ripgrep fd tree-sitter gcc
             ;;
         xbps-install)
-            "$ESCALATION_TOOL" "$PACKAGER" -Sy neovim ripgrep fzf python3-virtualenv luarocks go shellcheck git
+            "$ESCALATION_TOOL" "$PACKAGER" -Sy neovim git fzf ripgrep fd tree-sitter gcc
             ;;
         eopkg)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y neovim ripgrep fzf virtualenv luarocks golang shellcheck git
+            "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd tree-sitter gcc
             ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
             exit 1
             ;;
     esac
-    fi
 }
+
 
 backupNeovimConfig() {
     printf "%b\n" "${YELLOW}Backing up existing configuration files...${RC}"
@@ -63,6 +78,7 @@ installLazyVim() {
     printf "%b\n" "${CYAN}You can now start Neovim with 'nvim' to begin using LazyVim.${RC}"
     printf "%b\n" "${YELLOW}Tip: Run ':LazyHealth' after starting Neovim to check if everything is working correctly.${RC}"
 }
+
 
 checkEnv
 checkEscalationTool

@@ -146,6 +146,12 @@ checkPackageManager() {
         "$ESCALATION_TOOL" "$PACKAGER" update
     fi
 
+    ## Handle pkg (FreeBSD) package manager
+    if [ "$PACKAGER" = "pkg" ]; then
+        # Update package database
+        "$ESCALATION_TOOL" "$PACKAGER" update
+    fi
+
     if [ -z "$PACKAGER" ]; then
         printf "%b\n" "${RED}Can't find a supported package manager${RC}"
         exit 1
@@ -192,7 +198,7 @@ checkEnv() {
     checkArch
     checkEscalationTool
     checkCommandRequirements "curl groups $ESCALATION_TOOL"
-    checkPackageManager 'nala apt-get dnf pacman zypper apk xbps-install eopkg '
+    checkPackageManager 'nala apt-get dnf pacman zypper apk xbps-install eopkg pkg'
     checkCurrentDirectoryWritable
     checkSuperUser
     checkDistro

@@ -22,8 +22,8 @@ installLibreOffice() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy libreoffice
                 ;;
-            eopkg)
-                "$ESCALATION_TOOL" "$PACKAGER" -y install libreoffice
+            eopkg|pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y libreoffice
                 ;;
             *)
                 printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"

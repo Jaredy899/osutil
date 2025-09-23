@@ -23,7 +23,7 @@ installZellij() {
                     installZellijFromGitHub
                 fi
                 ;;
-            eopkg)
+            eopkg|pkg)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y zellij
                 ;;
             *)

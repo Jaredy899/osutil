@@ -23,6 +23,9 @@ installDiscord() {
             apk | xbps-install)
                 checkFlatpak
                 "$ESCALATION_TOOL" flatpak install -y flathub com.discordapp.Discord
+                ;;  
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y linux-discord
                 ;;
             *)
                 printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
