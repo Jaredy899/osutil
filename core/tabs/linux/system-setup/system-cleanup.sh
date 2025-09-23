@@ -32,6 +32,9 @@ cleanup_system() {
         eopkg)
             "$ESCALATION_TOOL" "$PACKAGER" -y remove-orphans
             ;;
+        pkg)
+            "$ESCALATION_TOOL" "$PACKAGER" -y autoremove
+            ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}. Skipping.${RC}"
             ;;

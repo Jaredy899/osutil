@@ -43,6 +43,14 @@ setup_ssh() {
             fi
             startAndEnableService "sshd"
             ;;
+        pkg)
+            if ! command_exists "openssh"; then
+                "$ESCALATION_TOOL" "$PACKAGER" install -y openssh-portable
+            else
+                printf "%b\n" "${GREEN}openssh-portable is already installed.${RC}"
+            fi
+            startAndEnableService "sshd"
+            ;;
         *)
             if ! command_exists "openssh-server"; then
                 "$ESCALATION_TOOL" "$PACKAGER" install -y openssh-server

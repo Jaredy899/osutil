@@ -7,10 +7,32 @@ script = "rust.sh"
 task_list = "I"
 
 [[data]]
+name = "Rust (pkg)"
+description = "Installs the latest stable Rust toolchain via pkg and adds rustfmt and clippy."
+script = "rust-pkg.sh"
+task_list = "I"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["pkg"]
+
+[[data]]
 name = "Go (mise)"
 description = "Installs the latest stable Go via mise."
 script = "go.sh"
 task_list = "I"
+
+[[data]]
+name = "Go (pkg)"
+description = "Installs the latest stable Go via pkg."
+script = "go-pkg.sh"
+task_list = "I"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["pkg"]
 
 [[data]]
 name = "Node.js (mise)"
@@ -19,10 +41,32 @@ script = "node.sh"
 task_list = "I"
 
 [[data]]
+name = "Node.js (pkg)"
+description = "Installs the latest Node.js via pkg and enables Corepack (Yarn/pnpm)."
+script = "node-pkg.sh"
+task_list = "I"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["pkg"]
+
+[[data]]
 name = "Zig (mise)"
 description = "Installs the latest stable Zig via mise."
 script = "zig.sh"
 task_list = "I"
+
+[[data]]
+name = "Zig (pkg)"
+description = "Installs the latest stable Zig via pkg."
+script = "zig-pkg.sh"
+task_list = "I"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["pkg"]
 
 [[data]]
 name = "Java (mise)"
@@ -31,9 +75,21 @@ script = "java.sh"
 task_list = "I"
 
 [[data]]
+name = "Java (pkg)"
+description = "Installs OpenJDK (prefers 21, falls back to 17) via pkg."
+script = "java-pkg.sh"
+task_list = "I"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["pkg"]
+
+[[data]]
 name = "Ruby (mise)"
 description = "Installs the latest stable Ruby via mise."
 script = "ruby.sh"
 task_list = "I"
+
 
 

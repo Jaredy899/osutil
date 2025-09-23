@@ -21,6 +21,9 @@ install_adb() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy android-tools
                 ;;
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y android-tools
+                ;;
             *)
                 printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
                 exit 1
