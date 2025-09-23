@@ -43,12 +43,12 @@ checkDocker() {
 }
 
 checkUfw() {
-    if ! command_exists ufw; then
-        printf "%b\n" "${RED}UFW is not installed. Please install UFW first using the ufw-baselines.sh script.${RC}"
+    if ! "$ESCALATION_TOOL" ufw status >/dev/null 2>&1; then
+        printf "%b\n" "${RED}UFW is not installed or not accessible. Please install UFW first using the ufw-baselines.sh script.${RC}"
         exit 1
     fi
     
-    printf "%b\n" "${GREEN}UFW is installed${RC}"
+    printf "%b\n" "${GREEN}UFW is installed and accessible${RC}"
 }
 
 configureUfwDocker() {
