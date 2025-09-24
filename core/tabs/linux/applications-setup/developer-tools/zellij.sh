@@ -23,6 +23,11 @@ installZellij() {
                     installZellijFromGitHub
                 fi
                 ;;
+            dnf)
+                printf "%b\n" "${YELLOW}Enabling Zellij COPR repository...${RC}"
+                "$ESCALATION_TOOL" "$PACKAGER" copr enable verlad/zellij -y
+                "$ESCALATION_TOOL" "$PACKAGER" install -y zellij
+                ;;
             eopkg|pkg)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y zellij
                 ;;
