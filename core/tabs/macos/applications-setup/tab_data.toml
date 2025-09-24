@@ -241,6 +241,12 @@ script = "raycast.sh"
 task_list = "I"
 
 [[data]]
+name = "Yazi"
+description = "Yazi is a fast, terminal-based file manager written in Rust, featuring asynchronous operations, image previews, and extensive customization options."
+script = "yazi.sh"
+task_list = "I"
+
+[[data]]
 name = "ZSH Prompt"
 description = "The Z shell is a Unix shell that can be used as an interactive login shell and as a command interpreter for shell scripting. Zsh is an extended Bourne shell with many improvements, including some features of Bash, ksh, and tcsh. This command installs ZSH prompt and provides basic configuration."
 script = "zsh.sh"
