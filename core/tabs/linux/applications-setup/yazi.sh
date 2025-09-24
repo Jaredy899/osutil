@@ -15,10 +15,10 @@ installYazi() {
                 
                 case "$ARCH" in
                     x86_64)
-                        YAZI_FILE="yazi-unknown-linux-gnu.tar.gz"
+                        YAZI_FILE="yazi-x86_64-unknown-linux-musl.zip"
                         ;;
                     aarch64)
-                        YAZI_FILE="yazi-unknown-linux-gnu.tar.gz"
+                        YAZI_FILE="yazi-aarch64-unknown-linux-musl.zip"
                         ;;
                     *)
                         printf "%b\n" "${RED}Unsupported architecture for Yazi install: $ARCH${RC}"
@@ -27,11 +27,11 @@ installYazi() {
                 esac
                 
                 printf "%b\n" "${YELLOW}Downloading Yazi from GitHub releases...${RC}"
-                curl -sSLo "/tmp/yazi.tar.gz" "https://github.com/sxyazi/yazi/releases/latest/download/$YAZI_FILE"
-                tar -xzf "/tmp/yazi.tar.gz" -C "/tmp/"
+                curl -sSLo "/tmp/yazi.zip" "https://github.com/sxyazi/yazi/releases/latest/download/$YAZI_FILE"
+                unzip -q "/tmp/yazi.zip" -d "/tmp/"
                 "$ESCALATION_TOOL" mv "/tmp/yazi" "/usr/local/bin/"
                 "$ESCALATION_TOOL" mv "/tmp/ya" "/usr/local/bin/"
-                rm "/tmp/yazi.tar.gz"
+                rm "/tmp/yazi.zip"
                 ;;
             apk)
                 "$ESCALATION_TOOL" "$PACKAGER" add yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
