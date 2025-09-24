@@ -28,7 +28,7 @@ installYazi() {
                 
                 printf "%b\n" "${YELLOW}Downloading Yazi from GitHub releases...${RC}"
                 curl -sSLo "/tmp/yazi.zip" "https://github.com/sxyazi/yazi/releases/latest/download/$YAZI_FILE"
-                unzip -q "/tmp/yazi.zip" -d "/tmp/"
+                unzip -j -q "/tmp/yazi.zip" -d "/tmp/" "*/yazi" "*/ya"
                 "$ESCALATION_TOOL" mv "/tmp/yazi" "/usr/local/bin/"
                 "$ESCALATION_TOOL" mv "/tmp/ya" "/usr/local/bin/"
                 rm "/tmp/yazi.zip"
