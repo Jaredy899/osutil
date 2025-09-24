@@ -4,13 +4,10 @@
 
 # Centralized dotfiles repository
 DOTFILES_REPO="${DOTFILES_REPO:-https://github.com/Jaredy899/dotfiles.git}"
-DOTFILES_DIR="$HOME/.local/share/dotfiles"
+DOTFILES_DIR="$HOME/dotfiles"
 
 cloneDotfiles() {
     printf "%b\n" "${YELLOW}Cloning dotfiles repository...${RC}"
-
-    # Ensure the parent directory exists
-    mkdir -p "$HOME/.local/share"
 
     if [ -d "$DOTFILES_DIR" ]; then
         printf "%b\n" "${CYAN}Dotfiles directory already exists. Pulling latest changes...${RC}"
@@ -28,37 +25,31 @@ cloneDotfiles() {
     printf "%b\n" "${GREEN}Dotfiles repository ready!${RC}"
 }
 
-backupZshConfig() {
-    printf "%b\n" "${YELLOW}Backing up existing Zsh configuration...${RC}"
+backupExistingConfigs() {
+    printf "%b\n" "${YELLOW}Backing up existing configuration files...${RC}"
 
-    # Backup existing .zshrc if it exists (skip if it's already a symlink)
-    if [ -f "$HOME/.zshrc" ] && [ ! -f "$HOME/.zshrc-backup" ] && [ ! -L "$HOME/.zshrc" ]; then
-        cp "$HOME/.zshrc" "$HOME/.zshrc-backup"
-        printf "%b\n" "${GREEN}Existing .zshrc backed up to .zshrc-backup.${RC}"
-    fi
+    # Create backup directory
+    BACKUP_DIR="$HOME/.config-backup-$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$BACKUP_DIR"
 
-    # Backup existing .config/zsh if it exists (skip if it's already a symlink)
-    if [ -d "$HOME/.config/zsh" ] && [ ! -d "$HOME/.config/zsh-backup" ] && [ ! -L "$HOME/.config/zsh" ]; then
-        cp -r "$HOME/.config/zsh" "$HOME/.config/zsh-backup"
-        printf "%b\n" "${GREEN}Existing Zsh config backed up to .config/zsh-backup.${RC}"
-    fi
+    # Backup existing configs that might conflict with Stow
+    for config in .zshrc .config/zsh .config/starship.toml .config/fastfetch .config/mise; do
+        if [ -e "$HOME/$config" ] && [ ! -L "$HOME/$config" ]; then
+            printf "%b\n" "${CYAN}Backing up $config...${RC}"
+            cp -r "$HOME/$config" "$BACKUP_DIR/"
+        fi
+    done
 
-    # Backup existing starship config if it exists (skip if it's already a symlink)
-    if [ -f "$HOME/.config/starship.toml" ] && [ ! -f "$HOME/.config/starship.toml.bak" ] && [ ! -L "$HOME/.config/starship.toml" ]; then
-        cp "$HOME/.config/starship.toml" "$HOME/.config/starship.toml.bak"
-        printf "%b\n" "${GREEN}Existing starship config backed up to .config/starship.toml.bak${RC}"
-    fi
-
-    # Backup existing fastfetch config if it exists (skip if it's already a symlink)
-    if [ -d "$HOME/.config/fastfetch" ] && [ ! -d "$HOME/.config/fastfetch-bak" ] && [ ! -L "$HOME/.config/fastfetch" ]; then
-        cp -r "$HOME/.config/fastfetch" "$HOME/.config/fastfetch-bak"
-        printf "%b\n" "${GREEN}Existing fastfetch config backed up to .config/fastfetch-bak${RC}"
+    if [ -d "$BACKUP_DIR" ]; then
+        printf "%b\n" "${GREEN}Existing configs backed up to $BACKUP_DIR${RC}"
+    else
+        printf "%b\n" "${GREEN}No existing configs to backup${RC}"
     fi
 }
 
 installZshDepend() {
     # List of dependencies
-    DEPENDENCIES="zsh-autocomplete bat tree multitail fastfetch wget unzip fontconfig starship fzf zoxide"
+    DEPENDENCIES="stow zsh-autocomplete bat tree multitail fastfetch wget unzip fontconfig starship fzf zoxide"
 
     printf "%b\n" "${CYAN}Installing dependencies...${RC}"
     for package in $DEPENDENCIES; do
@@ -89,8 +80,8 @@ installZshDepend() {
         fi
     done
 
-    if [ -e ~/.fzf/install ]; then
-        if ! ~/.fzf/install --all; then
+    if [ -e "$HOME/.fzf/install" ]; then
+        if ! "$HOME/.fzf/install" --all; then
             printf "%b\n" "${RED}Failed to install fzf. Please check your brew installation.${RC}"
             exit 1
         fi
@@ -113,76 +104,28 @@ installMise() {
     fi
 }
 
-setupStarshipConfig() {
-  printf "%b\n" "${YELLOW}Setting up Starship configuration...${RC}"
+setupDotfilesWithStow() {
+    printf "%b\n" "${YELLOW}Setting up dotfiles with GNU Stow...${RC}"
 
-  # Symlink starship.toml from dotfiles repo
-  if [ -f "$DOTFILES_DIR/config/starship.toml" ]; then
-    mkdir -p "$HOME/.config"
-    if [ -L "$HOME/.config/starship.toml" ] || [ -f "$HOME/.config/starship.toml" ]; then
-      rm -f "$HOME/.config/starship.toml"
+    if [ ! -d "$DOTFILES_DIR" ]; then
+        printf "%b\n" "${RED}Dotfiles directory not found at $DOTFILES_DIR${RC}"
+        exit 1
     fi
-    ln -sf "$DOTFILES_DIR/config/starship.toml" "$HOME/.config/starship.toml"
-    printf "%b\n" "${GREEN}Starship configuration symlinked successfully.${RC}"
-  else
-    printf "%b\n" "${YELLOW}Starship config not found in dotfiles repo, skipping...${RC}"
-  fi
-}
 
-setupFastfetchConfig() {
+    # Change to dotfiles directory and stow packages
+    cd "$DOTFILES_DIR" && stow zsh config
+
+    # Manual symlink for fastfetch config due to non-standard structure
     printf "%b\n" "${YELLOW}Setting up Fastfetch configuration...${RC}"
+    mkdir -p "$HOME/.config/fastfetch"
+    ln -sf "$DOTFILES_DIR/config/.config/fastfetch/macos.jsonc" "$HOME/.config/fastfetch/config.jsonc"
 
-    # Symlink fastfetch config from dotfiles repo
-    if [ -f "$DOTFILES_DIR/config/fastfetch/macos.jsonc" ]; then
-        mkdir -p "$HOME/.config/fastfetch"
-        if [ -L "$HOME/.config/fastfetch/config.jsonc" ] || [ -f "$HOME/.config/fastfetch/config.jsonc" ]; then
-            rm -f "$HOME/.config/fastfetch/config.jsonc"
-        fi
-        ln -sf "$DOTFILES_DIR/config/fastfetch/macos.jsonc" "$HOME/.config/fastfetch/config.jsonc"
-        printf "%b\n" "${GREEN}Fastfetch configuration symlinked successfully.${RC}"
-    else
-        printf "%b\n" "${YELLOW}Fastfetch config not found in dotfiles repo, skipping...${RC}"
-    fi
-}
-
-setupMiseConfig() {
-    printf "%b\n" "${YELLOW}Setting up Mise configuration...${RC}"
-
-    # Symlink mise config from dotfiles repo
-    if [ -f "$DOTFILES_DIR/config/mise/config.toml" ]; then
-        mkdir -p "$HOME/.config/mise"
-        if [ -L "$HOME/.config/mise/config.toml" ] || [ -f "$HOME/.config/mise/config.toml" ]; then
-            rm -f "$HOME/.config/mise/config.toml"
-        fi
-        ln -sf "$DOTFILES_DIR/config/mise/config.toml" "$HOME/.config/mise/config.toml"
-        printf "%b\n" "${GREEN}Mise configuration symlinked successfully.${RC}"
-    else
-        printf "%b\n" "${YELLOW}Mise config not found in dotfiles repo, skipping...${RC}"
-    fi
-}
-
-# Function to setup zsh configuration
-setupZshConfig() {
-  printf "%b\n" "${YELLOW}Setting up Zsh configuration...${RC}"
-
-  # Symlink .zshrc from dotfiles repo
-  if [ -f "$DOTFILES_DIR/zsh/.zshrc" ]; then
-    if [ -L "$HOME/.zshrc" ] || [ -f "$HOME/.zshrc" ]; then
-      rm -f "$HOME/.zshrc"
-    fi
-    ln -sf "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
-    printf "%b\n" "${GREEN}Zsh configuration symlinked successfully. Restart Shell.${RC}"
-  else
-    printf "%b\n" "${YELLOW}.zshrc not found in dotfiles repo, skipping...${RC}"
-  fi
+    printf "%b\n" "${GREEN}All dotfiles configured with Stow! Restart your shell to see changes.${RC}"
 }
 
 checkEnv
 cloneDotfiles
-backupZshConfig
+backupExistingConfigs
 installZshDepend
 installMise
-setupStarshipConfig
-setupFastfetchConfig
-setupMiseConfig
-setupZshConfig
+setupDotfilesWithStow
