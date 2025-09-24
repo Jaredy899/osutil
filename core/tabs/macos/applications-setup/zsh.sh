@@ -2,7 +2,6 @@
 
 . ../common-script.sh
 
-# Centralized dotfiles repository
 DOTFILES_REPO="${DOTFILES_REPO:-https://github.com/Jaredy899/dotfiles.git}"
 DOTFILES_DIR="$HOME/dotfiles"
 
@@ -26,30 +25,18 @@ cloneDotfiles() {
 }
 
 backupExistingConfigs() {
-    printf "%b\n" "${YELLOW}Backing up existing configuration files...${RC}"
-
-    # Create backup directory
     BACKUP_DIR="$HOME/.config-backup-$(date +%Y%m%d-%H%M%S)"
-    mkdir -p "$BACKUP_DIR"
-
-    # Backup existing configs that might conflict with Stow
+    
     for config in .zshrc .config/zsh .config/starship.toml .config/fastfetch .config/mise; do
         if [ -e "$HOME/$config" ] && [ ! -L "$HOME/$config" ]; then
-            printf "%b\n" "${CYAN}Backing up $config...${RC}"
+            mkdir -p "$BACKUP_DIR"
             cp -r "$HOME/$config" "$BACKUP_DIR/"
         fi
     done
-
-    if [ -d "$BACKUP_DIR" ]; then
-        printf "%b\n" "${GREEN}Existing configs backed up to $BACKUP_DIR${RC}"
-    else
-        printf "%b\n" "${GREEN}No existing configs to backup${RC}"
-    fi
 }
 
 installZshDepend() {
-    # List of dependencies
-    DEPENDENCIES="stow zsh-autocomplete bat tree multitail fastfetch wget unzip fontconfig starship fzf zoxide"
+    DEPENDENCIES="stow zsh-autocomplete bat tree multitail fastfetch wget unzip fontconfig starship fzf zoxide mise"
 
     printf "%b\n" "${CYAN}Installing dependencies...${RC}"
     for package in $DEPENDENCIES; do
@@ -64,45 +51,16 @@ installZshDepend() {
         fi
     done
 
-    # List of cask dependencies
-    CASK_DEPENDENCIES="ghostty font-fira-code-nerd-font"
-
-    printf "%b\n" "${CYAN}Installing cask dependencies...${RC}"
-    for cask in $CASK_DEPENDENCIES; do
-        if brewprogram_exists "$cask"; then
-            printf "%b\n" "${GREEN}$cask is already installed, skipping...${RC}"
-        else
-            printf "%b\n" "${CYAN}Installing $cask...${RC}"
-            if ! brew install --cask "$cask"; then
-                printf "%b\n" "${RED}Failed to install $cask. Please check your brew installation.${RC}"
-                exit 1
-            fi
-        fi
-    done
-
-    if [ -e "$HOME/.fzf/install" ]; then
-        if ! "$HOME/.fzf/install" --all; then
-            printf "%b\n" "${RED}Failed to install fzf. Please check your brew installation.${RC}"
+    if ! brewprogram_exists ghostty; then
+        printf "%b\n" "${CYAN}Installing ghostty...${RC}"
+        if ! brew install --cask ghostty; then
+            printf "%b\n" "${RED}Failed to install ghostty. Please check your brew installation.${RC}"
             exit 1
         fi
     fi
+
 }
 
-installMise() {
-    if command_exists mise; then
-        printf "%b\n" "${GREEN}Mise already installed${RC}"
-        return
-    fi
-
-    printf "%b\n" "${CYAN}Installing mise...${RC}"
-    if ! curl -sSL https://mise.run | sh; then
-        printf "%b\n" "${RED}Failed to install mise${RC}"
-        exit 1
-    else
-        printf "%b\n" "${GREEN}Mise installed successfully!${RC}"
-        printf "%b\n" "${YELLOW}Please restart your shell to see the changes.${RC}"
-    fi
-}
 
 setupDotfilesWithStow() {
     printf "%b\n" "${YELLOW}Setting up dotfiles with GNU Stow...${RC}"
@@ -112,11 +70,10 @@ setupDotfilesWithStow() {
         exit 1
     fi
 
-    # Change to dotfiles directory and stow packages
+    mkdir -p "$HOME/.config"
+
     cd "$DOTFILES_DIR" && stow zsh config
 
-    # Manual symlink for fastfetch config due to non-standard structure
-    printf "%b\n" "${YELLOW}Setting up Fastfetch configuration...${RC}"
     mkdir -p "$HOME/.config/fastfetch"
     ln -sf "$DOTFILES_DIR/config/.config/fastfetch/macos.jsonc" "$HOME/.config/fastfetch/config.jsonc"
 
@@ -127,5 +84,4 @@ checkEnv
 cloneDotfiles
 backupExistingConfigs
 installZshDepend
-installMise
 setupDotfilesWithStow
