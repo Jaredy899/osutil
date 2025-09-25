@@ -573,7 +573,7 @@ checksum = "b4ce411919553d3f9fa53a0880544cda985a112117a0444d5ff1e870a893d6ea"
 
 [[package]]
 name = "osutil_core"
-version = "1.9.3"
+version = "1.9.4"
 dependencies = [
  "ego-tree",
  "include_dir",
@@ -585,7 +585,7 @@ dependencies = [
 
 [[package]]
 name = "osutil_tui"
-version = "1.9.3"
+version = "1.9.4"
 dependencies = [
  "anyhow",
  "clap",
@@ -1432,7 +1432,7 @@ checksum = "d135d17ab770252ad95e9a872d365cf3090e3be864a34ab46f48555993efc904"
 
 [[package]]
 name = "xtask"
-version = "1.9.3"
+version = "1.9.4"
 dependencies = [
  "osutil_core",
 ]
