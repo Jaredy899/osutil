@@ -7,7 +7,7 @@ $Reset = "${esc}[0m"
 
 # Centralized dotfiles repository
 $dotfilesRepo = if ($env:DOTFILES_REPO) { $env:DOTFILES_REPO } else { "https://github.com/Jaredy899/dotfiles.git" }
-$dotfilesDir = "$env:USERPROFILE"
+$dotfilesDir = "$env:USERPROFILE\dotfiles"
 
 # Ensure clean input handling for TUI environment
 
@@ -42,14 +42,17 @@ function Invoke-CloneDotfiles {
             Pop-Location
         } catch {
             Write-Host "${Red}Failed to update dotfiles repository: $($_.Exception.Message)${Reset}"
-            exit 1
+            Write-Host "${Yellow}Continuing with existing dotfiles...${Reset}"
         }
     } else {
+        Write-Host "${Cyan}Cloning dotfiles repository to: $dotfilesDir${Reset}"
         try {
             git clone $dotfilesRepo $dotfilesDir
+            Write-Host "${Green}Dotfiles repository cloned successfully!${Reset}"
         } catch {
             Write-Host "${Red}Failed to clone dotfiles repository: $($_.Exception.Message)${Reset}"
-            exit 1
+            Write-Host "${Yellow}Continuing without dotfiles...${Reset}"
+            return
         }
     }
 
@@ -321,11 +324,18 @@ function Initialize-Profile {
     param(
         [string]$profilePath
     )
+    Write-Host "${Cyan}Initializing profile: $profilePath${Reset}"
     $profileDir = Split-Path $profilePath
-    if (-not (Test-Path -Path $profileDir)) { New-Item -ItemType Directory -Path $profileDir -Force | Out-Null }
+    if (-not (Test-Path -Path $profileDir)) { 
+        New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
+        Write-Host "${Green}Created profile directory: $profileDir${Reset}"
+    }
 
     $sourceProfile = Join-Path $dotfilesDir "powershell\Microsoft.PowerShell_profile.ps1"
+    Write-Host "${Cyan}Looking for source profile at: $sourceProfile${Reset}"
+    
     if (Test-Path -Path $sourceProfile) {
+        Write-Host "${Green}Found source profile, setting up symlink...${Reset}"
         # Remove existing profile if it exists (but backup if it's not already a symlink)
         if (Test-Path -Path $profilePath) {
             $item = Get-Item $profilePath
@@ -345,7 +355,12 @@ function Initialize-Profile {
             Write-Host "${Red}Failed to create symlink for profile: $($_.Exception.Message)${Reset}"
         }
     } else {
-        Write-Host "${Yellow}PowerShell profile not found in dotfiles repo, skipping...${Reset}"
+        Write-Host "${Yellow}PowerShell profile not found in dotfiles repo at: $sourceProfile${Reset}"
+        Write-Host "${Yellow}Dotfiles directory exists: $(Test-Path -Path $dotfilesDir)${Reset}"
+        if (Test-Path -Path $dotfilesDir) {
+            Write-Host "${Yellow}Contents of dotfiles directory:${Reset}"
+            Get-ChildItem -Path $dotfilesDir | ForEach-Object { Write-Host "  $($_.Name)" }
+        }
     }
 }
 
@@ -356,6 +371,7 @@ Initialize-Profile -profilePath $ps7ProfilePath
 
 # Config files (fastfetch, starship, mise)
 function Initialize-ConfigFiles {
+    Write-Host "${Cyan}Initializing config files...${Reset}"
     $userConfigDir = "$env:UserProfile\.config"
     $fastfetchConfigDir = "$userConfigDir\fastfetch"
     $miseConfigDir = "$userConfigDir\mise"
@@ -365,6 +381,7 @@ function Initialize-ConfigFiles {
     # Symlink fastfetch config
     $sourceFastfetchConfig = Join-Path $dotfilesDir "config\fastfetch\windows.jsonc"
     $targetFastfetchConfig = Join-Path $fastfetchConfigDir 'config.jsonc'
+    Write-Host "${Cyan}Looking for fastfetch config at: $sourceFastfetchConfig${Reset}"
     if (Test-Path -Path $sourceFastfetchConfig) {
         if (Test-Path -Path $targetFastfetchConfig) {
             $item = Get-Item $targetFastfetchConfig
@@ -388,6 +405,7 @@ function Initialize-ConfigFiles {
     # Symlink starship config
     $sourceStarshipConfig = Join-Path $dotfilesDir "config\starship.toml"
     $targetStarshipConfig = Join-Path $userConfigDir 'starship.toml'
+    Write-Host "${Cyan}Looking for starship config at: $sourceStarshipConfig${Reset}"
     if (Test-Path -Path $sourceStarshipConfig) {
         if (Test-Path -Path $targetStarshipConfig) {
             $item = Get-Item $targetStarshipConfig
@@ -411,6 +429,7 @@ function Initialize-ConfigFiles {
     # Symlink mise config
     $sourceMiseConfig = Join-Path $dotfilesDir "config\mise\config.toml"
     $targetMiseConfig = Join-Path $miseConfigDir 'config.toml'
+    Write-Host "${Cyan}Looking for mise config at: $sourceMiseConfig${Reset}"
     if (Test-Path -Path $sourceMiseConfig) {
         if (Test-Path -Path $targetMiseConfig) {
             $item = Get-Item $targetMiseConfig
