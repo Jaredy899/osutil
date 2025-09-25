@@ -10,7 +10,7 @@ installNeovim() {
             ;;
         apt-get|nala)
             # Install system packages
-            "$ESCALATION_TOOL" "$PACKAGER" install -y git ripgrep fd-find tree-sitter-cli gcc
+            "$ESCALATION_TOOL" "$PACKAGER" install -y git ripgrep fd-find tree-sitter-cli gcc # fzf will be installed from git
             # Download and install latest Neovim release (>= 0.11.2)
             curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
             "$ESCALATION_TOOL" rm -rf /opt/nvim
