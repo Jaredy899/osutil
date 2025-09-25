@@ -11,7 +11,7 @@ installYazi() {
                 ;;
             apt-get|nala)
                 "$ESCALATION_TOOL" "$PACKAGER" update
-                "$ESCALATION_TOOL" "$PACKAGER" install -y ffmpeg 7zip jq poppler-utils fd-find ripgrep imagemagick # fzf and zoxide will be installed from git
+                "$ESCALATION_TOOL" "$PACKAGER" install -y ffmpeg 7zip jq poppler-utils fd-find ripgrep imagemagick # fzf and zoxide will be installed from shell-setup
                 
                 case "$ARCH" in
                     x86_64)
