@@ -11,7 +11,18 @@ DOTFILES_DIR="$HOME/dotfiles"
 
 # Shell detection function
 detectShell() {
-    # Check for shell-specific environment variables first
+    # Primary method: check $SHELL environment variable (most reliable)
+    if [ -n "$SHELL" ]; then
+        CURRENT_SHELL=$(basename "$SHELL")
+        case "$CURRENT_SHELL" in
+            zsh|bash|ksh|fish|ash|dash|busybox)
+                echo "$CURRENT_SHELL"
+                return
+                ;;
+        esac
+    fi
+    
+    # Check for shell-specific environment variables
     for shell_var in ZSH_VERSION BASH_VERSION KSH_VERSION FISH_VERSION ASH_VERSION BB_ASH_VERSION; do
         if [ -n "$(eval echo \$$shell_var)" ]; then
             case "$shell_var" in
@@ -26,30 +37,43 @@ detectShell() {
         fi
     done
     
-    # Fallback: check the current shell from $0 or $SHELL
-    CURRENT_SHELL=$(basename "${0:-$SHELL}")
-    case "$CURRENT_SHELL" in
-        zsh|bash|ksh|fish|ash|dash|busybox)
-            echo "$CURRENT_SHELL"
-            ;;
-        *)
-            # Final fallback: check what shells are available
-            for shell in zsh bash fish; do
-                if command_exists "$shell"; then
-                    echo "$shell"
-                    return
-                fi
-            done
-            echo "sh"
-            ;;
-    esac
+    # Check /proc/$$/comm (Linux-specific but very reliable)
+    if [ -f "/proc/$$/comm" ]; then
+        CURRENT_SHELL=$(cat /proc/$$/comm 2>/dev/null)
+        case "$CURRENT_SHELL" in
+            zsh|bash|ksh|fish|ash|dash|busybox)
+                echo "$CURRENT_SHELL"
+                return
+                ;;
+        esac
+    fi
+    
+    # Check the actual running shell process
+    if command_exists ps; then
+        CURRENT_SHELL=$(ps -p $$ -o comm= 2>/dev/null | sed 's/^-//' | head -1)
+        case "$CURRENT_SHELL" in
+            zsh|bash|ksh|fish|ash|dash|busybox)
+                echo "$CURRENT_SHELL"
+                return
+                ;;
+        esac
+    fi
+    
+    # Final fallback: check what shells are available
+    for shell in zsh bash fish; do
+        if command_exists "$shell"; then
+            echo "$shell"
+            return
+        fi
+    done
+    echo "sh"
 }
 
 installDependencies() {
     printf "%b\n" "${YELLOW}Installing dependencies...${RC}"
     
     # Base packages needed for all configurations
-    BASE_PACKAGES="tar bat tree unzip fontconfig git fastfetch stow fzf"
+    BASE_PACKAGES="tar bat tree unzip fontconfig git fastfetch fzf"
     
     # Add shell-specific packages based on choice
     case "$SHELL_CHOICE" in
@@ -160,57 +184,126 @@ getShellChoice() {
     esac
 }
 
-stowConfigs() {
-    printf "%b\n" "${YELLOW}Stowing configs with GNU Stow...${RC}"
+
+symlinkConfigs() {
+    printf "%b\n" "${YELLOW}Symlinking configuration files...${RC}"
     
-    # Change to dotfiles config directory
-    cd "$DOTFILES_DIR/config"
+    # Create necessary directories
+    mkdir -p "$config_dir" "$config_dir/fastfetch" "$config_dir/mise"
     
-    # Stow specific config packages only
-    printf "%b\n" "${YELLOW}Stowing fastfetch config...${RC}"
-    stow fastfetch
-    
-    printf "%b\n" "${YELLOW}Stowing mise config...${RC}"
-    stow mise
-    
-    printf "%b\n" "${YELLOW}Stowing starship config...${RC}"
-    stow starship
-    
-    # Stow sh profile only on Alpine/BusyBox systems
-    if grep -qi alpine /etc/os-release 2>/dev/null || [ "$(detectShell)" = "busybox" ] || [ "$(detectShell)" = "ash" ]; then
-        printf "%b\n" "${YELLOW}Stowing sh profile (Alpine/BusyBox detected)...${RC}"
-        stow sh
+    # Symlink starship config
+    if [ -f "$DOTFILES_DIR/config/starship.toml" ]; then
+        if [ -L "$config_dir/starship.toml" ] || [ -f "$config_dir/starship.toml" ]; then
+            rm -f "$config_dir/starship.toml"
+        fi
+        ln -sf "$DOTFILES_DIR/config/starship.toml" "$config_dir/starship.toml"
+        printf "%b\n" "${GREEN}Symlinked starship.toml from dotfiles${RC}"
+    else
+        printf "%b\n" "${YELLOW}starship.toml not found in dotfiles repo, skipping...${RC}"
     fi
     
-    # Change back to dotfiles root for shell configs
-    cd "$DOTFILES_DIR"
+    # Symlink fastfetch config based on platform
+    case "$DTYPE" in
+        linux)
+            FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/linux.jsonc"
+            ;;
+        darwin)
+            FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/macos.jsonc"
+            ;;
+        freebsd)
+            FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/linux.jsonc"
+            ;;
+        *)
+            FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/linux.jsonc"
+            ;;
+    esac
     
-    # Stow shell-specific configs based on user choice
+    if [ -f "$FASTFETCH_CONFIG" ]; then
+        if [ -L "$config_dir/fastfetch/config.jsonc" ] || [ -f "$config_dir/fastfetch/config.jsonc" ]; then
+            rm -f "$config_dir/fastfetch/config.jsonc"
+        fi
+        ln -sf "$FASTFETCH_CONFIG" "$config_dir/fastfetch/config.jsonc"
+        printf "%b\n" "${GREEN}Symlinked fastfetch config from dotfiles${RC}"
+    else
+        printf "%b\n" "${YELLOW}fastfetch config not found in dotfiles repo, skipping...${RC}"
+    fi
+    
+    # Symlink mise config
+    if [ -f "$DOTFILES_DIR/config/mise/config.toml" ]; then
+        if [ -L "$config_dir/mise/config.toml" ] || [ -f "$config_dir/mise/config.toml" ]; then
+            rm -f "$config_dir/mise/config.toml"
+        fi
+        ln -sf "$DOTFILES_DIR/config/mise/config.toml" "$config_dir/mise/config.toml"
+        printf "%b\n" "${GREEN}Symlinked mise config from dotfiles${RC}"
+    else
+        printf "%b\n" "${YELLOW}mise config not found in dotfiles repo, skipping...${RC}"
+    fi
+    
+    # Handle shell-specific configs based on user choice
     case "$SHELL_CHOICE" in
         bash)
-            printf "%b\n" "${YELLOW}Stowing bash configuration...${RC}"
-            stow bash
+            printf "%b\n" "${YELLOW}Setting up bash configuration...${RC}"
+            if [ -f "$DOTFILES_DIR/bash/.bashrc" ]; then
+                if [ -L "$HOME/.bashrc" ] || [ -f "$HOME/.bashrc" ]; then
+                    rm -f "$HOME/.bashrc"
+                fi
+                ln -sf "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
+                printf "%b\n" "${GREEN}Symlinked .bashrc from dotfiles${RC}"
+            else
+                printf "%b\n" "${YELLOW}.bashrc not found in dotfiles repo, skipping...${RC}"
+            fi
             ;;
         zsh)
-            printf "%b\n" "${YELLOW}Stowing zsh configuration...${RC}"
-            stow zsh
-            # Handle zsh-specific setup
-            setupZshEnv
+            printf "%b\n" "${YELLOW}Setting up zsh configuration...${RC}"
+            
+            if [ -f "$DOTFILES_DIR/zsh/.zshrc" ]; then
+                if [ -L "$HOME/.zshrc" ] || [ -f "$HOME/.zshrc" ]; then
+                    rm -f "$HOME/.zshrc"
+                fi
+                ln -sf "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
+                printf "%b\n" "${GREEN}Symlinked .zshrc from dotfiles${RC}"
+            else
+                printf "%b\n" "${YELLOW}.zshrc not found in dotfiles repo, skipping...${RC}"
+            fi
             ;;
         auto)
             case "$(detectShell)" in
                 zsh)
-                    printf "%b\n" "${YELLOW}Stowing zsh configuration (detected)...${RC}"
-                    stow zsh
-                    setupZshEnv
+                    printf "%b\n" "${YELLOW}Setting up zsh configuration (detected)...${RC}"
+                    
+                    if [ -f "$DOTFILES_DIR/zsh/.zshrc" ]; then
+                        if [ -L "$HOME/.zshrc" ] || [ -f "$HOME/.zshrc" ]; then
+                            rm -f "$HOME/.zshrc"
+                        fi
+                        ln -sf "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
+                        printf "%b\n" "${GREEN}Symlinked .zshrc from dotfiles${RC}"
+                    else
+                        printf "%b\n" "${YELLOW}.zshrc not found in dotfiles repo, skipping...${RC}"
+                    fi
                     ;;
                 bash)
-                    printf "%b\n" "${YELLOW}Stowing bash configuration (detected)...${RC}"
-                    stow bash
+                    printf "%b\n" "${YELLOW}Setting up bash configuration (detected)...${RC}"
+                    if [ -f "$DOTFILES_DIR/bash/.bashrc" ]; then
+                        if [ -L "$HOME/.bashrc" ] || [ -f "$HOME/.bashrc" ]; then
+                            rm -f "$HOME/.bashrc"
+                        fi
+                        ln -sf "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
+                        printf "%b\n" "${GREEN}Symlinked .bashrc from dotfiles${RC}"
+                    else
+                        printf "%b\n" "${YELLOW}.bashrc not found in dotfiles repo, skipping...${RC}"
+                    fi
                     ;;
                 *)
-                    printf "%b\n" "${YELLOW}Stowing bash configuration (fallback for $(detectShell))...${RC}"
-                    stow bash
+                    printf "%b\n" "${YELLOW}Setting up bash configuration (fallback for $(detectShell))...${RC}"
+                    if [ -f "$DOTFILES_DIR/bash/.bashrc" ]; then
+                        if [ -L "$HOME/.bashrc" ] || [ -f "$HOME/.bashrc" ]; then
+                            rm -f "$HOME/.bashrc"
+                        fi
+                        ln -sf "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
+                        printf "%b\n" "${GREEN}Symlinked .bashrc from dotfiles${RC}"
+                    else
+                        printf "%b\n" "${YELLOW}.bashrc not found in dotfiles repo, skipping...${RC}"
+                    fi
                     ;;
             esac
             ;;
@@ -222,44 +315,34 @@ stowConfigs() {
             ;;
     esac
     
-    # Handle platform-specific fastfetch config
-    printf "%b\n" "${YELLOW}Setting up platform-specific configs...${RC}"
-    
-    # Create fastfetch config directory if it doesn't exist
-    mkdir -p "$config_dir/fastfetch"
-    
-    case "$DTYPE" in
-        linux)
-            ln -sf "$DOTFILES_DIR/config/.config/fastfetch/linux.jsonc" "$config_dir/fastfetch/config.jsonc"
-            printf "%b\n" "${GREEN}Symlinked Linux fastfetch config${RC}"
-            ;;
-        darwin)
-            ln -sf "$DOTFILES_DIR/config/.config/fastfetch/macos.jsonc" "$config_dir/fastfetch/config.jsonc"
-            printf "%b\n" "${GREEN}Symlinked macOS fastfetch config${RC}"
-            ;;
-        freebsd)
-            ln -sf "$DOTFILES_DIR/config/.config/fastfetch/linux.jsonc" "$config_dir/fastfetch/config.jsonc"
-            printf "%b\n" "${GREEN}Symlinked Linux fastfetch config (FreeBSD fallback)${RC}"
-            ;;
-        *)
-            ln -sf "$DOTFILES_DIR/config/.config/fastfetch/linux.jsonc" "$config_dir/fastfetch/config.jsonc"
-            printf "%b\n" "${GREEN}Symlinked Linux fastfetch config (default)${RC}"
-            ;;
-    esac
-    
-    printf "%b\n" "${GREEN}All configs stowed successfully!${RC}"
-}
-
-setupZshEnv() {
-    # Ensure /etc/zsh/zshenv sets ZDOTDIR to the user's config directory
-    [ ! -f /etc/zsh/zshenv ] && "$ESCALATION_TOOL" mkdir -p /etc/zsh && "$ESCALATION_TOOL" touch /etc/zsh/zshenv
-    grep -q "ZDOTDIR" /etc/zsh/zshenv 2>/dev/null || \
-        echo "export ZDOTDIR=\"$HOME/.config/zsh\"" | "$ESCALATION_TOOL" tee -a /etc/zsh/zshenv
-
-    # Handle Alpine and Solus special cases for /etc/profile and .profile
-    if [ -f /etc/alpine-release ] && [ -f "$DOTFILES_DIR/config/profile" ]; then
-        "$ESCALATION_TOOL" ln -sf "$DOTFILES_DIR/config/profile" "/etc/profile"
+    # Handle sh profile for Alpine/BusyBox systems
+    if grep -qi alpine /etc/os-release 2>/dev/null || [ "$(detectShell)" = "busybox" ] || [ "$(detectShell)" = "ash" ]; then
+        if [ -f "$DOTFILES_DIR/sh/.profile" ]; then
+            if [ -L "$HOME/.profile" ] || [ -f "$HOME/.profile" ]; then
+                rm -f "$HOME/.profile"
+            fi
+            ln -sf "$DOTFILES_DIR/sh/.profile" "$HOME/.profile"
+            printf "%b\n" "${GREEN}Symlinked .profile for Alpine/BusyBox${RC}"
+        else
+            printf "%b\n" "${YELLOW}.profile not found in dotfiles repo, skipping...${RC}"
+        fi
     fi
+    
+    # Handle Solus-specific case: .profile should source .bashrc
+    if grep -qi solus /etc/os-release 2>/dev/null; then
+        if [ -f "$HOME/.bashrc" ]; then
+            # Create a .profile that sources .bashrc
+            cat > "$HOME/.profile" << 'EOF'
+# Solus-specific: Source .bashrc to avoid configuration duplication
+if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+EOF
+            printf "%b\n" "${GREEN}Created .profile to source .bashrc for Solus${RC}"
+        fi
+    fi
+    
+    printf "%b\n" "${GREEN}All configuration files symlinked successfully!${RC}"
 }
 
 installStarshipAndFzf() {
@@ -282,6 +365,12 @@ installStarshipAndFzf() {
 
     # Handle apt systems separately since their fzf package is often outdated
     if [ "$PACKAGER" = "apt-get" ] || [ "$PACKAGER" = "nala" ]; then
+        # Check if fzf is installed via apt and remove it
+        if command_exists fzf && dpkg -l | grep -q "^ii.*fzf "; then
+            printf "%b\n" "${YELLOW}Removing apt-installed fzf...${RC}"
+            "$ESCALATION_TOOL" "$PACKAGER" remove -y fzf
+        fi
+        
         if ! command_exists fzf; then
             printf "%b\n" "${YELLOW}Installing fzf from GitHub (apt package is outdated)...${RC}"
             git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
@@ -375,6 +464,14 @@ backupExistingConfigs() {
         fi
     fi
     
+    # Backup .profile for Solus if we're setting up bash
+    if grep -qi solus /etc/os-release 2>/dev/null && [ "$SHELL_CHOICE" = "bash" ] || [ "$SHELL_CHOICE" = "auto" ] && [ "$(detectShell)" = "bash" ]; then
+        if [ -e "$HOME/.profile" ] && [ ! -e "$HOME/.profile.bak" ]; then
+            printf "%b\n" "${YELLOW}Backing up existing .profile to .profile.bak for Solus${RC}"
+            mv "$HOME/.profile" "$HOME/.profile.bak"
+        fi
+    fi
+    
     # Backup config files
     if [ -e "$config_dir/starship.toml" ] && [ ! -e "$config_dir/starship.toml.bak" ]; then
         printf "%b\n" "${YELLOW}Backing up existing starship.toml to starship.toml.bak${RC}"
@@ -401,7 +498,7 @@ getShellChoice
 cloneDotfiles
 backupExistingConfigs
 installDependencies
-stowConfigs
+symlinkConfigs
 installStarshipAndFzf
 installZoxide
 installMise
