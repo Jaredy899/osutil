@@ -206,6 +206,10 @@ stowConfigs() {
     
     # Handle platform-specific fastfetch config
     printf "%b\n" "${YELLOW}Setting up platform-specific configs...${RC}"
+    
+    # Create fastfetch config directory if it doesn't exist
+    mkdir -p "$config_dir/fastfetch"
+    
     case "$DTYPE" in
         linux)
             ln -sf "$DOTFILES_DIR/config/.config/fastfetch/linux.jsonc" "$config_dir/fastfetch/config.jsonc"

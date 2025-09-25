@@ -473,6 +473,12 @@ script = "rofi-setup.sh"
 task_list = "I FM"
 
 [[data]]
+name = "Shell Setup"
+description = "Sets up aliases and shell features."
+script = "shell-setup.sh"
+task_list = "I FM"
+
+[[data]]
 name = "Waydroid"
 description = "Waydroid is an emulator that allows you to run Android apps and games on Linux."
 script = "waydroid-setup.sh"
