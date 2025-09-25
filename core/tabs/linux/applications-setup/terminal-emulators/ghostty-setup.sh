@@ -29,6 +29,11 @@ installGhostty() {
             zypper|eopkg)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y ghostty
                 ;;
+            dnf)
+                printf "%b\n" "${YELLOW}Enabling Ghostty COPR repository...${RC}"
+                "$ESCALATION_TOOL" "$PACKAGER" copr enable scottames/ghostty -y
+                "$ESCALATION_TOOL" "$PACKAGER" install ghostty -y
+                ;;
             *)
                 printf "%b\n" "${RED}Binary installation not available for your distribution.${RC}"
                 return 1
