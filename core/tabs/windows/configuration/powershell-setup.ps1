@@ -7,7 +7,7 @@ $Reset = "${esc}[0m"
 
 # Centralized dotfiles repository
 $dotfilesRepo = if ($env:DOTFILES_REPO) { $env:DOTFILES_REPO } else { "https://github.com/Jaredy899/dotfiles.git" }
-$dotfilesDir = "$env:USERPROFILE\.local\share\dotfiles"
+$dotfilesDir = "$env:USERPROFILE"
 
 # Ensure clean input handling for TUI environment
 
@@ -533,11 +533,11 @@ Write-Host "${Cyan}Font setup:${Reset}"
 Write-Host "JetBrains Mono Nerd Font is installed via Winget. Set it in Windows Terminal." -ForegroundColor White
 Write-Host ''
 Write-Host "${Cyan}Configuration:${Reset}"
-Write-Host '• PowerShell profiles: ~/.local/share/dotfiles/powershell/Microsoft.PowerShell_profile.ps1' -ForegroundColor White
-Write-Host '• Starship config: ~/.local/share/dotfiles/config/starship.toml' -ForegroundColor White
-Write-Host '• Fastfetch config: ~/.local/share/dotfiles/config/fastfetch/windows.jsonc' -ForegroundColor White
-Write-Host '• Mise config: ~/.local/share/dotfiles/config/mise/config.toml' -ForegroundColor White
-Write-Host '• AutoHotkey shortcuts: ~/.local/share/dotfiles/ahk/shortcuts.ahk' -ForegroundColor White
+Write-Host '• PowerShell profiles: ~/powershell/Microsoft.PowerShell_profile.ps1' -ForegroundColor White
+Write-Host '• Starship config: ~/config/starship.toml' -ForegroundColor White
+Write-Host '• Fastfetch config: ~/config/fastfetch/windows.jsonc' -ForegroundColor White
+Write-Host '• Mise config: ~/config/mise/config.toml' -ForegroundColor White
+Write-Host '• AutoHotkey shortcuts: ~/ahk/shortcuts.ahk' -ForegroundColor White
 Write-Host ''
 Write-Host "${Cyan}✨ Key Benefits:${Reset}"
 Write-Host '• All changes in your dotfiles repository are reflected immediately' -ForegroundColor White
