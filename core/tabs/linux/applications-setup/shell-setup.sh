@@ -11,37 +11,45 @@ DOTFILES_DIR="$HOME/dotfiles"
 
 # Shell detection function
 detectShell() {
-    if [ -n "$ZSH_VERSION" ]; then
-        echo "zsh"
-    elif [ -n "$BASH_VERSION" ]; then
-        echo "bash"
-    elif [ -n "$KSH_VERSION" ]; then
-        echo "ksh"
-    elif [ -n "$FISH_VERSION" ]; then
-        echo "fish"
-    elif [ -n "$ASH_VERSION" ]; then
-        echo "ash"
-    elif [ -n "$BB_ASH_VERSION" ]; then
-        echo "busybox"
-    else
-        # Fallback: check what shell is available
-        if command_exists zsh; then
-            echo "zsh"
-        elif command_exists bash; then
-            echo "bash"
-        elif command_exists fish; then
-            echo "fish"
-        else
-            echo "sh"
+    # Check for shell-specific environment variables first
+    for shell_var in ZSH_VERSION BASH_VERSION KSH_VERSION FISH_VERSION ASH_VERSION BB_ASH_VERSION; do
+        if [ -n "$(eval echo \$$shell_var)" ]; then
+            case "$shell_var" in
+                ZSH_VERSION) echo "zsh" ;;
+                BASH_VERSION) echo "bash" ;;
+                KSH_VERSION) echo "ksh" ;;
+                FISH_VERSION) echo "fish" ;;
+                ASH_VERSION) echo "ash" ;;
+                BB_ASH_VERSION) echo "busybox" ;;
+            esac
+            return
         fi
-    fi
+    done
+    
+    # Fallback: check the current shell from $0 or $SHELL
+    CURRENT_SHELL=$(basename "${0:-$SHELL}")
+    case "$CURRENT_SHELL" in
+        zsh|bash|ksh|fish|ash|dash|busybox)
+            echo "$CURRENT_SHELL"
+            ;;
+        *)
+            # Final fallback: check what shells are available
+            for shell in zsh bash fish; do
+                if command_exists "$shell"; then
+                    echo "$shell"
+                    return
+                fi
+            done
+            echo "sh"
+            ;;
+    esac
 }
 
 installDependencies() {
     printf "%b\n" "${YELLOW}Installing dependencies...${RC}"
     
     # Base packages needed for all configurations
-    BASE_PACKAGES="tar bat tree unzip fontconfig git fastfetch stow"
+    BASE_PACKAGES="tar bat tree unzip fontconfig git fastfetch stow fzf"
     
     # Add shell-specific packages based on choice
     case "$SHELL_CHOICE" in
@@ -134,19 +142,19 @@ getShellChoice() {
     
     # Ask user which shell config they want to use
     printf "%b\n" "${YELLOW}Which shell configuration would you like to install?${RC}"
-    printf "%b\n" "${CYAN}1) bash (recommended for most systems)${RC}"
-    printf "%b\n" "${CYAN}2) zsh (recommended for macOS/advanced users)${RC}"
-    printf "%b\n" "${CYAN}3) Use detected shell ($CURRENT_SHELL)${RC}"
+    printf "%b\n" "${GREEN}1) Use detected shell ($CURRENT_SHELL) ${YELLOW}(recommended)${RC}"
+    printf "%b\n" "${CYAN}2) bash (recommended for most systems)${RC}"
+    printf "%b\n" "${CYAN}3) zsh (recommended for macOS/advanced users)${RC}"
     printf "%b\n" "${CYAN}4) Skip shell configuration${RC}"
     
-    printf "Enter your choice (1-4) [3]: "
+    printf "Enter your choice (1-4) [1]: "
     read -r USER_CHOICE
-    USER_CHOICE=${USER_CHOICE:-3}
+    USER_CHOICE=${USER_CHOICE:-1}
     
     case "$USER_CHOICE" in
-        1) SHELL_CHOICE="bash" ;;
-        2) SHELL_CHOICE="zsh" ;;
-        3) SHELL_CHOICE="auto" ;;
+        1) SHELL_CHOICE="auto" ;;
+        2) SHELL_CHOICE="bash" ;;
+        3) SHELL_CHOICE="zsh" ;;
         4) SHELL_CHOICE="skip" ;;
         *) SHELL_CHOICE="skip" ;;
     esac
@@ -155,17 +163,27 @@ getShellChoice() {
 stowConfigs() {
     printf "%b\n" "${YELLOW}Stowing configs with GNU Stow...${RC}"
     
-    # Change to dotfiles directory
-    cd "$DOTFILES_DIR"
+    # Change to dotfiles config directory
+    cd "$DOTFILES_DIR/config"
     
-    # Always stow config package
-    stow config
+    # Stow specific config packages only
+    printf "%b\n" "${YELLOW}Stowing fastfetch config...${RC}"
+    stow fastfetch
+    
+    printf "%b\n" "${YELLOW}Stowing mise config...${RC}"
+    stow mise
+    
+    printf "%b\n" "${YELLOW}Stowing starship config...${RC}"
+    stow starship
     
     # Stow sh profile only on Alpine/BusyBox systems
     if grep -qi alpine /etc/os-release 2>/dev/null || [ "$(detectShell)" = "busybox" ] || [ "$(detectShell)" = "ash" ]; then
         printf "%b\n" "${YELLOW}Stowing sh profile (Alpine/BusyBox detected)...${RC}"
         stow sh
     fi
+    
+    # Change back to dotfiles root for shell configs
+    cd "$DOTFILES_DIR"
     
     # Stow shell-specific configs based on user choice
     case "$SHELL_CHOICE" in
@@ -262,19 +280,16 @@ installStarshipAndFzf() {
         }
     fi
 
-    # Check if fzf is installed via apt and remove it
-    if command_exists fzf && dpkg -l | grep -q "^ii.*fzf "; then
-        printf "%b\n" "${YELLOW}Removing apt-installed fzf...${RC}"
-        "$ESCALATION_TOOL" "$PACKAGER" remove -y fzf
-    fi
-    
-    if ! command_exists fzf; then
-        printf "%b\n" "${YELLOW}Installing fzf...${RC}"
-        git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-        ~/.fzf/install --all
-        printf "%b\n" "${GREEN}Fzf installed successfully!${RC}"
-    else
-        printf "%b\n" "${GREEN}Fzf already installed${RC}"
+    # Handle apt systems separately since their fzf package is often outdated
+    if [ "$PACKAGER" = "apt-get" ] || [ "$PACKAGER" = "nala" ]; then
+        if ! command_exists fzf; then
+            printf "%b\n" "${YELLOW}Installing fzf from GitHub (apt package is outdated)...${RC}"
+            git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+            cd ~/.fzf && ./install --all
+            printf "%b\n" "${GREEN}Fzf installed successfully!${RC}"
+        else
+            printf "%b\n" "${GREEN}Fzf already installed${RC}"
+        fi
     fi
 }
 
@@ -390,5 +405,3 @@ stowConfigs
 installStarshipAndFzf
 installZoxide
 installMise
-
-printf "%b\n" "${GREEN}✅ Shell configuration installed with Stow! Restart your shell to see changes.${RC}"
