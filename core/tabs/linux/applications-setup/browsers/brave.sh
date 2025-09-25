@@ -6,6 +6,9 @@ installBrave() {
     if ! command_exists com.brave.Browser && ! command_exists brave; then
         printf "%b\n" "${YELLOW}Installing Brave...${RC}"
         case "$PACKAGER" in
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y linux-brave
+                ;;
             *)
                 curl -fsS https://dl.brave.com/install.sh | sh
                 ;;

@@ -20,7 +20,7 @@ installDiscord() {
                 "$ESCALATION_TOOL" "$PACKAGER" install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
                 "$ESCALATION_TOOL" "$PACKAGER" install -y discord
                 ;;
-            apk | xbps-install)
+            apk|xbps-install)
                 checkFlatpak
                 "$ESCALATION_TOOL" flatpak install -y flathub com.discordapp.Discord
                 ;;

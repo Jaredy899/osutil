@@ -44,6 +44,9 @@ installDepend() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy bash bash-completion tar bat tree unzip fontconfig git fastfetch
                 ;;
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y bash bash-completion xtar bat tree unzip fontconfig git fastfetch
+                ;;
             *)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y bash bash-completion tar bat tree unzip fontconfig git fastfetch
                 ;;
@@ -166,24 +169,19 @@ installStarshipAndFzf() {
         }
     fi
 
-    if command_exists fzf; then
-        # Check if installed fzf version is before 0.48.0
-        FZF_VERSION=$(fzf --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-        if [ -n "$FZF_VERSION" ]; then
-            # Compare version with 0.48.0
-            if [ "$(printf '%s\n' "0.48.0" "$FZF_VERSION" | sort -V | head -1)" = "0.48.0" ]; then
-                printf "%b\n" "${GREEN}Fzf already installed (version $FZF_VERSION)${RC}"
-            else
-                printf "%b\n" "${YELLOW}Fzf version $FZF_VERSION is older than 0.48.0, updating...${RC}"
-                git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-                ~/.fzf/install --all
-            fi
-        else
-            printf "%b\n" "${GREEN}Fzf already installed${RC}"
-        fi
-    else
+    # Check if fzf is installed via apt and remove it
+    if command_exists fzf && dpkg -l | grep -q "^ii.*fzf "; then
+        printf "%b\n" "${YELLOW}Removing apt-installed fzf...${RC}"
+        "$ESCALATION_TOOL" "$PACKAGER" remove -y fzf
+    fi
+    
+    if ! command_exists fzf; then
+        printf "%b\n" "${YELLOW}Installing fzf...${RC}"
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
         ~/.fzf/install --all
+        printf "%b\n" "${GREEN}Fzf installed successfully!${RC}"
+    else
+        printf "%b\n" "${GREEN}Fzf already installed${RC}"
     fi
 }
 
@@ -203,6 +201,12 @@ installZoxide() {
 }
 
 installMise() {
+    # Skip mise installation on FreeBSD
+    if [ "$DTYPE" = "freebsd" ]; then
+        printf "%b\n" "${YELLOW}Skipping mise installation on FreeBSD (use pkg instead)${RC}"
+        return
+    fi
+
     if command_exists mise; then
         printf "%b\n" "${GREEN}Mise already installed${RC}"
         return
@@ -246,7 +250,7 @@ installDepend
 cloneDotfiles
 backupExistingConfigs
 downloadConfigs
-installFont
+# installFont
 installStarshipAndFzf
 installZoxide
 installMise

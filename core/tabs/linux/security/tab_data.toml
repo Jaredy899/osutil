@@ -9,13 +9,17 @@ task_list = "I SS"
 [[data.preconditions]]
 matches = false
 data = "command_exists"
-values = [ "dnf", "zypper", "apk" ]
-
+values = [ "dnf", "zypper", "apk", "pkg" ]
 [[data]]
 name = "UFW Docker Integration"
 description = "Fixes the Docker and UFW security flaw by properly integrating Docker with UFW firewall rules. This allows you to control access to Docker containers through UFW without disabling iptables. For more information visit: https://github.com/chaifeng/ufw-docker"
 script = "ufw-docker-setup.sh"
 task_list = "I SS"
+
+[[data.preconditions]]
+matches = false
+data = "command_exists"
+values = [ "pkg" ]
 
 [[data.preconditions]]
 matches = true
@@ -31,13 +35,18 @@ task_list = "I SS"
 [[data.preconditions]]
 matches = false
 data = "command_exists"
-values = [ "apt-get", "nala", "pacman", "apk", "xbps-install", "eopkg" ]
+values = [ "apt-get", "nala", "pacman", "apk", "xbps-install", "eopkg", "pkg" ]
 
 [[data]]
 name = "Tailscale"
 description = "Tailscale is a zero-trust network overlay that utilizes the WireGuard protocol for secure connectivity across resources."
 script = "tailscale.sh"
 task_list = "I SS"
+
+[[data.preconditions]]
+matches = false
+data = "command_exists"
+values = [ "pkg" ]
 
 [[data]]
 name = "iptables Firewall Baselines (CTT)"
@@ -48,4 +57,4 @@ task_list = "I SS"
 [[data.preconditions]]
 matches = false
 data = "command_exists"
-values = [ "apt-get", "nala", "pacman", "dnf", "zypper", "xbps-install", "eopkg" ]
+values = [ "apt-get", "nala", "pacman", "dnf", "zypper", "xbps-install", "eopkg", "pkg" ]

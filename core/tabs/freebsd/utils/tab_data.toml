@@ -1,7 +1,0 @@
-name = "Utilities"
-
-[[data]]
-name = "Common Utilities"
-description = "Installs essential utilities including bash, curl, git, vim, htop, and development tools."
-script = "common-utils.sh"
-task_list = "I"

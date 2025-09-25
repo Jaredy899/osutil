@@ -15,8 +15,8 @@ installFirefox() {
             pacman)
                 "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm firefox
                 ;;
-            dnf|eopkg)
-                "$ESCALATION_TOOL" "$PACKAGER" -y install firefox
+            dnf|eopkg|pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y firefox
                 ;;
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy firefox

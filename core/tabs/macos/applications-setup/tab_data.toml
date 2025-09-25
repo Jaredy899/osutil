@@ -96,6 +96,12 @@ description = "Zed is a next-generation code editor written in rust, designed fo
 script = "developer-tools/zed.sh"
 task_list = "I"
 
+[[data.entries]]
+name = "Zellij"
+description = "Zellij is a terminal workspace with batteries included, featuring a modern terminal multiplexer with a focus on developer experience and productivity."
+script = "developer-tools/zellij.sh"
+task_list = "I"
+
 [[data]]
 name = "Multimedia"
 
@@ -232,6 +238,12 @@ task_list = "I"
 name = "Raycast"
 description = "Control your tools with a few keystrokes"
 script = "raycast.sh"
+task_list = "I"
+
+[[data]]
+name = "Yazi"
+description = "Yazi is a fast, terminal-based file manager written in Rust, featuring asynchronous operations, image previews, and extensive customization options."
+script = "yazi.sh"
 task_list = "I"
 
 [[data]]

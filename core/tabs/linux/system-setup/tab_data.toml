@@ -154,6 +154,38 @@ data = "command_exists"
 values = ["btrfs"]
 
 [[data]]
+name = "FreeBSD"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["pkg"]
+
+[[data.entries]]
+name = "Update System"
+description = "Updates the package database, upgrades all packages, and updates the ports tree."
+script = "freebsd/update-system.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Profile Setup"
+description = "Sets up custom shell profile with fastfetch, starship, zoxide, and other utilities."
+script = "freebsd/profile-setup.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "FreeBSD Upgrade"
+description = "Manages FreeBSD version upgrades and package repository switching."
+script = "freebsd/freebsd-upgrade.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Ports Setup"
+description = "Sets up the FreeBSD Ports Collection with git-based management."
+script = "freebsd/ports.sh"
+task_list = "I"
+
+[[data]]
 name = "RHEL-based"
 
 [[data.preconditions]]

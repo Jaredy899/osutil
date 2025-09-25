@@ -43,6 +43,10 @@ installBuildDependencies() {
             printf "%b\n" "${YELLOW}Installing dependencies for Solus...${RC}"
             "$ESCALATION_TOOL" "$PACKAGER" install -y autoconf gmp-devel libffi-devel rust openssl-devel yaml-devel zlib-ng-devel -c system.devel
             ;;
+        pkg)
+            printf "%b\n" "${YELLOW}Installing dependencies for FreeBSD...${RC}"
+            "$ESCALATION_TOOL" "$PACKAGER" install -y autoconf gcc gmake rust patch bzip2 openssl libyaml libffi readline zlib gdbm ncurses
+            ;;
         *)
             printf "%b\n" "${YELLOW}Unknown package manager, skipping build dependencies installation${RC}"
             ;;

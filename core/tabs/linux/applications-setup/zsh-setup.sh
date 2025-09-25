@@ -19,6 +19,9 @@ installZsh() {
                 ;;
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy zsh
+                ;;  
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y zsh
                 ;;
             *)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y zsh
@@ -60,6 +63,9 @@ installDepend() {
                 ;;
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy fastfetch
+                ;;
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y fastfetch
                 ;;
             *)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y fastfetch
@@ -107,11 +113,19 @@ installStarshipAndFzf() {
         }
     fi
 
-    if command_exists fzf; then
-        printf "%b\n" "${GREEN}Fzf already installed${RC}"
-    else
+    # Check if fzf is installed via apt and remove it
+    if command_exists fzf && dpkg -l | grep -q "^ii.*fzf "; then
+        printf "%b\n" "${YELLOW}Removing apt-installed fzf...${RC}"
+        "$ESCALATION_TOOL" "$PACKAGER" remove -y fzf
+    fi
+    
+    if ! command_exists fzf; then
+        printf "%b\n" "${YELLOW}Installing fzf...${RC}"
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-        "$ESCALATION_TOOL" ~/.fzf/install
+        ~/.fzf/install --all
+        printf "%b\n" "${GREEN}Fzf installed successfully!${RC}"
+    else
+        printf "%b\n" "${GREEN}Fzf already installed${RC}"
     fi
 }
 
@@ -132,6 +146,12 @@ installZoxide() {
 }
 
 installMise() {
+        # Skip mise installation on FreeBSD
+    if [ "$DTYPE" = "freebsd" ]; then
+        printf "%b\n" "${YELLOW}Skipping mise installation on FreeBSD (use pkg instead)${RC}"
+        return
+    fi
+
     if command_exists mise; then
         printf "%b\n" "${GREEN}Mise already installed${RC}"
         return
@@ -234,7 +254,7 @@ checkEnv
 checkEscalationTool
 installZsh
 installDepend
-installFont
+# installFont
 installStarshipAndFzf
 installZoxide
 installMise

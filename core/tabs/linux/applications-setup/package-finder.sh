@@ -26,6 +26,9 @@ installDependencies() {
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Sy fzf bash coreutils
             ;;
+        pkg)
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
+            ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
             exit 1
@@ -43,7 +46,7 @@ set -e
 
 # Detect first available package manager
 detect_pkg_mgr() {
-  for mgr in nala apt pacman dnf zypper apk eopkg xbps-install; do
+  for mgr in nala apt yay pacman dnf zypper apk eopkg xbps-install pkg; do
     if command -v "$mgr" >/dev/null 2>&1; then
       echo "$mgr"
       return
@@ -68,6 +71,13 @@ case "$PKG_MGR" in
     INSTALL_CMD="sudo apt install -y"
     REMOVE_CMD="sudo apt autoremove -y"
     INSTALLED_LIST=$(dpkg-query -W -f='${Package}\n')
+    ;;
+  yay)
+    LIST_CMD="yay -Slq"
+    INFO_CMD="yay -Si {1}"
+    INSTALL_CMD="yay -S --noconfirm"
+    REMOVE_CMD="yay -R --noconfirm"
+    INSTALLED_LIST=$(yay -Qq)
     ;;
   pacman)
     LIST_CMD="pacman -Slq"
@@ -113,8 +123,15 @@ case "$PKG_MGR" in
     REMOVE_CMD="sudo xbps-remove -y"
     INSTALLED_LIST=$(xbps-query -l | awk '{print $2}')
     ;;
+  pkg)
+    LIST_CMD="pkg search . | awk '{print \$1}'"
+    INFO_CMD="pkg info {1}"
+    INSTALL_CMD="sudo pkg install -y"
+    REMOVE_CMD="sudo pkg remove -y"
+    INSTALLED_LIST=$(pkg query -a '%n')
+    ;;
   none)
-    echo "❌ No supported package manager found (apt, pacman, dnf, zypper, apk, eopkg, xbps)."
+    echo "❌ No supported package manager found (apt, pacman, dnf, zypper, apk, eopkg, xbps, pkg)."
     exit 1
     ;;
 esac
