@@ -33,6 +33,25 @@ installYazi() {
                 "$ESCALATION_TOOL" mv "/tmp/ya" "/usr/local/bin/"
                 rm "/tmp/yazi.zip"
                 ;;
+            eopkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
+
+                case "$ARCH" in
+                    x86_64)
+                        YAZI_FILE="yazi-x86_64-unknown-linux-musl.zip"
+                        ;;
+                    aarch64)
+                        YAZI_FILE="yazi-aarch64-unknown-linux-musl.zip"
+                        ;;
+                esac
+
+                printf "%b\n" "${YELLOW}Downloading Yazi from GitHub releases...${RC}"
+                curl -sSLo "/tmp/yazi.zip" "https://github.com/sxyazi/yazi/releases/latest/download/$YAZI_FILE"
+                unzip -j -q "/tmp/yazi.zip" -d "/tmp/" "*/yazi" "*/ya"
+                "$ESCALATION_TOOL" mv "/tmp/yazi" "/usr/bin/"
+                "$ESCALATION_TOOL" mv "/tmp/ya" "/usr/bin/"
+                rm "/tmp/yazi.zip"
+                ;;
             apk)
                 "$ESCALATION_TOOL" "$PACKAGER" add yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
                 ;;
