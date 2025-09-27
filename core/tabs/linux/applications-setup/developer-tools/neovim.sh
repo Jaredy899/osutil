@@ -26,6 +26,10 @@ installNeovim() {
             
             if ! command_exists fzf; then
                 printf "%b\n" "${YELLOW}Installing fzf from git...${RC}"
+                # Remove existing .fzf directory if it exists
+                if [ -d "$HOME/.fzf" ]; then
+                    rm -rf "$HOME/.fzf"
+                fi
                 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
                 ~/.fzf/install --all
                 printf "%b\n" "${GREEN}Fzf installed successfully!${RC}"
