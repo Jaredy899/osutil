@@ -315,31 +315,33 @@ symlinkConfigs() {
             ;;
     esac
     
-    # Handle sh profile for Alpine/BusyBox systems
-    if grep -qi alpine /etc/os-release 2>/dev/null || [ "$(detectShell)" = "busybox" ] || [ "$(detectShell)" = "ash" ]; then
+    # Handle .profile based on distribution and shell setup
+    if grep -qi alpine /etc/os-release 2>/dev/null; then
+        # Alpine: Use custom .profile from dotfiles
         if [ -f "$DOTFILES_DIR/sh/.profile" ]; then
             if [ -L "$HOME/.profile" ] || [ -f "$HOME/.profile" ]; then
                 rm -f "$HOME/.profile"
             fi
             ln -sf "$DOTFILES_DIR/sh/.profile" "$HOME/.profile"
-            printf "%b\n" "${GREEN}Symlinked .profile for Alpine/BusyBox${RC}"
+            printf "%b\n" "${GREEN}Symlinked .profile for Alpine${RC}"
         else
             printf "%b\n" "${YELLOW}.profile not found in dotfiles repo, skipping...${RC}"
         fi
-    fi
-    
-    # Handle Solus-specific case: .profile should source .bashrc
-    if grep -qi solus /etc/os-release 2>/dev/null; then
-        if [ -f "$HOME/.bashrc" ]; then
-            # Create a .profile that sources .bashrc
-            cat > "$HOME/.profile" << 'EOF'
+    elif grep -qi solus /etc/os-release 2>/dev/null; then
+        # Solus: Create .profile that sources .bashrc (only if we're setting up bash)
+        if [ "$SHELL_CHOICE" = "bash" ] || ([ "$SHELL_CHOICE" = "auto" ] && [ "$(detectShell)" = "bash" ]); then
+            if [ -f "$HOME/.bashrc" ]; then
+                # Create a .profile that sources .bashrc
+                cat > "$HOME/.profile" << 'EOF'
 # Solus-specific: Source .bashrc to avoid configuration duplication
 if [ -f "$HOME/.bashrc" ]; then
     . "$HOME/.bashrc"
 fi
 EOF
-            printf "%b\n" "${GREEN}Created .profile to source .bashrc for Solus${RC}"
+                printf "%b\n" "${GREEN}Created .profile to source .bashrc for Solus${RC}"
+            fi
         fi
+    # Note: Ubuntu and other systems keep their existing .profile (which is usually good)
     fi
     
     printf "%b\n" "${GREEN}All configuration files symlinked successfully!${RC}"
@@ -456,20 +458,22 @@ backupExistingConfigs() {
             ;;
     esac
     
-    # Backup sh profile if we're on Alpine/BusyBox
-    if grep -qi alpine /etc/os-release 2>/dev/null || [ "$(detectShell)" = "busybox" ] || [ "$(detectShell)" = "ash" ]; then
+    # Backup .profile based on distribution and shell setup
+    if grep -qi alpine /etc/os-release 2>/dev/null; then
+        # Alpine: Backup .profile before replacing with custom one
         if [ -e "$HOME/.profile" ] && [ ! -e "$HOME/.profile.bak" ]; then
-            printf "%b\n" "${YELLOW}Backing up existing .profile to .profile.bak${RC}"
+            printf "%b\n" "${YELLOW}Backing up existing .profile to .profile.bak for Alpine${RC}"
             mv "$HOME/.profile" "$HOME/.profile.bak"
         fi
-    fi
-    
-    # Backup .profile for Solus if we're setting up bash
-    if grep -qi solus /etc/os-release 2>/dev/null && [ "$SHELL_CHOICE" = "bash" ] || [ "$SHELL_CHOICE" = "auto" ] && [ "$(detectShell)" = "bash" ]; then
-        if [ -e "$HOME/.profile" ] && [ ! -e "$HOME/.profile.bak" ]; then
-            printf "%b\n" "${YELLOW}Backing up existing .profile to .profile.bak for Solus${RC}"
-            mv "$HOME/.profile" "$HOME/.profile.bak"
+    elif grep -qi solus /etc/os-release 2>/dev/null; then
+        # Solus: Backup .profile only if we're setting up bash
+        if [ "$SHELL_CHOICE" = "bash" ] || ([ "$SHELL_CHOICE" = "auto" ] && [ "$(detectShell)" = "bash" ]); then
+            if [ -e "$HOME/.profile" ] && [ ! -e "$HOME/.profile.bak" ]; then
+                printf "%b\n" "${YELLOW}Backing up existing .profile to .profile.bak for Solus${RC}"
+                mv "$HOME/.profile" "$HOME/.profile.bak"
+            fi
         fi
+    # Note: Ubuntu and other systems keep their existing .profile (no backup needed)
     fi
     
     # Backup config files
