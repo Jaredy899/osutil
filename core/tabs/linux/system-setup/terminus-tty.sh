@@ -29,6 +29,8 @@ InstallTermiusFonts() {
             apk)
                 "$ESCALATION_TOOL" "$PACKAGER" add font-terminus
                 ;;
+            pkg)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y terminus-font
             *)
                 printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
                 exit 1
@@ -71,7 +73,23 @@ SetTermiusFonts() {
                 fi
                 printf "%b\n" "${GREEN}Terminus font has been set for TTY.${RC}"
                 ;;
-            *)
+            pkg)
+                if ! grep -q '^vidfont_enable=' /etc/rc.conf; then
+                    echo 'vidfont_enable="YES"' | "$ESCALATION_TOOL" tee -a /etc/rc.conf > /dev/null
+                fi
+                # Set Terminus as the console font
+                if ! grep -q '^font8x16=' /etc/rc.conf; then
+                    echo 'font8x16="ter-v18b"' | "$ESCALATION_TOOL" tee -a /etc/rc.conf > /dev/null
+                else
+                    "$ESCALATION_TOOL" sed -i '' 's/^font8x16=.*/font8x16="ter-v18b"/' /etc/rc.conf
+                fi
+                # Apply font immediately if not in X/Wayland
+                if [ -z "$DISPLAY" ] && [ -z "$WAYLAND_DISPLAY" ]; then
+                    "$ESCALATION_TOOL" vidfont ter-v18b
+                fi
+                printf "%b\n" "${GREEN}Terminus font set for FreeBSD TTY.${RC}"
+                ;;
+                *)
                 printf "%b\n" "${RED}Unsupported package manager for font configuration: ""$PACKAGER""${RC}"
                 exit 1
                 ;;

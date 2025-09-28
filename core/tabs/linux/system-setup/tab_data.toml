@@ -167,11 +167,11 @@ description = "Updates the package database, upgrades all packages, and updates 
 script = "freebsd/update-system.sh"
 task_list = "I"
 
-[[data.entries]]
-name = "Profile Setup"
-description = "Sets up custom shell profile with fastfetch, starship, zoxide, and other utilities."
-script = "freebsd/profile-setup.sh"
-task_list = "I"
+#[[data.entries]]
+#name = "Profile Setup"
+#description = "Sets up custom shell profile with fastfetch, starship, zoxide, and other utilities."
+#script = "freebsd/profile-setup.sh"
+#task_list = "I"
 
 [[data.entries]]
 name = "FreeBSD Upgrade"
