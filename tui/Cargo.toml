@@ -24,7 +24,7 @@ time = { version = "0.3.43", features = ["formatting", "local-offset", "macros"]
 unicode-width = { version = "0.2.0", default-features = false }
 osutil_core = { path = "../core" }
 tree-sitter-bash = { version = "0.25.0", optional = true }
-tree-sitter-highlight = { version = "0.25.9", optional = true }
+tree-sitter-highlight = { version = "0.25.10", optional = true }
 tree-sitter-powershell = { version = "0.25.8", optional = true }
 nix = { version = "0.30.1", features = [ "user" ], optional = true }
 vt100-ctt = "0.16.0"
