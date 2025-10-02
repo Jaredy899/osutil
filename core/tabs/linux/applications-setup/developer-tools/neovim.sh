@@ -9,14 +9,39 @@ installNeovim() {
             "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm neovim git fzf ripgrep fd tree-sitter gcc || true    
             ;;
         apt-get|nala)
-            # Install system packages
             "$ESCALATION_TOOL" "$PACKAGER" install -y git ripgrep fd-find tree-sitter-cli gcc || true # fzf will be installed from git
+            
+            ARCH=$(uname -m)
+            case "$ARCH" in
+                x86_64)
+                    NVIM_ARCH="x86_64"
+                    ;;
+                aarch64|arm64)
+                    NVIM_ARCH="aarch64"
+                    ;;
+                armv7l)
+                    printf "%b\n" "${RED}ARM32 (armv7l) is not supported by official Neovim releases.${RC}"
+                    printf "%b\n" "${YELLOW}Please install Neovim from your package manager or build from source.${RC}"
+                    printf "%b\n" "${CYAN}Installing from package manager as fallback...${RC}"
+                    "$ESCALATION_TOOL" "$PACKAGER" install -y neovim || true
+                    return 0
+                    ;;
+                *)
+                    printf "%b\n" "${RED}Unsupported architecture: $ARCH${RC}"
+                    printf "%b\n" "${YELLOW}Please install Neovim from your package manager or build from source.${RC}"
+                    printf "%b\n" "${CYAN}Installing from package manager as fallback...${RC}"
+                    "$ESCALATION_TOOL" "$PACKAGER" install -y neovim || true
+                    return 0
+                    ;;
+            esac
+            
             # Download and install latest Neovim release (>= 0.11.2)
-            curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+            printf "%b\n" "${YELLOW}Downloading Neovim for $ARCH architecture...${RC}"
+            curl -LO "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${NVIM_ARCH}.tar.gz"
             "$ESCALATION_TOOL" rm -rf /opt/nvim
-            "$ESCALATION_TOOL" tar -C /opt -xzf nvim-linux-x86_64.tar.gz
-            "$ESCALATION_TOOL" ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
-            rm -f nvim-linux-x86_64.tar.gz
+            "$ESCALATION_TOOL" tar -C /opt -xzf "nvim-linux-${NVIM_ARCH}.tar.gz"
+            "$ESCALATION_TOOL" ln -sf "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim
+            rm -f "nvim-linux-${NVIM_ARCH}.tar.gz"
             
             # Install fzf from git (better version)
             if command_exists fzf && dpkg -l | grep -q "^ii.*fzf "; then
