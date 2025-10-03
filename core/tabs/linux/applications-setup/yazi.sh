@@ -55,9 +55,6 @@ installYazi() {
     apk)
       "$ESCALATION_TOOL" "$PACKAGER" add yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
       ;;
-    xbps-install)
-      "$ESCALATION_TOOL" "$PACKAGER" -Sy yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
-      ;;
     dnf)
       # Try COPR repository first
       if ! "$ESCALATION_TOOL" dnf copr enable lihaohong/yazi -y; then
