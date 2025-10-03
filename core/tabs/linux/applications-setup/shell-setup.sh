@@ -92,11 +92,11 @@ installDependencies() {
   # Install packages based on package manager
   case "$PACKAGER" in
   pacman)
-    "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm $PACKAGES
+    "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
   apt-get | nala)
     "$ESCALATION_TOOL" "$PACKAGER" update
-    "$ESCALATION_TOOL" "$PACKAGER" install -y $PACKAGES
+    "$ESCALATION_TOOL" "$PACKAGER" install -y $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     # Install fastfetch from GitHub for latest version if not available
     if ! command_exists fastfetch; then
       printf "%b\n" "${YELLOW}Installing Fastfetch from GitHub...${RC}"
@@ -108,28 +108,29 @@ installDependencies() {
         DEB_FILE="fastfetch-linux-aarch64.deb"
         ;;
       *)
-        printf "%b\n" "${RED}Unsupported architecture for deb install: $ARCH${RC}"
-        exit 1
+        printf "%b\n" "${YELLOW}Unsupported architecture for deb install: $ARCH, skipping fastfetch...${RC}"
         ;;
       esac
-      curl -sSLo "/tmp/fastfetch.deb" "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$DEB_FILE"
-      "$ESCALATION_TOOL" "$PACKAGER" install -y /tmp/fastfetch.deb
-      rm /tmp/fastfetch.deb
+      if [ -n "$DEB_FILE" ]; then
+        curl -sSLo "/tmp/fastfetch.deb" "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$DEB_FILE" && \
+        "$ESCALATION_TOOL" "$PACKAGER" install -y /tmp/fastfetch.deb && \
+        rm /tmp/fastfetch.deb || printf "%b\n" "${YELLOW}Failed to install fastfetch from GitHub, continuing...${RC}"
+      fi
     fi
     ;;
   apk)
-    "$ESCALATION_TOOL" "$PACKAGER" add $PACKAGES
+    "$ESCALATION_TOOL" "$PACKAGER" add $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
   xbps-install)
-    "$ESCALATION_TOOL" "$PACKAGER" -Sy $PACKAGES
+    "$ESCALATION_TOOL" "$PACKAGER" -Sy $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
   pkg)
     # Replace some package names for FreeBSD
     FREEBSD_PACKAGES=$(echo "$PACKAGES" | sed 's/tar/xtar/g')
-    "$ESCALATION_TOOL" "$PACKAGER" install -y $FREEBSD_PACKAGES
+    "$ESCALATION_TOOL" "$PACKAGER" install -y $FREEBSD_PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
   *)
-    "$ESCALATION_TOOL" "$PACKAGER" install -y $PACKAGES
+    "$ESCALATION_TOOL" "$PACKAGER" install -y $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
   esac
 
@@ -354,13 +355,11 @@ installStarshipAndFzf() {
 
   if [ "$PACKAGER" = "eopkg" ]; then
     "$ESCALATION_TOOL" "$PACKAGER" install -y starship || {
-      printf "%b\n" "${RED}Failed to install starship with Solus!${RC}"
-      exit 1
+      printf "%b\n" "${YELLOW}Failed to install starship with Solus, continuing...${RC}"
     }
   else
     curl -sSL https://starship.rs/install.sh | "$ESCALATION_TOOL" sh || {
-      printf "%b\n" "${RED}Failed to install starship!${RC}"
-      exit 1
+      printf "%b\n" "${YELLOW}Failed to install starship, continuing...${RC}"
     }
   fi
 
@@ -390,12 +389,11 @@ installZoxide() {
   fi
 
   if [ "$PACKAGER" = "apk" ]; then
-    "$ESCALATION_TOOL" "$PACKAGER" add zoxide
+    "$ESCALATION_TOOL" "$PACKAGER" add zoxide || printf "%b\n" "${YELLOW}Failed to install zoxide, continuing...${RC}"
   else
-    if ! curl -sSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh; then
-      printf "%b\n" "${RED}Something went wrong during zoxide install!${RC}"
-      exit 1
-    fi
+    curl -sSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh || {
+      printf "%b\n" "${YELLOW}Something went wrong during zoxide install, continuing...${RC}"
+    }
   fi
 }
 
@@ -411,12 +409,11 @@ installMise() {
     return
   fi
 
-  if ! curl -sSL https://mise.run | sh; then
-    printf "%b\n" "${RED}Something went wrong during mise install!${RC}"
-    exit 1
-  else
+  if curl -sSL https://mise.run | sh; then
     printf "%b\n" "${GREEN}Mise installed successfully!${RC}"
     printf "%b\n" "${YELLOW}Please restart your shell to see the changes.${RC}"
+  else
+    printf "%b\n" "${YELLOW}Something went wrong during mise install, continuing...${RC}"
   fi
 }
 
