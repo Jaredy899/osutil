@@ -68,6 +68,9 @@ installYazi() {
     pkg)
       "$ESCALATION_TOOL" "$PACKAGER" install -y yazi ffmpeg 7-zip jq poppler-utils fd-find ripgrep fzf zoxide ImageMagick7
       ;;
+    xbps-install)
+      "$ESCALATION_TOOL" "$PACKAGER" -Sy yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide resvg ImageMagick
+      ;;
     *)
       "$ESCALATION_TOOL" "$PACKAGER" install -y yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide ImageMagick
       ;;
