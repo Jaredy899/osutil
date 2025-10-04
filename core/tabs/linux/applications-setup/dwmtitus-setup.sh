@@ -78,31 +78,31 @@ setupPicomDependencies() {
 
 makeDWM() {
     if [ -d "$DWM_DIR" ]; then
-        printf "%b\n" "${YELLOW}Removing existing dwm-titus directory...${RC}"
+        printf "%b\n" "${YELLOW}Removing existing dwm directory...${RC}"
         if ! rm -rf "$DWM_DIR"; then
-            printf "%b\n" "${RED}Failed to remove existing dwm-titus directory${RC}"
+            printf "%b\n" "${RED}Failed to remove existing dwm directory${RC}"
             return 1
         fi
     fi
     
-    printf "%b\n" "${YELLOW}Cloning dwm-titus repository...${RC}"
-    if ! git clone https://github.com/ChrisTitusTech/dwm-titus.git "$DWM_DIR"; then
-        printf "%b\n" "${RED}Error: Failed to clone dwm-titus repository${RC}"
+    printf "%b\n" "${YELLOW}Cloning dwm repository...${RC}"
+    if ! git clone https://git.suckless.org/dwm "$DWM_DIR"; then
+        printf "%b\n" "${RED}Error: Failed to clone dwm repository${RC}"
         return 1
     fi
     
     if ! cd "$DWM_DIR"; then
-        printf "%b\n" "${RED}Error: Failed to change to dwm-titus directory${RC}"
+        printf "%b\n" "${RED}Error: Failed to change to dwm directory${RC}"
         return 1
     fi
     
-    printf "%b\n" "${YELLOW}Building and installing dwm-titus...${RC}"
+    printf "%b\n" "${YELLOW}Building and installing dwm...${RC}"
     if ! "$ESCALATION_TOOL" make clean install; then
-        printf "%b\n" "${RED}Error: Failed to build/install dwm-titus${RC}"
+        printf "%b\n" "${RED}Error: Failed to build/install dwm${RC}"
         return 1
     fi
     
-    printf "%b\n" "${GREEN}dwm-titus installed successfully!${RC}"
+    printf "%b\n" "${GREEN}dwm installed successfully!${RC}"
 }
 
 install_nerd_font() {
@@ -178,7 +178,7 @@ picom_animations() {
     fi
     
     if [ ! -d "$picom_dir" ]; then
-        if ! git clone https://github.com/ChrisTitusTech/picom.git "$picom_dir"; then
+        if ! git clone https://github.com/yshui/picom "$picom_dir"; then
             printf "%b\n" "${RED}Failed to clone the repository${RC}"
             return 1
         fi
