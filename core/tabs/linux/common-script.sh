@@ -98,7 +98,7 @@ checkEscalationTool() {
             return 0
         fi
 
-        ESCALATION_TOOLS='sudo doas'
+        ESCALATION_TOOLS='sudo-rs sudo doas'
         for tool in ${ESCALATION_TOOLS}; do
             if command_exists "${tool}"; then
                 ESCALATION_TOOL=${tool}
