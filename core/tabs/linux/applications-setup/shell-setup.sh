@@ -495,9 +495,9 @@ backupExistingConfigs() {
 checkEnv
 checkEscalationTool
 getShellChoice
+installDependencies
 cloneDotfiles
 backupExistingConfigs
-installDependencies
 symlinkConfigs
 installStarshipAndFzf
 installZoxide
