@@ -6,7 +6,7 @@
 cleanup_system() {
   printf "%b\n" "${YELLOW}Performing system cleanup...${RC}"
   case "$PACKAGER" in
-  apt-get | nala)
+  apt-get|nala)
     "$ESCALATION_TOOL" "$PACKAGER" clean
     "$ESCALATION_TOOL" "$PACKAGER" autoremove -y
     "$ESCALATION_TOOL" du -h /var/cache/apt
