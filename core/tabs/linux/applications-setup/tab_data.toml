@@ -374,12 +374,6 @@ script = "auto-cpufreq.sh"
 task_list = "I SS"
 
 [[data]]
-name = "Bash Prompt"
-description = "The .bashrc file is a script that runs every time a new terminal session is started in Unix-like operating systems. It is used to configure the shell session, set up aliases, define functions, and more, making the terminal easier to use and more powerful. This command configures the key sections and functionalities defined in the .bashrc file from CTT's mybash repository. https://github.com/ChrisTitusTech/mybash"
-script = "mybash-setup.sh"
-task_list = "I FM"
-
-[[data]]
 name = "Bottles"
 description = "Bottles allows Windows software, like applications and games, to run on Linux. Bottles also provides tools to categorize, organize and optimize your applications."
 script = "bottles-setup.sh"
@@ -498,9 +492,3 @@ name = "Yazi"
 description = "Yazi is a fast, terminal-based file manager written in Rust, featuring asynchronous operations, image previews, and extensive customization options."
 script = "yazi.sh"
 task_list = "I"
-
-[[data]]
-name = "ZSH Prompt"
-description = "The Z shell is a Unix shell that can be used as an interactive login shell and as a command interpreter for shell scripting. Zsh is an extended Bourne shell with many improvements, including some features of Bash, ksh, and tcsh. This command installs ZSH prompt and provides basic configuration."
-script = "zsh-setup.sh"
-task_list = "I FM"
