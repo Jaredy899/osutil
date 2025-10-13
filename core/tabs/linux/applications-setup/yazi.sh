@@ -9,7 +9,7 @@ installYazi() {
     pacman)
       "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm yazi ffmpeg 7zip jq poppler fd ripgrep fzf zoxide resvg imagemagick
       ;;
-    apt-get | nala)
+    apt-get|nala)
       "$ESCALATION_TOOL" "$PACKAGER" update
       "$ESCALATION_TOOL" "$PACKAGER" install -y ffmpeg 7zip jq poppler-utils fd-find ripgrep imagemagick # fzf and zoxide will be installed from shell-setup
 
@@ -34,23 +34,7 @@ installYazi() {
       rm "/tmp/yazi.zip"
       ;;
     eopkg)
-      "$ESCALATION_TOOL" "$PACKAGER" install -y ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
-
-      case "$ARCH" in
-      x86_64)
-        YAZI_FILE="yazi-x86_64-unknown-linux-musl.zip"
-        ;;
-      aarch64)
-        YAZI_FILE="yazi-aarch64-unknown-linux-musl.zip"
-        ;;
-      esac
-
-      printf "%b\n" "${YELLOW}Downloading Yazi from GitHub releases...${RC}"
-      curl -sSLo "/tmp/yazi.zip" "https://github.com/sxyazi/yazi/releases/latest/download/$YAZI_FILE"
-      unzip -j -q "/tmp/yazi.zip" -d "/tmp/" "*/yazi" "*/ya"
-      "$ESCALATION_TOOL" mv "/tmp/yazi" "/usr/bin/"
-      "$ESCALATION_TOOL" mv "/tmp/ya" "/usr/bin/"
-      rm "/tmp/yazi.zip"
+      "$ESCALATION_TOOL" "$PACKAGER" install -y yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
       ;;
     apk)
       "$ESCALATION_TOOL" "$PACKAGER" add yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
