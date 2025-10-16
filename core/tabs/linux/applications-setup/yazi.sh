@@ -36,6 +36,9 @@ installYazi() {
     eopkg)
       "$ESCALATION_TOOL" "$PACKAGER" install -y yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
       ;;
+    zypper)
+      "$ESCALATION_TOOL" "$PACKAGER" install -y yazi ffmpeg 7zip jq poppler-tools fd ripgrep fzf zoxide ImageMagick
+      ;;
     apk)
       "$ESCALATION_TOOL" "$PACKAGER" add yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
       ;;
