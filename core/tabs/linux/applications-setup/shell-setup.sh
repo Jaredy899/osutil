@@ -83,6 +83,9 @@ installDependencies() {
   zsh)
     PACKAGES="$BASE_PACKAGES zsh zsh-completions"
     ;;
+  fish)
+    PACKAGES="$BASE_PACKAGES fish"
+    ;;
   *)
     # For sh/skip/auto, just install base packages
     PACKAGES="$BASE_PACKAGES"
@@ -139,6 +142,12 @@ installDependencies() {
     printf "%b\n" "${GREEN}Zsh installed successfully!${RC}"
     printf "%b\n" "${YELLOW}To make zsh your default shell, run: chsh -s $(which zsh)${RC}"
   fi
+
+  # Show helpful message if fish was installed
+  if [ "$SHELL_CHOICE" = "fish" ] && command_exists fish; then
+    printf "%b\n" "${GREEN}Fish installed successfully!${RC}"
+    printf "%b\n" "${YELLOW}To make fish your default shell, run: chsh -s $(which fish)${RC}"
+  fi
 }
 
 cloneDotfiles() {
@@ -170,9 +179,10 @@ getShellChoice() {
   printf "%b\n" "${GREEN}1) Use detected shell ($CURRENT_SHELL) ${YELLOW}(recommended)${RC}"
   printf "%b\n" "${CYAN}2) bash (recommended for most systems)${RC}"
   printf "%b\n" "${CYAN}3) zsh (recommended for macOS/advanced users)${RC}"
-  printf "%b\n" "${CYAN}4) Skip shell configuration${RC}"
+  printf "%b\n" "${CYAN}4) fish (modern shell with great defaults)${RC}"
+  printf "%b\n" "${CYAN}5) Skip shell configuration${RC}"
 
-  printf "Enter your choice (1-4) [1]: "
+  printf "Enter your choice (1-5) [1]: "
   read -r USER_CHOICE
   USER_CHOICE=${USER_CHOICE:-1}
 
@@ -180,7 +190,8 @@ getShellChoice() {
   1) SHELL_CHOICE="auto" ;;
   2) SHELL_CHOICE="bash" ;;
   3) SHELL_CHOICE="zsh" ;;
-  4) SHELL_CHOICE="skip" ;;
+  4) SHELL_CHOICE="fish" ;;
+  5) SHELL_CHOICE="skip" ;;
   *) SHELL_CHOICE="skip" ;;
   esac
 }
@@ -266,6 +277,22 @@ symlinkConfigs() {
       printf "%b\n" "${YELLOW}.zshrc not found in dotfiles repo, skipping...${RC}"
     fi
     ;;
+  fish)
+    printf "%b\n" "${YELLOW}Setting up fish configuration...${RC}"
+
+    # Create fish config directory if it doesn't exist
+    mkdir -p "$HOME/.config/fish"
+
+    if [ -f "$DOTFILES_DIR/fish/config.fish" ]; then
+      if [ -L "$HOME/.config/fish/config.fish" ] || [ -f "$HOME/.config/fish/config.fish" ]; then
+        rm -f "$HOME/.config/fish/config.fish"
+      fi
+      ln -sf "$DOTFILES_DIR/fish/config.fish" "$HOME/.config/fish/config.fish"
+      printf "%b\n" "${GREEN}Symlinked config.fish from dotfiles${RC}"
+    else
+      printf "%b\n" "${YELLOW}config.fish not found in dotfiles repo, skipping...${RC}"
+    fi
+    ;;
   auto)
     case "$(detectShell)" in
     zsh)
@@ -291,6 +318,22 @@ symlinkConfigs() {
         printf "%b\n" "${GREEN}Symlinked .bashrc from dotfiles${RC}"
       else
         printf "%b\n" "${YELLOW}.bashrc not found in dotfiles repo, skipping...${RC}"
+      fi
+      ;;
+    fish)
+      printf "%b\n" "${YELLOW}Setting up fish configuration (detected)...${RC}"
+
+      # Create fish config directory if it doesn't exist
+      mkdir -p "$HOME/.config/fish"
+
+      if [ -f "$DOTFILES_DIR/fish/config.fish" ]; then
+        if [ -L "$HOME/.config/fish/config.fish" ] || [ -f "$HOME/.config/fish/config.fish" ]; then
+          rm -f "$HOME/.config/fish/config.fish"
+        fi
+        ln -sf "$DOTFILES_DIR/fish/config.fish" "$HOME/.config/fish/config.fish"
+        printf "%b\n" "${GREEN}Symlinked config.fish from dotfiles${RC}"
+      else
+        printf "%b\n" "${YELLOW}config.fish not found in dotfiles repo, skipping...${RC}"
       fi
       ;;
     *)
@@ -434,6 +477,12 @@ backupExistingConfigs() {
       mv "$HOME/.zshrc" "$HOME/.zshrc.bak"
     fi
     ;;
+  fish)
+    if [ -e "$HOME/.config/fish/config.fish" ] && [ ! -e "$HOME/.config/fish/config.fish.bak" ]; then
+      printf "%b\n" "${YELLOW}Backing up existing config.fish to config.fish.bak${RC}"
+      mv "$HOME/.config/fish/config.fish" "$HOME/.config/fish/config.fish.bak"
+    fi
+    ;;
   auto)
     # Backup based on detected shell
     CURRENT_SHELL=$(detectShell)
@@ -448,6 +497,12 @@ backupExistingConfigs() {
       if [ -e "$HOME/.zshrc" ] && [ ! -e "$HOME/.zshrc.bak" ]; then
         printf "%b\n" "${YELLOW}Backing up existing .zshrc to .zshrc.bak${RC}"
         mv "$HOME/.zshrc" "$HOME/.zshrc.bak"
+      fi
+      ;;
+    fish)
+      if [ -e "$HOME/.config/fish/config.fish" ] && [ ! -e "$HOME/.config/fish/config.fish.bak" ]; then
+        printf "%b\n" "${YELLOW}Backing up existing config.fish to config.fish.bak${RC}"
+        mv "$HOME/.config/fish/config.fish" "$HOME/.config/fish/config.fish.bak"
       fi
       ;;
     esac
