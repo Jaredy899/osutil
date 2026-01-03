@@ -89,6 +89,12 @@ script = "developer-tools/neovim.sh"
 task_list = "I FM"
 
 [[data.entries]]
+name = "Helix"
+description = "Helix is a post-modern modal text editor written in Rust, featuring multiple cursors, tree-sitter integration, and a built-in LSP client."
+script = "developer-tools/helix.sh"
+task_list = "I"
+
+[[data.entries]]
 name = "Ngrok"
 description = "Ngrok is a tool that creates secure, temporary tunnels to expose local servers to the internet for testing and development."
 script = "developer-tools/ngrok.sh"
