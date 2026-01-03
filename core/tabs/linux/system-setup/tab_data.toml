@@ -268,6 +268,18 @@ script = "gaming-setup.sh"
 task_list = "I"
 
 [[data]]
+name = "Complete Linux Setup"
+description = "All-in-one setup script that combines Git setup, SSH key management, developer tools (Helix, Neovim, Zellij), utilities (eza, yazi, package-finder), and shell configuration"
+script = "complete-linux-setup.sh"
+task_list = "I SS"
+
+[[data]]
+name = "Git Setup"
+description = "This script configures Git with user name, email, default editor, branch settings, and other Git preferences"
+script = "git-setup.sh"
+task_list = "I SS"
+
+[[data]]
 name = "Global Theme"
 description = "This script is designed to handle the installation and configuration of global theming"
 script = "global-theme.sh"
