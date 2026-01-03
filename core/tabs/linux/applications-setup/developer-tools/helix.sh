@@ -44,7 +44,6 @@ installHelix() {
                 ;;
         esac
         printf "%b\n" "${GREEN}Helix installed successfully!${RC}"
-        printf "%b\n" "${CYAN}Note: On Arch Linux, use 'helix' command. On other distros, use 'hx' command.${RC}"
     else
         printf "%b\n" "${GREEN}Helix is already installed.${RC}"
     fi
