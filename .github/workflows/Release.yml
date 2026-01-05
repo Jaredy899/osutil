@@ -12,7 +12,7 @@ jobs:
   documentation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Release Info
         run: |
           echo "Release ${{ github.ref_name }} created via local build script"
