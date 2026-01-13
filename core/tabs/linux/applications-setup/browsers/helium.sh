@@ -41,15 +41,20 @@ installHelium() {
         # Make executable
         chmod +x "$appimage_path"
         
-        # Extract desktop file and icon from AppImage
+        # Extract desktop file and icon from AppImage to a temporary directory
         printf "%b\n" "${CYAN}Extracting desktop file and icon from AppImage...${RC}"
+        extract_dir=$(mktemp -d)
+        cd "$extract_dir" || exit 1
+        
         if ! "$appimage_path" --appimage-extract helium.desktop >/dev/null 2>&1; then
             printf "%b\n" "${RED}Failed to extract desktop file from AppImage${RC}"
+            rm -rf "$extract_dir"
             exit 1
         fi
         
         if ! "$appimage_path" --appimage-extract helium.png >/dev/null 2>&1; then
             printf "%b\n" "${RED}Failed to extract icon from AppImage${RC}"
+            rm -rf "$extract_dir"
             exit 1
         fi
         
@@ -59,6 +64,7 @@ installHelium() {
             mv "squashfs-root/helium.png" "$icon_path"
         else
             printf "%b\n" "${RED}Icon file not found after extraction${RC}"
+            rm -rf "$extract_dir"
             exit 1
         fi
         
@@ -68,9 +74,12 @@ installHelium() {
             sed "s|^Exec=.*|Exec=$appimage_path|" "squashfs-root/helium.desktop" > "$HOME/.local/share/applications/helium.desktop"
             # Update Icon path
             sed -i "s|^Icon=.*|Icon=$icon_path|" "$HOME/.local/share/applications/helium.desktop"
-            rm -rf squashfs-root
+            cd - >/dev/null || true
+            rm -rf "$extract_dir"
         else
             printf "%b\n" "${RED}Desktop file not found after extraction${RC}"
+            cd - >/dev/null || true
+            rm -rf "$extract_dir"
             exit 1
         fi
         
