@@ -362,6 +362,12 @@ matches = false
 data = "command_exists"
 values = ["pkg"]
 
+[[data.entries]]
+name = "Helium"
+description = "Helium is a modern web browser designed for a fast and efficient browsing experience."
+script = "browsers/helium.sh"
+task_list = "I"
+
 [[data]]
 name = "Android Debloater"
 description = "Universal Android Debloater (UAD) is a tool designed to help users remove bloatware and unnecessary pre-installed applications from Android devices, enhancing performance and user experience."
