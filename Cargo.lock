@@ -604,7 +604,7 @@ checksum = "3ce66197e99546da6c6d991285f605192e794ceae69686c17163844a7bf8fcc2"
 
 [[package]]
 name = "osutil_core"
-version = "1.9.6"
+version = "2.0.0"
 dependencies = [
  "ego-tree",
  "include_dir",
@@ -616,7 +616,7 @@ dependencies = [
 
 [[package]]
 name = "osutil_tui"
-version = "1.9.6"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "clap",

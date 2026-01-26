@@ -55,6 +55,12 @@ script = "developer-tools/github-desktop.sh"
 task_list = "I"
 
 [[data.entries]]
+name = "Helix"
+description = "Helix is a modal text editor written in Rust, inspired by Kakoune, featuring built-in language server protocol (LSP) support, multiple selections, and a modern architecture designed for efficient code editing."
+script = "developer-tools/helix.sh"
+task_list = "I"
+
+[[data.entries]]
 name = "JetBrains Toolbox"
 description = "JetBrains Toolbox is a collection of tools and an app that help developers work with JetBrains products."
 script = "developer-tools/jetbrains-toolbox.sh"

@@ -4,12 +4,6 @@ A powerful cross-platform system utility tool with a modern TUI interface that s
 
 ## 🚀 How to Run
 
-### **Linux**
-
-```bash
-curl -fsSL jaredcervantes.com/os | sh
-```
-
 ### **macOS & Linux**
 
 ```bash
