@@ -9,9 +9,6 @@ installWaterfox() {
             pacman)
 		        "$AUR_HELPER" -S --needed --noconfirm waterfox-bin
                 ;;
-            pkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y waterfox
-                ;;
             *)
 		        checkFlatpak
                 flatpak install -y flathub net.waterfox.waterfox

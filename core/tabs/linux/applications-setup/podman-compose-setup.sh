@@ -18,9 +18,6 @@ installPodmanCompose() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy podman-compose
                 ;;
-            pkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y py311-podman-compose
-                ;;
             *)
                 printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}${RC}"
                 exit 1

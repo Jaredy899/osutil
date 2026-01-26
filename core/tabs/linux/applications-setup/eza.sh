@@ -29,7 +29,7 @@ installEza() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy eza
                 ;;
-            zypper|eopkg|pkg)
+            zypper|eopkg)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y eza
                 ;;
             *)

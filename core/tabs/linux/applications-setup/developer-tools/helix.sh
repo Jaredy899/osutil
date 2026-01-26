@@ -28,9 +28,6 @@ installHelix() {
             eopkg)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y helix
                 ;;
-            pkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y helix
-                ;;
             *)
                 # Fallback: try installing via cargo if available
                 if command_exists cargo; then
@@ -49,6 +46,35 @@ installHelix() {
     fi
 }
 
+configureHelix() {
+    HELIX_CONFIG_DIR="$HOME/.config/helix"
+    HELIX_CONFIG_FILE="$HELIX_CONFIG_DIR/config.toml"
+    
+    # Create config directory if it doesn't exist
+    if [ ! -d "$HELIX_CONFIG_DIR" ]; then
+        printf "%b\n" "${YELLOW}Creating Helix config directory...${RC}"
+        mkdir -p "$HELIX_CONFIG_DIR"
+    fi
+    
+    # Check if config already has the theme setting
+    if [ -f "$HELIX_CONFIG_FILE" ] && grep -q 'theme = "catppuccin_mocha"' "$HELIX_CONFIG_FILE"; then
+        printf "%b\n" "${GREEN}Helix configuration already exists.${RC}"
+        return
+    fi
+    
+    # Append configuration to config.toml
+    printf "%b\n" "${YELLOW}Configuring Helix...${RC}"
+    cat >> "$HELIX_CONFIG_FILE" << 'EOF'
+theme = "catppuccin_mocha"
+
+[keys.normal]
+q = { q = ":q!" }
+Z = { Z = ":wq" }
+EOF
+    printf "%b\n" "${GREEN}Helix configuration applied successfully!${RC}"
+}
+
 checkEnv
 checkEscalationTool
 installHelix
+configureHelix

@@ -66,21 +66,6 @@ case "$OS" in
         ;;
     esac
     ;;
-  FreeBSD)
-    case "$ARCH" in
-      x86_64|amd64)
-        URL="https://github.com/Jaredy899/osutil/releases/latest/download/osutil-freebsd-x86_64"
-        ;;
-      *)
-        if use_colors; then
-            printf "%b\n" "${RED}Unsupported FreeBSD architecture: $ARCH${RC}"
-        else
-            printf "Unsupported FreeBSD architecture: %s\n" "$ARCH"
-        fi
-        exit 1
-        ;;
-    esac
-    ;;
   *)
     if use_colors; then
         printf "%b\n" "${RED}Unsupported OS: $OS${RC}"

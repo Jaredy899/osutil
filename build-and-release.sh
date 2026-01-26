@@ -9,6 +9,10 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}🚀 Starting local build and release process...${NC}"
 
+# Detect OS
+OS="$(uname -s)"
+echo -e "${YELLOW}📍 Detected OS: $OS${NC}"
+
 # Check if we're in a git repository
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
     echo -e "${RED}❌ Not in a git repository${NC}"
@@ -33,7 +37,6 @@ mkdir -p dist
 # Install required tools if not present
 echo -e "${YELLOW}🔧 Installing build tools...${NC}"
 cargo install cargo-zigbuild --locked 2>/dev/null || true
-cargo install cross --locked 2>/dev/null || true
 
 # Build all targets
 echo -e "${YELLOW}🔨 Building all targets...${NC}"
@@ -48,20 +51,16 @@ cp target/aarch64-unknown-linux-musl/release/osutil dist/osutil-linux-aarch64
 cargo zigbuild --release --target armv7-unknown-linux-musleabihf --all-features
 cp target/armv7-unknown-linux-musleabihf/release/osutil dist/osutil-linux-armv7
 
-echo "==> Windows (GNU)"
-cargo build --release --target x86_64-pc-windows-gnu --features syntax-highlighting
-cp target/x86_64-pc-windows-gnu/release/osutil.exe dist/osutil-windows-x86_64-gnu.exe
+if [[ "$OS" == "Darwin" ]]; then
+    echo "==> macOS (Darwin) with full features"
+    cargo build --release --target x86_64-apple-darwin --all-features
+    cp target/x86_64-apple-darwin/release/osutil dist/osutil-macos-x86_64
 
-echo "==> macOS (Darwin)"
-cargo zigbuild --release --target x86_64-apple-darwin --all-features
-cp target/x86_64-apple-darwin/release/osutil dist/osutil-macos-x86_64
-
-cargo zigbuild --release --target aarch64-apple-darwin --all-features
-cp target/aarch64-apple-darwin/release/osutil dist/osutil-macos-arm64
-
-echo "==> FreeBSD (x86_64)"
-cross build --release --target x86_64-unknown-freebsd --all-features
-cp target/x86_64-unknown-freebsd/release/osutil dist/osutil-freebsd-x86_64
+    cargo build --release --target aarch64-apple-darwin --all-features
+    cp target/aarch64-apple-darwin/release/osutil dist/osutil-macos-arm64
+else
+    echo "==> Skipping macOS (requires macOS to build with full features)"
+fi
 
 # Show what we built
 echo -e "${GREEN}✅ Build complete! Created files:${NC}"
@@ -83,22 +82,11 @@ cat > release_notes.md << EOF
 - **x86_64**: \`osutil-macos-x86_64\`
 - **arm64**: \`osutil-macos-arm64\`
 
-### Windows
-- **x86_64 (GNU)**: \`osutil-windows-x86_64-gnu.exe\`
-
-### FreeBSD
-- **x86_64**: \`osutil-freebsd-x86_64\`
-
 ## Installation
 
-### macOS, Linux, & FreeBSD
+### macOS & Linux
 \`\`\`bash
 sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh)
-\`\`\`
-
-### Windows
-\`\`\`powershell
-irm https://raw.githubusercontent.com/Jaredy899/osutil/main/install-windows.ps1 | iex
 \`\`\`
 EOF
 
@@ -113,3 +101,7 @@ rm release_notes.md
 
 echo -e "${GREEN}🎉 Release $VERSION created successfully!${NC}"
 echo -e "${YELLOW}🔗 View at: https://github.com/Jaredy899/osutil/releases/tag/$VERSION${NC}"
+
+if [[ "$OS" != "Darwin" ]]; then
+    echo -e "${YELLOW}⚠️  Note: macOS binaries not included (run release from macOS to include them)${NC}"
+fi

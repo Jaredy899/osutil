@@ -48,16 +48,6 @@ installXFCE() {
             "$ESCALATION_TOOL" "$PACKAGER" -y xfce4
             installDisplayManager
             ;;
-        pkg)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y xfce xfce4-goodies slim dbus polkit xorg
-            # Enable services (FreeBSD specific)
-            "$ESCALATION_TOOL" sysrc dbus_enable=YES
-            "$ESCALATION_TOOL" sysrc slim_enable=YES
-            "$ESCALATION_TOOL" sysrc moused_enable=YES
-            "$ESCALATION_TOOL" service dbus start
-            "$ESCALATION_TOOL" service moused start
-            printf "%b\n" "${GREEN}XFCE installed on FreeBSD. Configure SLiM and .xinitrc manually.${RC}"
-            ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
             exit 1

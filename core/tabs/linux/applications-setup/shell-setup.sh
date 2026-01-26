@@ -127,11 +127,6 @@ installDependencies() {
   xbps-install)
     "$ESCALATION_TOOL" "$PACKAGER" -Sy $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
-  pkg)
-    # Replace some package names for FreeBSD
-    FREEBSD_PACKAGES=$(echo "$PACKAGES" | sed 's/tar/xtar/g')
-    "$ESCALATION_TOOL" "$PACKAGER" install -y $FREEBSD_PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
-    ;;
   *)
     "$ESCALATION_TOOL" "$PACKAGER" install -y $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
@@ -220,9 +215,6 @@ symlinkConfigs() {
     ;;
   darwin)
     FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/macos.jsonc"
-    ;;
-  freebsd)
-    FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/linux.jsonc"
     ;;
   *)
     FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/linux.jsonc"
@@ -441,12 +433,6 @@ installZoxide() {
 }
 
 installMise() {
-  # Skip mise installation on FreeBSD
-  if [ "$DTYPE" = "freebsd" ]; then
-    printf "%b\n" "${YELLOW}Skipping mise installation on FreeBSD (use pkg instead)${RC}"
-    return
-  fi
-
   if command_exists mise; then
     printf "%b\n" "${GREEN}Mise already installed${RC}"
     return

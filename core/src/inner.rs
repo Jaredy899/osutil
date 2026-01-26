@@ -3,20 +3,14 @@ use ego_tree::{NodeMut, Tree};
 use include_dir::{include_dir, Dir};
 use serde::Deserialize;
 use std::{
+    fs::File,
+    io::{BufRead, BufReader, Read},
     ops::{Deref, DerefMut},
+    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     rc::Rc,
 };
-
-#[cfg(not(windows))]
-use std::{
-    fs::File,
-    io::{BufRead, BufReader, Read},
-};
 use temp_dir::TempDir;
-
-#[cfg(not(windows))]
-use std::os::unix::fs::PermissionsExt;
 
 const TAB_DATA: Dir = include_dir!("$CARGO_MANIFEST_DIR/tabs");
 
@@ -218,12 +212,7 @@ fn create_directory(
                 }));
             }
             EntryType::Script(script) => {
-                let script_base_path = command_dir.join(&script);
-                let script_path = if cfg!(windows) {
-                    script_base_path.with_extension("ps1")
-                } else {
-                    script_base_path.with_extension("sh")
-                };
+                let script_path = command_dir.join(&script).with_extension("sh");
 
                 if script_path.exists() {
                     if let Some((executable, args)) = get_shebang(&script_path, validate) {
@@ -245,91 +234,6 @@ fn create_directory(
     }
 }
 
-#[cfg(windows)]
-fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String>)> {
-    if script_path.extension() == Some(std::ffi::OsStr::new("ps1")) {
-        // Prefer PowerShell 7 (pwsh.exe), fallback to PowerShell 5 (powershell.exe)
-        let pwsh = "pwsh.exe";
-        let powershell = "powershell.exe";
-
-        // Check for PowerShell 7 first
-        let pwsh_valid = if validate {
-            which::which(pwsh).is_ok()
-                || std::path::Path::new("C:\\Program Files\\PowerShell\\7\\pwsh.exe").exists()
-                || std::path::Path::new("C:\\Program Files (x86)\\PowerShell\\7\\pwsh.exe").exists()
-        } else {
-            true
-        };
-
-        // Build a -Command wrapper that captures all streams, including Write-Host (Information)
-        let command_wrapper = format!(
-            "$InformationPreference='Continue'; & '{}' *>&1",
-            script_path.to_string_lossy()
-        );
-
-        let (base_exe, base_args) = if pwsh_valid {
-            (
-                pwsh.to_string(),
-                vec![
-                    "-NoLogo".to_string(),
-                    "-NoProfile".to_string(),
-                    "-ExecutionPolicy".to_string(),
-                    "Bypass".to_string(),
-                    "-Command".to_string(),
-                    command_wrapper,
-                ],
-            )
-        } else {
-            // Fallback to PowerShell 5
-            let powershell_valid = if validate {
-                which::which(powershell).is_ok()
-                    || std::path::Path::new(
-                        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-                    )
-                    .exists()
-            } else {
-                true
-            };
-
-            if powershell_valid {
-                (
-                    powershell.to_string(),
-                    vec![
-                        "-NoLogo".to_string(),
-                        "-NoProfile".to_string(),
-                        "-ExecutionPolicy".to_string(),
-                        "Bypass".to_string(),
-                        "-Command".to_string(),
-                        command_wrapper,
-                    ],
-                )
-            } else {
-                // No PowerShell found - return None
-                return None;
-            }
-        };
-
-        Some((base_exe, base_args))
-    } else {
-        None
-    }
-}
-
-#[cfg(windows)]
-#[allow(dead_code)]
-fn script_requires_admin(script_path: &Path) -> bool {
-    match std::fs::read_to_string(script_path) {
-        Ok(content) => {
-            let lower = content.to_lowercase();
-            lower.contains("-verb runas")
-                || lower.contains("test-administrator")
-                || lower.contains("#requires -runasadministrator")
-        }
-        Err(_) => false,
-    }
-}
-
-#[cfg(not(windows))]
 fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String>)> {
     let default_executable = || {
         if script_path.extension() == Some(std::ffi::OsStr::new("sh")) {
@@ -371,13 +275,6 @@ fn get_shebang(script_path: &Path, validate: bool) -> Option<(String, Vec<String
     })
 }
 
-#[cfg(windows)]
-#[allow(dead_code)]
-fn is_executable(path: &Path) -> bool {
-    path.is_file()
-}
-
-#[cfg(not(windows))]
 fn is_executable(path: &Path) -> bool {
     path.metadata()
         .map(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
@@ -429,9 +326,7 @@ impl TabDirectories {
     }
 
     fn detect_platform() -> &'static str {
-        if cfg!(target_os = "windows") {
-            "windows"
-        } else if cfg!(target_os = "macos") {
+        if cfg!(target_os = "macos") {
             "macos"
         } else {
             "linux"

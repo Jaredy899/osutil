@@ -2,7 +2,7 @@
 name = "osutil_core"
 description = "The backend of OSutil."
 repository = "https://github.com/Jaredy899/osutil"
-edition = "2021"
+edition = "2024"
 version.workspace = true
 license.workspace = true
 include = ["src/*.rs", "Cargo.toml", "tabs/**"]
@@ -13,4 +13,4 @@ temp-dir = "0.1.14"
 serde = { version = "1.0.228", features = ["derive", "std"], default-features = false }
 toml = { version = "0.9.4", features = ["parse", "serde"], default-features = false }
 which = "8.0.0"
-ego-tree = "0.10.0"
+ego-tree = "0.11.0"

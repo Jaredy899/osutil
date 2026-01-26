@@ -26,9 +26,6 @@ installDependencies() {
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Sy fzf bash coreutils
             ;;
-        pkg)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
-            ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
             exit 1

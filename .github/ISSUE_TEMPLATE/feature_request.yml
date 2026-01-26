@@ -8,7 +8,6 @@ body:
     attributes:
       label: Target Operating System
       options:
-        - Windows
         - macOS
         - Linux
     validations:

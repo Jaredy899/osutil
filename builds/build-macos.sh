@@ -73,8 +73,8 @@ install_rust
 ensure_rustup_rust
 update_rust
 
-# Create build directory
-BUILD_DIR="build"
+# Create dist directory
+BUILD_DIR="dist"
 mkdir -p "$BUILD_DIR"
 
 # Install required targets

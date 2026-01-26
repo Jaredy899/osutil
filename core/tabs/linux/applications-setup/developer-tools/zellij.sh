@@ -28,7 +28,7 @@ installZellij() {
                 "$ESCALATION_TOOL" "$PACKAGER" copr enable verlad/zellij -y
                 "$ESCALATION_TOOL" "$PACKAGER" install -y zellij
                 ;;
-            eopkg|pkg)
+            eopkg)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y zellij
                 ;;
             *)

@@ -7,7 +7,3 @@ linker = "zig cc -target aarch64-linux-musl"
 
 [target.armv7-unknown-linux-musleabihf]
 linker = "zig cc -target arm-linux-musleabihf"
-
-# Windows (GNU) target
-[target.x86_64-pc-windows-gnu]
-linker = "x86_64-w64-mingw32-gcc"

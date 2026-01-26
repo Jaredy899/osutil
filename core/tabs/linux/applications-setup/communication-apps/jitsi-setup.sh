@@ -19,7 +19,7 @@ installJitsi() {
             pacman)
                 "$AUR_HELPER" -S --needed --noconfirm jitsi-meet-bin
                 ;;
-            dnf|pkg)
+            dnf)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y jitsi-meet
                 ;;
             apk|xbps-install)

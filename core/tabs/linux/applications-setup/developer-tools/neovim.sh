@@ -74,9 +74,6 @@ installNeovim() {
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Sy neovim git fzf ripgrep fd tree-sitter gcc || true
             ;;
-        pkg)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd-find tree-sitter gcc || true
-            ;;
         eopkg)
             "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd tree-sitter gcc || true
             ;;

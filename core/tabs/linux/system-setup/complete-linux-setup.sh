@@ -70,43 +70,36 @@ if ! source_script "$LINUX_DIR/applications-setup/developer-tools/helix.sh"; the
 fi
 printf "%b\n" ""
 
-# 4. Neovim Setup
-printf "%b\n" "${CYAN}=== Step 4: Neovim Setup ===${RC}"
-if ! source_script "$LINUX_DIR/applications-setup/developer-tools/neovim.sh"; then
-    printf "%b\n" "${YELLOW}Neovim setup failed or skipped, continuing...${RC}"
-fi
-printf "%b\n" ""
-
-# 5. Zellij Setup
-printf "%b\n" "${CYAN}=== Step 5: Zellij Setup ===${RC}"
+# 4. Zellij Setup
+printf "%b\n" "${CYAN}=== Step 4: Zellij Setup ===${RC}"
 if ! source_script "$LINUX_DIR/applications-setup/developer-tools/zellij.sh"; then
     printf "%b\n" "${YELLOW}Zellij setup failed or skipped, continuing...${RC}"
 fi
 printf "%b\n" ""
 
-# 6. Eza Setup
-printf "%b\n" "${CYAN}=== Step 6: Eza Setup ===${RC}"
+# 5. Eza Setup
+printf "%b\n" "${CYAN}=== Step 5: Eza Setup ===${RC}"
 if ! source_script "$LINUX_DIR/applications-setup/eza.sh"; then
     printf "%b\n" "${YELLOW}Eza setup failed or skipped, continuing...${RC}"
 fi
 printf "%b\n" ""
 
-# 7. Package Finder Setup
-printf "%b\n" "${CYAN}=== Step 7: Package Finder Setup ===${RC}"
+# 6. Package Finder Setup
+printf "%b\n" "${CYAN}=== Step 6: Package Finder Setup ===${RC}"
 if ! source_script "$LINUX_DIR/applications-setup/package-finder.sh"; then
     printf "%b\n" "${YELLOW}Package finder setup failed or skipped, continuing...${RC}"
 fi
 printf "%b\n" ""
 
-# 8. Shell Setup
-printf "%b\n" "${CYAN}=== Step 8: Shell Setup ===${RC}"
+# 7. Shell Setup
+printf "%b\n" "${CYAN}=== Step 7: Shell Setup ===${RC}"
 if ! source_script "$LINUX_DIR/applications-setup/shell-setup.sh"; then
     printf "%b\n" "${YELLOW}Shell setup failed or skipped, continuing...${RC}"
 fi
 printf "%b\n" ""
 
-# 9. Yazi Setup
-printf "%b\n" "${CYAN}=== Step 9: Yazi Setup ===${RC}"
+# 8. Yazi Setup
+printf "%b\n" "${CYAN}=== Step 8: Yazi Setup ===${RC}"
 if ! source_script "$LINUX_DIR/applications-setup/yazi.sh"; then
     printf "%b\n" "${YELLOW}Yazi setup failed or skipped, continuing...${RC}"
 fi

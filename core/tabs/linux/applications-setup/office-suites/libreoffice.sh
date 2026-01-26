@@ -22,7 +22,7 @@ installLibreOffice() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy libreoffice
                 ;;
-            eopkg|pkg)
+            eopkg)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y libreoffice
                 ;;
             *)

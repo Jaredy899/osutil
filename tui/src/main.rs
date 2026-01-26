@@ -8,8 +8,6 @@ mod root;
 mod running_command;
 mod state;
 mod theme;
-#[cfg(windows)]
-mod windows_runner;
 
 use crate::cli::Args;
 use clap::Parser;

@@ -118,8 +118,8 @@ update_rust
 # Install Rust targets
 install_rust_targets
 
-# Create build directory
-BUILD_DIR="build"
+# Create dist directory
+BUILD_DIR="dist"
 mkdir -p "$BUILD_DIR"
 
 # Build for all architectures

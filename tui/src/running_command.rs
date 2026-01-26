@@ -1,14 +1,9 @@
 use crate::{float::FloatContent, hint::Shortcut, shortcuts, theme::Theme};
-#[cfg(not(windows))]
-use oneshot::channel;
-#[cfg(not(windows))]
-use oneshot::Receiver;
+use oneshot::{channel, Receiver};
 use osutil_core::Command;
-#[cfg(not(windows))]
-use portable_pty::ChildKiller;
-#[cfg(not(windows))]
-use portable_pty::{CommandBuilder, NativePtySystem, PtySystem};
-use portable_pty::{ExitStatus, MasterPty, PtySize};
+use portable_pty::{
+    ChildKiller, CommandBuilder, ExitStatus, MasterPty, NativePtySystem, PtySize, PtySystem,
+};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind},
     prelude::*,
@@ -17,58 +12,16 @@ use ratatui::{
 };
 use std::{
     fs::File,
-    io::{Result, Write},
-    sync::{atomic::AtomicBool, Arc, Mutex},
+    io::{Read, Result, Write},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
     thread::JoinHandle,
 };
-
-#[cfg(not(windows))]
-use std::sync::atomic::Ordering;
 use time::{macros::format_description, OffsetDateTime};
 use tui_term::widget::PseudoTerminal;
 use vt100_ctt::{Parser, Screen};
-
-// Dummy PTY for error cases
-#[allow(dead_code)]
-struct DummyPty;
-
-impl portable_pty::MasterPty for DummyPty {
-    fn resize(&self, _size: portable_pty::PtySize) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn get_size(&self) -> anyhow::Result<portable_pty::PtySize> {
-        Ok(portable_pty::PtySize {
-            rows: 24,
-            cols: 80,
-            pixel_width: 0,
-            pixel_height: 0,
-        })
-    }
-
-    fn take_writer(&self) -> anyhow::Result<Box<dyn Write + Send>> {
-        Ok(Box::new(std::io::sink()))
-    }
-
-    fn try_clone_reader(&self) -> anyhow::Result<Box<dyn std::io::Read + Send>> {
-        Ok(Box::new(std::io::empty()))
-    }
-
-    #[cfg(unix)]
-    fn tty_name(&self) -> Option<std::path::PathBuf> {
-        None
-    }
-
-    #[cfg(unix)]
-    fn process_group_leader(&self) -> Option<i32> {
-        None
-    }
-
-    #[cfg(unix)]
-    fn as_raw_fd(&self) -> Option<i32> {
-        None
-    }
-}
 
 pub struct RunningCommand {
     /// A buffer to save all the command output (accumulates, until the command exits)
@@ -76,20 +29,17 @@ pub struct RunningCommand {
     /// A handle for the thread running the command
     command_thread: Option<JoinHandle<ExitStatus>>,
     /// A handle to kill the running process; it's an option because it can only be used once
-    #[cfg(not(windows))]
     child_killer: Option<Receiver<Box<dyn ChildKiller + Send + Sync>>>,
     /// A join handle for the thread that reads command output and sends it to the main thread
     _reader_thread: JoinHandle<()>,
     /// Virtual terminal (pty) handle, used for resizing the pty
     pty_master: Box<dyn MasterPty + Send>,
-    /// Used for sending keys to the emulated terminal (or child stdin on Windows)
+    /// Used for sending keys to the emulated terminal
     writer: Box<dyn Write + Send>,
     /// Only set after the process has ended
     status: Option<ExitStatus>,
     log_path: Option<String>,
     scroll_offset: usize,
-    #[cfg(windows)]
-    child_pid: Option<u32>,
 }
 
 impl FloatContent for RunningCommand {
@@ -215,44 +165,59 @@ impl FloatContent for RunningCommand {
         }
     }
 }
+
 pub static TERMINAL_UPDATED: AtomicBool = AtomicBool::new(true);
 
+/// Get the shell and argument for Unix platforms
+fn get_shell() -> (&'static str, &'static str) {
+    ("sh", "-c")
+}
+
 impl RunningCommand {
-    #[cfg(not(windows))]
     pub fn new(commands: &[&Command]) -> Self {
         let pty_system = NativePtySystem::default();
 
-        // Build the command based on the provided Command enum variant
-        let mut cmd: CommandBuilder = CommandBuilder::new("sh");
-        cmd.arg("-c");
+        // Get platform-specific shell
+        let (shell, shell_arg) = get_shell();
 
-        // Set environment variables needed for interactive TUI tools like gum
+        // Build the command based on the provided Command enum variant
+        let mut cmd: CommandBuilder = CommandBuilder::new(shell);
+        cmd.arg(shell_arg);
+
+        // Set environment variables needed for interactive TUI tools
         cmd.env("TERM", "xterm-256color");
         cmd.env("COLORTERM", "truecolor");
-        // Ensure that interactive tools can detect they're in a terminal
         cmd.env("FORCE_COLOR", "1");
         cmd.env("NO_COLOR", "");
+        // Mark that we are running under the OSutil TUI so scripts can detect this
+        cmd.env("OSUTIL_TUI_MODE", "1");
 
-        // All the merged commands are passed as a single argument to reduce the overhead of rebuilding the command arguments for each and every command
+        // Build the script from all commands
         let mut script = String::new();
 
         for command in commands {
             match command {
-                Command::Raw(prompt) => script.push_str(&format!("{prompt}\n")),
+                Command::Raw(prompt) => {
+                    script.push_str(prompt);
+                    script.push('\n');
+                }
                 Command::LocalFile {
                     executable,
                     args,
                     file,
                 } => {
+                    // Change to the script's directory first
                     if let Some(parent_directory) = file.parent() {
-                        script.push_str(&format!("cd {}\n", parent_directory.display()));
+                        script.push_str(&format!("cd '{}'\n", parent_directory.display()));
                     }
+
+                    // Add the command
                     script.push_str(executable);
                     for arg in args {
                         script.push(' ');
                         script.push_str(arg);
                     }
-                    script.push('\n'); // Ensures that each command is properly separated for execution preventing directory errors
+                    script.push('\n');
                 }
                 Command::None => panic!("Command::None was treated as a command"),
             }
@@ -279,17 +244,14 @@ impl RunningCommand {
             child.wait().unwrap()
         });
 
-        let mut reader = pair.master.try_clone_reader().unwrap(); // This is a reader, this is where we
+        let mut reader = pair.master.try_clone_reader().unwrap();
 
-        // A buffer, shared between the thread that reads the command output, and the main tread.
+        // A buffer, shared between the thread that reads the command output, and the main thread.
         // The main thread only reads the contents
         let command_buffer: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
         TERMINAL_UPDATED.store(true, Ordering::Release);
         let reader_handle = {
-            // Arc is just a reference, so we can create an owned copy without any problem
             let command_buffer = command_buffer.clone();
-            // The closure below moves all variables used into it, so we can no longer use them,
-            // that's why command_buffer.clone(), because we need to use command_buffer later
             std::thread::spawn(move || {
                 let mut buf = [0u8; 8192];
                 loop {
@@ -298,12 +260,10 @@ impl RunningCommand {
                             if size == 0 {
                                 break; // EOF
                             }
-                            let mut mutex = command_buffer.lock(); // Only lock the mutex after the read is
-                                                                   // done, to minimise the time it is opened
+                            let mut mutex = command_buffer.lock();
                             let command_buffer = mutex.as_mut().unwrap();
                             command_buffer.extend_from_slice(&buf[0..size]);
                             TERMINAL_UPDATED.store(true, Ordering::Release);
-                            // The mutex is closed here automatically
                         }
                         Err(e) => {
                             eprintln!("Error reading from terminal: {}", e);
@@ -329,36 +289,10 @@ impl RunningCommand {
         }
     }
 
-    #[allow(dead_code)]
+    /// Create a new RunningCommand with script names (for logging purposes)
+    /// This is now just an alias for new() since script names are not currently used
     pub fn new_with_names(commands: &[&Command], _script_names: &[String]) -> Self {
-        #[cfg(not(windows))]
-        {
-            Self::new(commands)
-        }
-
-        #[cfg(windows)]
-        {
-            // Use Windows-specific implementation
-            use crate::windows_runner::WindowsCommandRunner;
-            let command = commands.first().expect("No commands provided");
-
-            let windows_runner = WindowsCommandRunner::new(command);
-
-            Self {
-                buffer: windows_runner.buffer,
-                command_thread: windows_runner.command_thread,
-
-                _reader_thread: windows_runner._reader_thread,
-                pty_master: Box::new(DummyPty),
-                writer: windows_runner.stdin_writer,
-                status: windows_runner.status,
-                log_path: None,
-                scroll_offset: 0,
-                child_pid: windows_runner.child_pid,
-            }
-        }
-
-        // Windows-specific fallback removed (unused)
+        Self::new(commands)
     }
 
     fn screen(&mut self, size: Size) -> Screen {
@@ -374,8 +308,6 @@ impl RunningCommand {
         }
 
         // Process the buffer with a parser with the current screen size
-        // We don't actually need to create a new parser every time, but it is so much easier this
-        // way, and doesn't cost that much
         let mut parser = Parser::new(size.height, size.width, 1000);
         if let Ok(mutex) = self.buffer.lock() {
             parser.process(&mutex);
@@ -402,29 +334,14 @@ impl RunningCommand {
             .unwrap_or_else(|| ExitStatus::with_exit_code(1))
     }
 
-    /// Send SIGHUB signal, *not* SIGKILL or SIGTERM, to the child process
+    /// Kill the child process
     pub fn kill_child(&mut self) {
         if !self.is_finished() {
-            #[cfg(not(windows))]
-            {
-                if let Some(rx) = self.child_killer.take() {
-                    if let Ok(mut killer) = rx.recv() {
-                        if let Err(e) = killer.kill() {
-                            eprintln!("Failed to kill child process: {e}");
-                        }
+            if let Some(rx) = self.child_killer.take() {
+                if let Ok(mut killer) = rx.recv() {
+                    if let Err(e) = killer.kill() {
+                        eprintln!("Failed to kill child process: {e}");
                     }
-                }
-            }
-            #[cfg(windows)]
-            {
-                if let Some(pid) = self.child_pid {
-                    use std::process::Stdio;
-                    let _ = std::process::Command::new("taskkill")
-                        .args(["/T", "/F", "/PID", &pid.to_string()])
-                        .stdin(Stdio::null())
-                        .stdout(Stdio::null())
-                        .stderr(Stdio::null())
-                        .status();
                 }
             }
         }
@@ -446,157 +363,6 @@ impl RunningCommand {
         file.write_all(&buffer)?;
 
         Ok(log_path.to_string_lossy().into_owned())
-    }
-
-    /// Get PowerShell executable (prefer PowerShell 7, fallback to PowerShell 5)
-    #[cfg(windows)]
-    #[allow(dead_code)]
-    fn get_powershell_executable() -> Option<String> {
-        // First try PowerShell 7 (pwsh.exe)
-        let pwsh = "pwsh.exe";
-        let pwsh_valid = which::which(pwsh).is_ok()
-            || std::path::Path::new("C:\\Program Files\\PowerShell\\7\\pwsh.exe").exists()
-            || std::path::Path::new("C:\\Program Files (x86)\\PowerShell\\7\\pwsh.exe").exists();
-
-        if pwsh_valid {
-            return Some(pwsh.to_string());
-        }
-
-        // Fallback to PowerShell 5 (powershell.exe)
-        let powershell = "powershell.exe";
-        let powershell_valid = which::which(powershell).is_ok()
-            || std::path::Path::new(
-                "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-            )
-            .exists();
-
-        if powershell_valid {
-            Some(powershell.to_string())
-        } else {
-            None
-        }
-    }
-
-    /// Launch an interactive PowerShell script in a separate terminal window
-    #[cfg(windows)]
-    #[allow(dead_code)]
-    pub fn launch_in_separate_terminal(command: &Command, script_name: Option<String>) -> Self {
-        if let Command::LocalFile {
-            executable: _,
-            args: _,
-            file,
-        } = command
-        {
-            // Get PowerShell executable (prefer 7, fallback to 5)
-            let powershell_exe = match Self::get_powershell_executable() {
-                Some(exe) => exe,
-                None => {
-                    // No PowerShell found - show error
-                    let message = "ERROR!\r\n\r\nNo PowerShell installation found.\r\n\r\nPlease install PowerShell 7 from: https://github.com/PowerShell/PowerShell/releases\r\n\r\nOr ensure PowerShell 5 is available in the system PATH.\r\n\r\nPress Enter to continue...";
-
-                    return Self {
-                        buffer: Arc::new(Mutex::new(message.as_bytes().to_vec())),
-                        command_thread: None,
-                        _reader_thread: std::thread::spawn(|| {}),
-                        pty_master: Box::new(DummyPty),
-                        writer: Box::new(std::io::sink()),
-                        status: Some(ExitStatus::with_exit_code(1)),
-                        log_path: None,
-                        scroll_offset: 0,
-                        child_pid: None,
-                    };
-                }
-            };
-
-            // Launch in a new PowerShell window with the script file
-            let result = std::process::Command::new("cmd")
-                .args([
-                    "/c",
-                    "start",
-                    &powershell_exe,
-                    "-ExecutionPolicy",
-                    "Bypass",
-                    "-File",
-                    &file.to_string_lossy(),
-                ])
-                .spawn();
-
-            match result {
-                Ok(_) => {
-                    // Use TOML name if available, otherwise use filename
-                    let display_name = if let Some(name) = script_name {
-                        if name.len() > 25 {
-                            format!("{}...", &name[..22])
-                        } else {
-                            name
-                        }
-                    } else {
-                        let script_name = file.file_name().unwrap_or_default().to_string_lossy();
-                        if script_name.len() > 15 {
-                            format!("{}...", &script_name[..12])
-                        } else {
-                            script_name.to_string()
-                        }
-                    };
-
-                    // Create a properly formatted multi-line message
-                    let message = format!("SUCCESS!\r\n\r\nScript '{display_name}' launched in separate terminal.\r\n\r\nPress Enter to continue...");
-
-                    // Create a dummy RunningCommand that shows success
-                    Self {
-                        buffer: Arc::new(Mutex::new(message.into_bytes())),
-                        command_thread: None,
-                        _reader_thread: std::thread::spawn(|| {}),
-                        pty_master: Box::new(DummyPty),
-                        writer: Box::new(std::io::sink()),
-                        status: Some(ExitStatus::with_exit_code(0)),
-                        log_path: None,
-                        scroll_offset: 0,
-                        child_pid: None,
-                    }
-                }
-                Err(e) => {
-                    // Truncate error message if it's too long
-                    let error_msg = e.to_string();
-                    let display_error = if error_msg.len() > 20 {
-                        format!("{}...", &error_msg[..17])
-                    } else {
-                        error_msg
-                    };
-
-                    // Create a properly formatted multi-line error message
-                    let message = format!("ERROR!\r\n\r\nFailed to launch script: {display_error}.\r\n\r\nFalling back to TUI...");
-
-                    // Create a dummy RunningCommand that shows error
-                    Self {
-                        buffer: Arc::new(Mutex::new(message.into_bytes())),
-                        command_thread: None,
-                        _reader_thread: std::thread::spawn(|| {}),
-                        pty_master: Box::new(DummyPty),
-                        writer: Box::new(std::io::sink()),
-                        status: Some(ExitStatus::with_exit_code(1)),
-                        log_path: None,
-                        scroll_offset: 0,
-                        child_pid: None,
-                    }
-                }
-            }
-        } else {
-            // Fallback for non-LocalFile commands
-            Self {
-                buffer: Arc::new(Mutex::new(
-                    "ERROR!\r\n\r\nCannot launch in separate terminal.\r\n\r\nFalling back to TUI...".as_bytes().to_vec()
-                )),
-                command_thread: None,
-                _reader_thread: std::thread::spawn(|| {}),
-                pty_master: Box::new(DummyPty),
-                writer: Box::new(std::io::sink()),
-                status: Some(ExitStatus::with_exit_code(1)),
-                log_path: None,
-                scroll_offset: 0,
-                child_pid: None,
-            }
-        }
     }
 
     /// Convert the KeyEvent to pty key codes, and send them to the virtual terminal

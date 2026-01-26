@@ -1,11 +1,10 @@
 [workspace.package]
 license = "MIT"
 version = "1.9.6"
-edition = "2021"
+edition = "2024"
 
 [workspace]
-members = ["tui", "core", "xtask"]
-default-members = ["tui", "core"]
+members = ["tui", "core"]
 resolver = "2"
 
 [profile.release]

@@ -1,10 +1,10 @@
 # OSutil
 
-A powerful cross-platform system utility tool with a modern TUI interface that simplifies system administration across Windows, macOS, Linux, and FreeBSD distributions.
+A powerful cross-platform system utility tool with a modern TUI interface that simplifies system administration across macOS and Linux.
 
 ## 🚀 How to Run
 
-### **Linux & FreeBSD**
+### **Linux**
 
 ```bash
 curl -fsSL jaredcervantes.com/os | sh
@@ -14,12 +14,6 @@ curl -fsSL jaredcervantes.com/os | sh
 
 ```bash
 sh <(curl -fsSL jaredcervantes.com/os)
-```
-
-### **Windows**
-
-```powershell
-irm jaredcervantes.com/os | iex
 ```
 
 ## 📖 Usage
@@ -37,10 +31,8 @@ OSutil is a modern TUI-based system utility that simplifies system administratio
 
 ### **Supported Platforms**
 
-- **Windows**: PowerShell-based system optimization and application management
 - **macOS**: Homebrew-based development tools and system utilities
 - **Linux**: Multi-distribution support with intelligent package manager detection
-- **FreeBSD**: Limited support for FreeBSD. ***Still in active development.***
 
 ### **Supported Linux Distributions**
 
@@ -61,10 +53,6 @@ OSutil is a modern TUI-based system utility that simplifies system administratio
 ### macOS
 
 ![macOS Interface](.github/Mac.png)
-
-### Windows
-
-![Windows Interface](.github/Windows.png)
 
 ## ⚙️ Configuration
 
@@ -88,7 +76,7 @@ size_bypass = true
 
 ### **Prerequisites**
 
-- Rust 1.70+
+- Rust 1.85+ (2024 edition)
 - Cargo
 
 ### **Build**
@@ -103,8 +91,6 @@ cargo build --release
 cargo run
 ```
 
-For detailed build instructions and multi-platform setup, see [MULTI_PLATFORM_SETUP.md](MULTI_PLATFORM_SETUP.md).
-
 ## 🤝 Contributing
 
 OSutil is designed to be easily extensible. Add new scripts by:
@@ -115,7 +101,7 @@ OSutil is designed to be easily extensible. Add new scripts by:
 
 ## 🙏 Acknowledgments
 
-OSutil is built upon the foundation of [Chris Titus Tech's linutil](https://github.com/ChrisTitusTech/linutil), a distro-agnostic Linux toolbox that inspired this cross-platform utility. The original linutil project, with its 3.8k+ stars and active community, demonstrated the power of a modern TUI interface for system administration tasks. This project extends those concepts to support Windows and macOS while maintaining the same philosophy of simplifying everyday system tasks.
+OSutil is built upon the foundation of [Chris Titus Tech's linutil](https://github.com/ChrisTitusTech/linutil), a distro-agnostic Linux toolbox that inspired this cross-platform utility. The original linutil project, with its 3.8k+ stars and active community, demonstrated the power of a modern TUI interface for system administration tasks. This project extends those concepts to support macOS while maintaining the same philosophy of simplifying everyday system tasks.
 
 ## 📄 License
 

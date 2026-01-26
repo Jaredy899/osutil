@@ -18,9 +18,6 @@ installTorBrowser() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy torbrowser-launcher
                 ;;
-            pkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y tor-browser
-                ;;
             *)
                 printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}${RC}"
                 exit 1
