@@ -25,6 +25,62 @@ checkGitInstalled() {
     fi
 }
 
+checkGhInstalled() {
+    if ! command_exists gh; then
+        printf "%b\n" "${YELLOW}GitHub CLI (gh) is not installed. Installing gh...${RC}"
+        case "$PACKAGER" in
+            pacman)
+                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm gh
+                ;;
+            apk)
+                "$ESCALATION_TOOL" "$PACKAGER" add github-cli
+                ;;
+            xbps-install)
+                "$ESCALATION_TOOL" "$PACKAGER" -Sy gh
+                ;;
+            *)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y gh
+                ;;
+        esac
+        printf "%b\n" "${GREEN}GitHub CLI installed successfully.${RC}"
+    else
+        printf "%b\n" "${CYAN}GitHub CLI is already installed.${RC}"
+    fi
+}
+
+setupGitWithGh() {
+    printf "%b\n" "${CYAN}=== GitHub CLI Git Setup ===${RC}"
+    if ! gh auth status 2>/dev/null; then
+        printf "%b\n" "${YELLOW}Not logged in to GitHub. Running 'gh auth login'...${RC}"
+        gh auth login
+    fi
+    if gh auth status 2>/dev/null; then
+        gh auth setup-git
+        printf "%b\n" "${GREEN}Git configured to use GitHub CLI for credentials and identity.${RC}"
+        return 0
+    else
+        printf "%b\n" "${RED}GitHub authentication failed or was cancelled.${RC}"
+        return 1
+    fi
+}
+
+maybeSetupWithGh() {
+    printf "%b\n" "${CYAN}=== GitHub CLI Option ===${RC}"
+    printf "%b" "${CYAN}Use GitHub CLI (gh) to set up Git credentials and identity? [y/N]: ${RC}"
+    read -r use_gh_response
+    case "$use_gh_response" in
+        [Yy]*)
+            checkGhInstalled
+            if setupGitWithGh; then
+                USE_GH=true
+            fi
+            ;;
+        *)
+            printf "%b\n" "${CYAN}Using manual Git configuration.${RC}"
+            ;;
+    esac
+}
+
 configureGit() {
     printf "%b\n" "${YELLOW}Configuring Git...${RC}"
     
@@ -36,35 +92,40 @@ configureGit() {
     current_eol=$(git config --global core.autocrlf 2>/dev/null || echo "")
     current_pull_rebase=$(git config --global pull.rebase 2>/dev/null || echo "false")
     
-    # Prompt for username
-    printf "%b\n" "${CYAN}=== Git User Configuration ===${RC}"
-    if [ -n "$current_name" ]; then
-        printf "%b" "${CYAN}Enter your Git username [${current_name}]: ${RC}"
+    # Skip username/email if already configured via gh
+    if [ "$USE_GH" != true ]; then
+        # Prompt for username
+        printf "%b\n" "${CYAN}=== Git User Configuration ===${RC}"
+        if [ -n "$current_name" ]; then
+            printf "%b" "${CYAN}Enter your Git username [${current_name}]: ${RC}"
+        else
+            printf "%b" "${CYAN}Enter your Git username: ${RC}"
+        fi
+        read -r git_username
+        if [ -z "$git_username" ] && [ -n "$current_name" ]; then
+            git_username="$current_name"
+        fi
+        if [ -n "$git_username" ]; then
+            git config --global user.name "$git_username"
+            printf "%b\n" "${GREEN}Git username set to: ${git_username}${RC}"
+        fi
+        
+        # Prompt for email
+        if [ -n "$current_email" ]; then
+            printf "%b" "${CYAN}Enter your Git email [${current_email}]: ${RC}"
+        else
+            printf "%b" "${CYAN}Enter your Git email: ${RC}"
+        fi
+        read -r git_email
+        if [ -z "$git_email" ] && [ -n "$current_email" ]; then
+            git_email="$current_email"
+        fi
+        if [ -n "$git_email" ]; then
+            git config --global user.email "$git_email"
+            printf "%b\n" "${GREEN}Git email set to: ${git_email}${RC}"
+        fi
     else
-        printf "%b" "${CYAN}Enter your Git username: ${RC}"
-    fi
-    read -r git_username
-    if [ -z "$git_username" ] && [ -n "$current_name" ]; then
-        git_username="$current_name"
-    fi
-    if [ -n "$git_username" ]; then
-        git config --global user.name "$git_username"
-        printf "%b\n" "${GREEN}Git username set to: ${git_username}${RC}"
-    fi
-    
-    # Prompt for email
-    if [ -n "$current_email" ]; then
-        printf "%b" "${CYAN}Enter your Git email [${current_email}]: ${RC}"
-    else
-        printf "%b" "${CYAN}Enter your Git email: ${RC}"
-    fi
-    read -r git_email
-    if [ -z "$git_email" ] && [ -n "$current_email" ]; then
-        git_email="$current_email"
-    fi
-    if [ -n "$git_email" ]; then
-        git config --global user.email "$git_email"
-        printf "%b\n" "${GREEN}Git email set to: ${git_email}${RC}"
+        printf "%b\n" "${CYAN}User name and email configured via GitHub CLI.${RC}"
     fi
     
     # Prompt for default editor
@@ -147,18 +208,22 @@ configureGit() {
     git config --global push.default simple
     printf "%b\n" "${GREEN}Push default set to 'simple'.${RC}"
     
-    # Enable credential helper cache (optional)
-    printf "%b" "${CYAN}Enable credential helper cache (stores credentials for 15 minutes)? [Y/n]: ${RC}"
-    read -r use_credential_cache
-    case "$use_credential_cache" in
-        [Nn]*)
-            printf "%b\n" "${YELLOW}Credential helper cache skipped.${RC}"
-            ;;
-        *)
-            git config --global credential.helper cache
-            printf "%b\n" "${GREEN}Credential helper cache enabled.${RC}"
-            ;;
-    esac
+    # Enable credential helper cache (optional; skip when using gh)
+    if [ "$USE_GH" = true ]; then
+        printf "%b\n" "${CYAN}Credential helper already configured via GitHub CLI.${RC}"
+    else
+        printf "%b" "${CYAN}Enable credential helper cache (stores credentials for 15 minutes)? [Y/n]: ${RC}"
+        read -r use_credential_cache
+        case "$use_credential_cache" in
+            [Nn]*)
+                printf "%b\n" "${YELLOW}Credential helper cache skipped.${RC}"
+                ;;
+            *)
+                git config --global credential.helper cache
+                printf "%b\n" "${GREEN}Credential helper cache enabled.${RC}"
+                ;;
+        esac
+    fi
     
     # GPG signing (optional)
     printf "%b" "${CYAN}Do you want to configure GPG signing for commits? [y/N]: ${RC}"
@@ -184,8 +249,11 @@ displayGitConfig() {
     git config --global --list | grep -E "(user\.|core\.|init\.|pull\.|push\.|credential\.|commit\.)" || true
 }
 
+USE_GH=false
+
 checkEnv
 checkEscalationTool
 checkGitInstalled
+maybeSetupWithGh
 configureGit
 displayGitConfig
