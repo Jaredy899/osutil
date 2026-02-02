@@ -42,7 +42,7 @@ backupExistingConfigs() {
 }
 
 installZshDepend() {
-    DEPENDENCIES="git zsh-autocomplete bat tree multitail fastfetch wget unzip fontconfig starship fzf zoxide mise"
+    DEPENDENCIES="git zsh-autocomplete bat tree multitail fastfetch wget unzip fontconfig starship fzf zoxide mise eza"
 
     printf "%b\n" "${CYAN}Installing dependencies...${RC}"
     for package in $DEPENDENCIES; do

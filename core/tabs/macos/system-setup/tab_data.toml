@@ -1,6 +1,18 @@
 name = "System Setup"
 
 [[data]]
+name = "Complete macOS Setup"
+description = "All-in-one setup script that combines Git setup, SSH configuration, developer tools (Helix, Zellij), shell setup (zsh, dotfiles, starship), and Yazi"
+script = "complete-macos-setup.sh"
+task_list = "I SS"
+
+[[data]]
+name = "Git Setup"
+description = "Configure Git with user name, email, default editor, branch settings, optional GitHub CLI, and other Git preferences"
+script = "git-setup.sh"
+task_list = "I SS"
+
+[[data]]
 name = "Development Setup"
 description = "This script is designed to handle the installation of various development dependencies and tools across different Linux distributions"
 script = "dev-setup.sh"
