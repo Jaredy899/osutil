@@ -1,2 +1,2 @@
 [tools]
-zig = "latest"
+rust = "latest"
