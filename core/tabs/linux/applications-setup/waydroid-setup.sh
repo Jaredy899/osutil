@@ -61,6 +61,9 @@ installWaydroid() {
                     "$ESCALATION_TOOL" dkms install anbox-binder/1
                 fi
                 ;;
+            moss)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y waydroid
+                ;;
             *)
                 printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
                 exit 1

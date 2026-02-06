@@ -9,7 +9,7 @@ installMeld() {
             pacman)
                 "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm meld
                 ;;
-            apt-get|nala|eopkg)
+            apt-get|nala|eopkg|moss)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y meld
                 ;;
             apk)

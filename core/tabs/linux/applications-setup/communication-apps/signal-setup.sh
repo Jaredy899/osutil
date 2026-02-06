@@ -13,7 +13,7 @@ installSignal() {
                 "$ESCALATION_TOOL" "$PACKAGER" update
                 "$ESCALATION_TOOL" "$PACKAGER" -y install signal-desktop
                 ;;
-            zypper|eopkg)
+            zypper|eopkg|moss)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y signal-desktop
                 ;;
             pacman)

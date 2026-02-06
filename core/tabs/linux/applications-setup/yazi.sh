@@ -55,6 +55,9 @@ installYazi() {
     xbps-install)
       "$ESCALATION_TOOL" "$PACKAGER" -Sy yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide resvg ImageMagick
       ;;
+    moss)
+      "$ESCALATION_TOOL" moss -y install yazi
+      ;;
     *)
       "$ESCALATION_TOOL" "$PACKAGER" install -y yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide ImageMagick
       ;;

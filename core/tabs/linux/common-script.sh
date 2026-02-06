@@ -30,6 +30,9 @@ checkFlatpak() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy flatpak
                 ;;
+            moss)
+                "$ESCALATION_TOOL" moss -y install flatpak
+                ;;
             *)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y flatpak
                 ;;
@@ -162,7 +165,7 @@ checkSuperUser() {
     ## Check SuperUser Group
     SUPERUSERGROUP='wheel sudo root'
     for sug in ${SUPERUSERGROUP}; do
-        if groups | grep -q "${sug}"; then
+        if id -Gn | grep -q "${sug}"; then
             SUGROUP=${sug}
             printf "%b\n" "${CYAN}Super user group ${SUGROUP}${RC}"
             break
@@ -170,7 +173,7 @@ checkSuperUser() {
     done
 
     ## Check if member of the sudo group.
-    if ! groups | grep -q "${SUGROUP}"; then
+    if ! id -Gn | grep -q "${SUGROUP}"; then
         printf "%b\n" "${RED}You need to be a member of the sudo group to run me!${RC}"
         exit 1
     fi
@@ -197,8 +200,8 @@ checkDistro() {
 checkEnv() {
     checkArch
     checkEscalationTool
-    checkCommandRequirements "curl groups $ESCALATION_TOOL"
-    checkPackageManager 'nala apt-get dnf pacman zypper apk xbps-install eopkg pkg'
+    checkCommandRequirements "curl id $ESCALATION_TOOL"
+    checkPackageManager 'moss nala apt-get dnf pacman zypper apk xbps-install eopkg pkg'
     checkCurrentDirectoryWritable
     checkSuperUser
     checkDistro

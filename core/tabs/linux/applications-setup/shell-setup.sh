@@ -388,13 +388,9 @@ installStarshipAndFzf() {
     return
   fi
 
-  if [ "$PACKAGER" = "eopkg" ]; then
+  if [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "moss" ]; then
     "$ESCALATION_TOOL" "$PACKAGER" install -y starship || {
-      printf "%b\n" "${YELLOW}Failed to install starship with Solus, continuing...${RC}"
-    }
-  else
-    curl -sSL https://starship.rs/install.sh | "$ESCALATION_TOOL" sh || {
-      printf "%b\n" "${YELLOW}Failed to install starship, continuing...${RC}"
+      printf "%b\n" "${YELLOW}Failed to install starship with Solus/AeryonOS, continuing...${RC}"
     }
   fi
 

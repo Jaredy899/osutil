@@ -20,7 +20,7 @@ installDependencies() {
         apk)
             "$ESCALATION_TOOL" "$PACKAGER" add fzf bash coreutils
             ;;
-        eopkg)
+        eopkg|moss)
             "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
             ;;
         xbps-install)
@@ -112,6 +112,13 @@ case "$PKG_MGR" in
     INSTALL_CMD="sudo eopkg install -y"
     REMOVE_CMD="sudo eopkg remove -y"
     INSTALLED_LIST=$(eopkg list-installed | awk '{print $1}')
+    ;;
+  moss)
+    LIST_CMD="moss list-available"
+    INFO_CMD="moss info {1}"
+    INSTALL_CMD="moss install -y"
+    REMOVE_CMD="moss remove -y"
+    INSTALLED_LIST=$(moss list-installed | awk '{print $1}')
     ;;
   xbps-install)
     LIST_CMD="xbps-query -Rs '' | awk '{print \$2}'"

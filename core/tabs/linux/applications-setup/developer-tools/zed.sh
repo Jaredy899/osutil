@@ -16,7 +16,7 @@ installZed() {
                 "$ESCALATION_TOOL" "$PACKAGER" addrepo -f https://download.opensuse.org/repositories/editors/openSUSE_Tumbleweed/editors.repo
                 "$ESCALATION_TOOL" "$PACKAGER" install -y zed
                 ;;
-            eopkg)
+            eopkg|moss)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y zed
                 ;;
             *)

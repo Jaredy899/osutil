@@ -57,6 +57,9 @@ installDepend() {
             "$ESCALATION_TOOL" "$PACKAGER" install -y tar tree unzip cmake make jq || true
             "$ESCALATION_TOOL" "$PACKAGER" install -y $COMPILEDEPS || true
             ;;
+        moss)
+            "$ESCALATION_TOOL" moss -y install build-essential tar tree cmake make jq unzip ninja || true
+            ;;
         *)
             "$ESCALATION_TOOL" "$PACKAGER" install -y $DEPENDENCIES || true
             ;;

@@ -23,6 +23,10 @@ updateSystem() {
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Syu
             ;;
+        moss)
+            "$ESCALATION_TOOL" "$PACKAGER" -y repo update
+            "$ESCALATION_TOOL" "$PACKAGER" -y sync
+            ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}${RC}"
             exit 1
