@@ -57,4 +57,4 @@ task_list = "I SS"
 [[data.preconditions]]
 matches = false
 data = "command_exists"
-values = [ "apt-get", "nala", "pacman", "dnf", "zypper", "xbps-install", "eopkg", "pkg" ]
+values = [ "apt-get", "nala", "pacman", "dnf", "zypper", "xbps-install", "eopkg", "pkg", "rpm-ostree" ]

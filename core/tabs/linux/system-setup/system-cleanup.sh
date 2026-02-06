@@ -35,6 +35,9 @@ cleanup_system() {
   moss)
     "$ESCALATION_TOOL" "$PACKAGER" -y cache prune
     ;;
+  rpm-ostree)
+    "$ESCALATION_TOOL" "$PACKAGER" cleanup -p
+    ;;
   *)
     printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}. Skipping.${RC}"
     ;;

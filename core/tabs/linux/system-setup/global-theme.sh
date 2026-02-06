@@ -11,6 +11,9 @@ install_theme_tools() {
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Sy qt6ct kvantum
             ;;
+        rpm-ostree)
+            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive qt6ct kvantum
+            ;;
         *)
             "$ESCALATION_TOOL" "$PACKAGER" install -y qt6ct kvantum
             ;;

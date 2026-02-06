@@ -6,7 +6,7 @@ installPodmanCompose() {
     if ! command_exists podman-compose; then
         printf "%b\n" "${YELLOW}Installing Podman Compose...${RC}"
         case "$PACKAGER" in
-            apt-get|nala|dnf|zypper)
+            apt-get|nala|dnf|zypper|rpm-ostree)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y podman-compose
                 ;;
             pacman)

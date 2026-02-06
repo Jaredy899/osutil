@@ -93,6 +93,31 @@ script = "debian/hyprland-kool-deb.sh"
 task_list = "I MP"
 
 [[data]]
+name = "Fedora Atomic / Bazzite"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["rpm-ostree"]
+
+[[data.preconditions]]
+matches = true
+data = { containing_file = "/run/ostree-booted" }
+values = [""]
+
+[[data.entries]]
+name = "RPM Fusion"
+description = "Layer RPM Fusion repos for Bazzite/Fedora Silverblue/Kinoite (reboot to apply)"
+script = "fedora/rpm-fusion-setup.sh"
+task_list = "MP"
+
+[[data.entries]]
+name = "Multimedia Codecs"
+description = "Layer ffmpeg and multimedia codecs; requires RPM Fusion first (reboot to apply)"
+script = "fedora/multimedia-codecs.sh"
+task_list = "I"
+
+[[data]]
 name = "Fedora"
 
 [[data.preconditions]]

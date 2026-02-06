@@ -33,6 +33,9 @@ checkFlatpak() {
             moss)
                 "$ESCALATION_TOOL" moss -y install flatpak
                 ;;
+            rpm-ostree)
+                "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive flatpak
+                ;;
             *)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y flatpak
                 ;;
@@ -134,6 +137,11 @@ checkCommandRequirements() {
 
 checkPackageManager() {
     ## Check Package Manager
+    ## Prefer rpm-ostree when booted from OSTree (Bazzite, Fedora Silverblue/Kinoite, etc.)
+    if [ -f /run/ostree-booted ] && command_exists "rpm-ostree"; then
+        PACKAGER="rpm-ostree"
+        printf "%b\n" "${CYAN}Using ${MAGENTA}rpm-ostree${RC}${CYAN} (OSTree/Atomic system)${RC}"
+    else
     PACKAGEMANAGER=$1
     for pgm in ${PACKAGEMANAGER}; do
         if command_exists "${pgm}"; then
@@ -153,6 +161,8 @@ checkPackageManager() {
     if [ "$PACKAGER" = "pkg" ]; then
         # Update package database
         "$ESCALATION_TOOL" "$PACKAGER" update
+    fi
+
     fi
 
     if [ -z "$PACKAGER" ]; then

@@ -60,6 +60,10 @@ installDepend() {
         moss)
             "$ESCALATION_TOOL" moss -y install build-essential tar tree cmake make jq unzip ninja || true
             ;;
+        rpm-ostree)
+            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive $DEPENDENCIES || true
+            printf "%b\n" "${YELLOW}Reboot to apply layered packages.${RC}"
+            ;;
         *)
             "$ESCALATION_TOOL" "$PACKAGER" install -y $DEPENDENCIES || true
             ;;

@@ -52,6 +52,9 @@ install_docker() {
                     curl -fsSL https://get.docker.com | "$ESCALATION_TOOL" sh
                 fi
                 ;;
+            rpm-ostree)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y docker-cli docker-compose
+                ;;
             *)
                 curl -fsSL https://get.docker.com | "$ESCALATION_TOOL" sh
                 ;;

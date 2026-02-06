@@ -62,7 +62,7 @@ installNeovim() {
                 printf "%b\n" "${GREEN}Fzf already installed${RC}"
             fi
             ;;
-        dnf)
+        dnf|rpm-ostree)
             "$ESCALATION_TOOL" "$PACKAGER" install -y neovim git fzf ripgrep fd-find tree-sitter-cli gcc || true
             ;;
         zypper)

@@ -49,6 +49,15 @@ install_package() {
                 exit 1
             fi
             ;;
+        rpm-ostree)
+            if "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive "$package_name"; then
+                printf "%b\n" "${GREEN}$package_name installed successfully.${RC}"
+                printf "%b\n" "${YELLOW}Reboot to apply layered package.${RC}"
+            else
+                printf "%b\n" "${RED}Failed to install $package_name. Please install it manually.${RC}"
+                exit 1
+            fi
+            ;;
         apt-get|nala|dnf|zypper|eopkg)
             if "$ESCALATION_TOOL" "$PACKAGER" install -y "$package_name"; then
                 printf "%b\n" "${GREEN}$package_name installed successfully.${RC}"

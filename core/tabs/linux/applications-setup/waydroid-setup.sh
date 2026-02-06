@@ -61,7 +61,7 @@ installWaydroid() {
                     "$ESCALATION_TOOL" dkms install anbox-binder/1
                 fi
                 ;;
-            moss)
+            moss|rpm-ostree)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y waydroid
                 ;;
             *)

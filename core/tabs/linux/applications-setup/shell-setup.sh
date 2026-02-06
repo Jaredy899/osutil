@@ -127,6 +127,10 @@ installDependencies() {
   xbps-install)
     "$ESCALATION_TOOL" "$PACKAGER" -Sy $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
+  rpm-ostree)
+    "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
+    printf "%b\n" "${YELLOW}Reboot to apply layered packages.${RC}"
+    ;;
   *)
     "$ESCALATION_TOOL" "$PACKAGER" install -y $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
@@ -385,13 +389,18 @@ EOF
 installStarshipAndFzf() {
   if command_exists starship; then
     printf "%b\n" "${GREEN}Starship already installed${RC}"
-    return
-  fi
-
-  if [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "moss" ]; then
-    "$ESCALATION_TOOL" "$PACKAGER" install -y starship || {
-      printf "%b\n" "${YELLOW}Failed to install starship with Solus/AeryonOS, continuing...${RC}"
-    }
+    # fall through for fzf handling
+  else
+    if [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "moss" ]; then
+      "$ESCALATION_TOOL" "$PACKAGER" install -y starship || {
+        printf "%b\n" "${YELLOW}Failed to install starship with Solus/AeryonOS, continuing...${RC}"
+      }
+    fi
+    # Fallback when not in repos (e.g. rpm-ostree/Bazzite)
+    if ! command_exists starship; then
+      printf "%b\n" "${YELLOW}Installing starship via official install script...${RC}"
+      curl -sS https://starship.rs/install.sh | sh || printf "%b\n" "${YELLOW}Starship install failed, continuing...${RC}"
+    fi
   fi
 
   # Handle apt systems separately since their fzf package is often outdated
