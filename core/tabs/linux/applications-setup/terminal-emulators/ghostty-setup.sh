@@ -26,7 +26,7 @@ installGhostty() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy ghostty
                 ;;
-            zypper|eopkg)
+            zypper|eopkg|moss)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y ghostty
                 ;;
             dnf)

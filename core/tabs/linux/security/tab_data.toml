@@ -9,7 +9,7 @@ task_list = "I SS"
 [[data.preconditions]]
 matches = false
 data = "command_exists"
-values = [ "dnf", "zypper", "apk", "pkg" ]
+values = [ "dnf", "zypper", "apk", "pkg", "moss" ]
 [[data]]
 name = "UFW Docker Integration"
 description = "Fixes the Docker and UFW security flaw by properly integrating Docker with UFW firewall rules. This allows you to control access to Docker containers through UFW without disabling iptables. For more information visit: https://github.com/chaifeng/ufw-docker"
@@ -35,7 +35,7 @@ task_list = "I SS"
 [[data.preconditions]]
 matches = false
 data = "command_exists"
-values = [ "apt-get", "nala", "pacman", "apk", "xbps-install", "eopkg", "pkg" ]
+values = [ "apt-get", "nala", "pacman", "apk", "xbps-install", "eopkg", "pkg", "moss" ]
 
 [[data]]
 name = "Tailscale"

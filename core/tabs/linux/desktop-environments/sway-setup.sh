@@ -45,6 +45,10 @@ installSway() {
             "$ESCALATION_TOOL" "$PACKAGER" -y sway swaylock swayidle waybar wofi mako
             installDisplayManager
             ;;
+        moss)
+            "$ESCALATION_TOOL" moss install -y pkgset-aeryn-sway-minimal branding-aeryn-sway
+            installDisplayManager
+            ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
             exit 1

@@ -30,6 +30,9 @@ checkFlatpak() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy flatpak
                 ;;
+            moss)
+                "$ESCALATION_TOOL" moss -y install flatpak
+                ;;
             *)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y flatpak
                 ;;
@@ -55,7 +58,7 @@ checkArch() {
         *) printf "%b\n" "${RED}Unsupported architecture: $(uname -m)${RC}" && exit 1 ;;
     esac
 
-    printf "%b\n" "${CYAN}System architecture: ${ARCH}${RC}"
+    printf "%b\n" "${CYAN}System architecture: ${MAGENTA}${ARCH}${RC}"
 }
 
 checkAURHelper() {
@@ -94,7 +97,7 @@ checkEscalationTool() {
         if [ "$(id -u)" = "0" ]; then
             ESCALATION_TOOL="eval"
             ESCALATION_TOOL_CHECKED=true
-            printf "%b\n" "${CYAN}Running as root, no escalation needed${RC}"
+            printf "%b\n" "${CYAN}Running as ${MAGENTA}root${RC}${CYAN}, no escalation needed${RC}"
             return 0
         fi
 
@@ -102,7 +105,7 @@ checkEscalationTool() {
         for tool in ${ESCALATION_TOOLS}; do
             if command_exists "${tool}"; then
                 ESCALATION_TOOL=${tool}
-                printf "%b\n" "${CYAN}Using ${tool} for privilege escalation${RC}"
+                printf "%b\n" "${CYAN}Using ${MAGENTA}${tool}${RC}${CYAN} for privilege escalation${RC}"
                 ESCALATION_TOOL_CHECKED=true
                 return 0
             fi
@@ -135,7 +138,7 @@ checkPackageManager() {
     for pgm in ${PACKAGEMANAGER}; do
         if command_exists "${pgm}"; then
             PACKAGER=${pgm}
-            printf "%b\n" "${CYAN}Using ${pgm} as package manager${RC}"
+            printf "%b\n" "${CYAN}Using ${MAGENTA}${pgm}${RC}${CYAN} as package manager${RC}"
             break
         fi
     done
@@ -162,15 +165,15 @@ checkSuperUser() {
     ## Check SuperUser Group
     SUPERUSERGROUP='wheel sudo root'
     for sug in ${SUPERUSERGROUP}; do
-        if groups | grep -q "${sug}"; then
+        if id -Gn | grep -q "${sug}"; then
             SUGROUP=${sug}
-            printf "%b\n" "${CYAN}Super user group ${SUGROUP}${RC}"
+            printf "%b\n" "${CYAN}Super user group ${MAGENTA}${SUGROUP}${RC}"
             break
         fi
     done
 
     ## Check if member of the sudo group.
-    if ! groups | grep -q "${SUGROUP}"; then
+    if ! id -Gn | grep -q "${SUGROUP}"; then
         printf "%b\n" "${RED}You need to be a member of the sudo group to run me!${RC}"
         exit 1
     fi
@@ -197,8 +200,8 @@ checkDistro() {
 checkEnv() {
     checkArch
     checkEscalationTool
-    checkCommandRequirements "curl groups $ESCALATION_TOOL"
-    checkPackageManager 'nala apt-get dnf pacman zypper apk xbps-install eopkg pkg'
+    checkCommandRequirements "curl id $ESCALATION_TOOL"
+    checkPackageManager 'moss nala apt-get dnf pacman zypper apk xbps-install eopkg pkg'
     checkCurrentDirectoryWritable
     checkSuperUser
     checkDistro

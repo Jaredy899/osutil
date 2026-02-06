@@ -25,7 +25,7 @@ installHelix() {
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy helix
                 ;;
-            eopkg)
+            eopkg|moss)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y helix
                 ;;
             *)

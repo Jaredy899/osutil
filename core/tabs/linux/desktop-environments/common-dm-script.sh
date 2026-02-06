@@ -107,10 +107,7 @@ installDisplayManager() {
     if [ "$DM_EXISTS" -eq 1 ] && [ "$DM" != "none" ]; then
         printf "%b\n" "${CYAN}Installing and enabling $DM display manager...${RC}"
         case "$PACKAGER" in
-            apt-get|nala)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y "$DM"
-                ;;
-            dnf)
+            apt-get|nala|dnf|zypper|eopkg|moss)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y "$DM"
                 ;;
             pacman)
@@ -118,12 +115,6 @@ installDisplayManager() {
                 if [ "$DM" = "lightdm" ]; then
                     "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm lightdm-gtk-greeter
                 fi
-                ;;
-            zypper)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y "$DM"
-                ;;
-            eopkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y "$DM"
                 ;;
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy "$DM"

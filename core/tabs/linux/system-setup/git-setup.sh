@@ -35,7 +35,7 @@ checkGhInstalled() {
             apk)
                 "$ESCALATION_TOOL" "$PACKAGER" add github-cli
                 ;;
-            eopkg)
+            eopkg|moss)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y github-cli
                 ;;
              xbps-install)

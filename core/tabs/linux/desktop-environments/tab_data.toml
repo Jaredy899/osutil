@@ -2,6 +2,17 @@ name = "Desktop Environments"
 warning = "⚠️ BETA WARNING ⚠️\n\nDesktop Environment installations are currently in BETA.\n\nInstalling multiple desktop environments may:\n• Cause conflicts between desktop managers\n• Break your current desktop setup\n• Require manual configuration to resolve issues\n• Lead to unexpected behavior\n\nIt is recommended to:\n• Test in a virtual machine first\n• Create a system backup before proceeding\n• Install only one desktop environment at a time\n\nProceed with caution!"
 
 [[data]]
+name = "COSMIC"
+description = "COSMIC is a Wayland-native desktop from System76, written in Rust. On AerynOS install via moss (minimal, recommended, or full package set)."
+script = "cosmic-setup.sh"
+task_list = "I SS"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["moss", "pacman"]
+
+[[data]]
 name = "GNOME"
 description = "GNOME is a modern, user-friendly desktop environment focused on simplicity and elegance, featuring a clean interface and tight integration with core applications."
 script = "gnome-setup.sh"

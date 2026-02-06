@@ -23,6 +23,9 @@ InstallTermiusFonts() {
             eopkg)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y font-terminus-console
                 ;;
+            moss)
+                "$ESCALATION_TOOL" "$PACKAGER" install -y terminus-font
+                ;;
             zypper)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y terminus-bitmap-fonts
                 ;;
