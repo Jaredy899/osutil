@@ -58,7 +58,7 @@ checkArch() {
         *) printf "%b\n" "${RED}Unsupported architecture: $(uname -m)${RC}" && exit 1 ;;
     esac
 
-    printf "%b\n" "${CYAN}System architecture: ${ARCH}${RC}"
+    printf "%b\n" "${CYAN}System architecture: ${MAGENTA}${ARCH}${RC}"
 }
 
 checkAURHelper() {
@@ -97,7 +97,7 @@ checkEscalationTool() {
         if [ "$(id -u)" = "0" ]; then
             ESCALATION_TOOL="eval"
             ESCALATION_TOOL_CHECKED=true
-            printf "%b\n" "${CYAN}Running as root, no escalation needed${RC}"
+            printf "%b\n" "${CYAN}Running as ${MAGENTA}root${RC}${CYAN}, no escalation needed${RC}"
             return 0
         fi
 
@@ -105,7 +105,7 @@ checkEscalationTool() {
         for tool in ${ESCALATION_TOOLS}; do
             if command_exists "${tool}"; then
                 ESCALATION_TOOL=${tool}
-                printf "%b\n" "${CYAN}Using ${tool} for privilege escalation${RC}"
+                printf "%b\n" "${CYAN}Using ${MAGENTA}${tool}${RC}${CYAN} for privilege escalation${RC}"
                 ESCALATION_TOOL_CHECKED=true
                 return 0
             fi
@@ -138,7 +138,7 @@ checkPackageManager() {
     for pgm in ${PACKAGEMANAGER}; do
         if command_exists "${pgm}"; then
             PACKAGER=${pgm}
-            printf "%b\n" "${CYAN}Using ${pgm} as package manager${RC}"
+            printf "%b\n" "${CYAN}Using ${MAGENTA}${pgm}${RC}${CYAN} as package manager${RC}"
             break
         fi
     done
@@ -167,7 +167,7 @@ checkSuperUser() {
     for sug in ${SUPERUSERGROUP}; do
         if id -Gn | grep -q "${sug}"; then
             SUGROUP=${sug}
-            printf "%b\n" "${CYAN}Super user group ${SUGROUP}${RC}"
+            printf "%b\n" "${CYAN}Super user group ${MAGENTA}${SUGROUP}${RC}"
             break
         fi
     done
