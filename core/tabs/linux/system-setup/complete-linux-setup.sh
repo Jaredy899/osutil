@@ -49,17 +49,17 @@ printf "%b\n" "${CYAN}Complete Linux Setup Script${RC}"
 printf "%b\n" "${CYAN}========================================${RC}"
 printf "%b\n" ""
 
-# 1. Git Setup
-printf "%b\n" "${CYAN}=== Step 1: Git Setup ===${RC}"
-if ! source_script "$SCRIPT_DIR/git-setup.sh"; then
-    printf "%b\n" "${YELLOW}Git setup failed or skipped, continuing...${RC}"
+# 1. SSH Key Setup (before Git so keys exist for GitHub/GitLab)
+printf "%b\n" "${CYAN}=== Step 1: SSH Key Setup ===${RC}"
+if ! source_script "$LINUX_DIR/utils/add-ssh-key.sh"; then
+    printf "%b\n" "${YELLOW}SSH key setup failed or skipped, continuing...${RC}"
 fi
 printf "%b\n" ""
 
-# 2. SSH Key Setup
-printf "%b\n" "${CYAN}=== Step 2: SSH Key Setup ===${RC}"
-if ! source_script "$LINUX_DIR/utils/add-ssh-key.sh"; then
-    printf "%b\n" "${YELLOW}SSH key setup failed or skipped, continuing...${RC}"
+# 2. Git Setup
+printf "%b\n" "${CYAN}=== Step 2: Git Setup ===${RC}"
+if ! source_script "$SCRIPT_DIR/git-setup.sh"; then
+    printf "%b\n" "${YELLOW}Git setup failed or skipped, continuing...${RC}"
 fi
 printf "%b\n" ""
 

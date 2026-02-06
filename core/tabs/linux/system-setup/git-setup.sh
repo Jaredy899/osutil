@@ -54,8 +54,22 @@ checkGhInstalled() {
 setupGitWithGh() {
     printf "%b\n" "${CYAN}=== GitHub CLI Git Setup ===${RC}"
     if ! gh auth status 2>/dev/null; then
-        printf "%b\n" "${YELLOW}Not logged in to GitHub. Running 'gh auth login'...${RC}"
-        gh auth login
+        # gh auth login is interactive and fails without a real TTY (e.g. pseudo-terminal).
+        # Prefer token-based auth when possible; otherwise ask user to run login in a terminal.
+        if [ -n "${GH_TOKEN:-}" ]; then
+            printf "%b\n" "${YELLOW}Not logged in. Using GH_TOKEN to authenticate...${RC}"
+            printf '%s' "$GH_TOKEN" | gh auth login --with-token
+        elif [ -n "${GITHUB_TOKEN:-}" ]; then
+            printf "%b\n" "${YELLOW}Not logged in. Using GITHUB_TOKEN to authenticate...${RC}"
+            printf '%s' "$GITHUB_TOKEN" | gh auth login --with-token
+        else
+            printf "%b\n" "${YELLOW}GitHub CLI is not logged in.${RC}"
+            printf "%b\n" "${CYAN}  'gh auth login' requires a real terminal and cannot run from this environment.${RC}"
+            printf "%b\n" "${CYAN}  Either:${RC}"
+            printf "%b\n" "${CYAN}    1. Run 'gh auth login' in a terminal, then re-run this script (or run 'gh auth setup-git'), or${RC}"
+            printf "%b\n" "${CYAN}    2. Set GH_TOKEN or GITHUB_TOKEN and re-run this script.${RC}"
+            return 1
+        fi
     fi
     if gh auth status 2>/dev/null; then
         gh auth setup-git
