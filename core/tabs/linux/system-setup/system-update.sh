@@ -14,6 +14,9 @@ updateSystem() {
         dnf|eopkg)
             "$ESCALATION_TOOL" "$PACKAGER" upgrade -y
             ;;
+        rpm-ostree)
+            "$ESCALATION_TOOL" "$PACKAGER" upgrade
+            ;;
         zypper)
             "$ESCALATION_TOOL" "$PACKAGER" --non-interactive dup
             ;;

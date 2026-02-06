@@ -29,6 +29,9 @@ installDependencies() {
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Sy fzf bash coreutils
             ;;
+        rpm-ostree)
+            "$ESCALATION_TOOL" rpm-ostree install --allow-inactive fzf bash coreutils
+            ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
             exit 1
@@ -46,6 +49,10 @@ set -e
 
 # Detect first available package manager
 detect_pkg_mgr() {
+  if [ -f /run/ostree-booted ] && command -v rpm-ostree >/dev/null 2>&1; then
+    echo "rpm-ostree"
+    return
+  fi
   for mgr in nala apt yay pacman dnf zypper apk eopkg xbps-install pkg moss; do
     if command -v "$mgr" >/dev/null 2>&1; then
       echo "$mgr"
@@ -93,6 +100,13 @@ case "$PKG_MGR" in
     REMOVE_CMD="sudo dnf remove -y"
     INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
     ;;
+  rpm-ostree)
+    LIST_CMD="rpm -qa --qf '%{NAME}\n'"
+    INFO_CMD="rpm-ostree search {1}"
+    INSTALL_CMD="sudo rpm-ostree install"
+    REMOVE_CMD="sudo rpm-ostree uninstall"
+    INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
+    ;;
   zypper)
     LIST_CMD="zypper se -s | awk 'NR>2 {print \$2; print \$3}' | grep -v '^[|]' | sort -u"
     INFO_CMD="zypper info {1}"
@@ -138,7 +152,7 @@ case "$PKG_MGR" in
     INSTALLED_LIST=$(pkg query -a '%n')
     ;;
   none)
-    echo "❌ No supported package manager found (apt, pacman, dnf, zypper, apk, eopkg, xbps, pkg)."
+    echo "❌ No supported package manager found (apt, pacman, dnf, rpm-ostree, zypper, apk, eopkg, xbps, pkg)."
     exit 1
     ;;
 esac
@@ -237,7 +251,7 @@ fi
 exit 0
 EOF
 
-    if [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "moss" ]; then
+    if [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "moss" ] || [ "$PACKAGER" = "rpm-ostree" ]; then
         "$ESCALATION_TOOL" mv "$tmpfile" /usr/bin/pkg-tui
         "$ESCALATION_TOOL" chmod +x /usr/bin/pkg-tui
         printf "%b\n" "${GREEN}pkg-tui script installed to /usr/bin/pkg-tui${RC}"

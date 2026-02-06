@@ -13,10 +13,7 @@ installHelix() {
                 "$ESCALATION_TOOL" "$PACKAGER" update
                 "$ESCALATION_TOOL" "$PACKAGER" install -y hx
                 ;;
-            dnf)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y helix
-                ;;
-            zypper)
+            dnf|zypper|eopkg|moss|rpm-ostree)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y helix
                 ;;
             apk)
@@ -24,9 +21,6 @@ installHelix() {
                 ;;
             xbps-install)
                 "$ESCALATION_TOOL" "$PACKAGER" -Sy helix
-                ;;
-            eopkg|moss)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y helix
                 ;;
             *)
                 # Fallback: try installing via cargo if available

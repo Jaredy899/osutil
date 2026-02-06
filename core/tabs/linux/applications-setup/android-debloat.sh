@@ -12,7 +12,7 @@ install_adb() {
             pacman)
                 "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm android-tools
                 ;;
-            dnf|zypper|moss)
+            dnf|zypper|moss|rpm-ostree)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y android-tools
                 ;;
             apk)

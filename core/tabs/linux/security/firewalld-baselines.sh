@@ -7,7 +7,7 @@ installPkg() {
     if ! command_exists firewalld; then
         printf "%b\n" "${YELLOW}Installing firewalld...${RC}"
         case "$PACKAGER" in
-            zypper|dnf)
+            zypper|dnf|rpm-ostree)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y firewalld
                 ;;
             *)

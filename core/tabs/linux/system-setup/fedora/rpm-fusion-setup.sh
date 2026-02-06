@@ -48,6 +48,17 @@ installRPMFusion() {
                 printf "%b\n" "${GREEN}RPM Fusion already installed${RC}"
             fi
             ;;
+        rpm-ostree)
+            if [ ! -e /etc/yum.repos.d/rpmfusion-free.repo ] || [ ! -e /etc/yum.repos.d/rpmfusion-nonfree.repo ]; then
+                printf "%b\n" "${YELLOW}Layering RPM Fusion (reboot to apply)...${RC}"
+                "$ESCALATION_TOOL" "$PACKAGER" install \
+                    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
+                    "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+                printf "%b\n" "${GREEN}RPM Fusion layered. Reboot to apply.${RC}"
+            else
+                printf "%b\n" "${GREEN}RPM Fusion already present.${RC}"
+            fi
+            ;;
         *)
             printf "%b\n" "${RED}Unsupported distribution: $DTYPE${RC}"
             ;;

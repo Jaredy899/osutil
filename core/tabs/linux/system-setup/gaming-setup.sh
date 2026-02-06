@@ -54,6 +54,11 @@ installDepend() {
     
             "$ESCALATION_TOOL" "$PACKAGER" install -y $DEPENDENCIES
             ;;
+        rpm-ostree)
+            printf "%b\n" "${CYAN}Layering RPM Fusion and gaming deps (reboot to apply).${RC}"
+            "$ESCALATION_TOOL" "$PACKAGER" install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-"$(rpm -E %fedora)".noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-"$(rpm -E %fedora)".noarch.rpm
+            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive $DEPENDENCIES
+            ;;
         zypper)
             "$ESCALATION_TOOL" "$PACKAGER" -n install $DEPENDENCIES
             ;;
@@ -95,6 +100,10 @@ installAdditionalDepend() {
         dnf)
             DISTRO_DEPS='steam lutris'
             "$ESCALATION_TOOL" "$PACKAGER" install -y $DISTRO_DEPS
+            ;;
+        rpm-ostree)
+            DISTRO_DEPS='steam lutris'
+            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive $DISTRO_DEPS
             ;;
         zypper)
             DISTRO_DEPS='lutris'
