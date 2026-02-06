@@ -206,6 +206,26 @@ script = "solus/unstable-repo.sh"
 task_list = "PFM"
 
 [[data]]
+name = "AerynOS"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["moss"]
+
+[[data.entries]]
+name = "Packaging Environment"
+description = "Prepares AerynOS for packaging: build-essential, clone recipes, helpers, just init, subuid/subgid, optional local repo and moss volatile/local. See https://aerynos.dev/packaging/workflow/"
+script = "aeryn/packaging-setup.sh"
+task_list = "I SS"
+
+[[data.entries]]
+name = "Volatile & Local Repositories"
+description = "Enable, disable, list, or sync moss repos (volatile and local for packaging/testing). See https://aerynos.dev/packaging/workflow/basic-workflow/"
+script = "aeryn/repos.sh"
+task_list = "PFM"
+
+[[data]]
 name = "RHEL-based"
 
 [[data.preconditions]]
