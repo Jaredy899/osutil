@@ -233,12 +233,13 @@ configureGit() {
     read -r use_gpg
     case "$use_gpg" in
         [Yy]*)
-            printf "%b" "${CYAN}Enter your GPG key ID (leave empty to skip): ${RC}"
-            read -r gpg_key
+            gpg_key=$(gpg --list-secret-keys --keyid-format=long 2>/dev/null | awk '/^sec/ { split($2, a, "/"); if (a[2] != "") { print a[2]; exit } }')
             if [ -n "$gpg_key" ]; then
                 git config --global user.signingkey "$gpg_key"
                 git config --global commit.gpgsign true
                 printf "%b\n" "${GREEN}GPG signing configured with key: ${gpg_key}${RC}"
+            else
+                printf "%b\n" "${YELLOW}No GPG secret key found. Install gpg and create a key, or set user.signingkey manually.${RC}"
             fi
             ;;
         *)
