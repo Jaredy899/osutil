@@ -20,8 +20,11 @@ installDependencies() {
         apk)
             "$ESCALATION_TOOL" "$PACKAGER" add fzf bash coreutils
             ;;
-        eopkg|moss)
+        eopkg)
             "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
+            ;;
+        moss)
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash uutils-coreutils
             ;;
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Sy fzf bash coreutils
@@ -43,7 +46,7 @@ set -e
 
 # Detect first available package manager
 detect_pkg_mgr() {
-  for mgr in nala apt yay pacman dnf zypper apk eopkg xbps-install pkg; do
+  for mgr in nala apt yay pacman dnf zypper apk eopkg xbps-install pkg moss; do
     if command -v "$mgr" >/dev/null 2>&1; then
       echo "$mgr"
       return
@@ -114,11 +117,11 @@ case "$PKG_MGR" in
     INSTALLED_LIST=$(eopkg list-installed | awk '{print $1}')
     ;;
   moss)
-    LIST_CMD="moss list-available"
+    LIST_CMD="moss list available"
     INFO_CMD="moss info {1}"
     INSTALL_CMD="moss install -y"
     REMOVE_CMD="moss remove -y"
-    INSTALLED_LIST=$(moss list-installed | awk '{print $1}')
+    INSTALLED_LIST=$(moss list installed | awk '{print $1}')
     ;;
   xbps-install)
     LIST_CMD="xbps-query -Rs '' | awk '{print \$2}'"
@@ -150,6 +153,12 @@ if [[ "$PKG_MGR" == "eopkg" ]]; then
       | sed 's/[[:space:]]\+$//' \
       | sort -u
   )"
+elif [[ "$PKG_MGR" == "moss" ]]; then
+  INSTALLED_CACHE="$(
+    moss list installed 2>/dev/null \
+      | awk 'NF>0 {print $1}' \
+      | sort -u
+  )"
 else
   while read -r pkg; do
     [[ -n "$pkg" ]] && installed["$pkg"]=1
@@ -158,7 +167,7 @@ fi
 
 # Package list function
 list_names() {
-  if [[ "$PKG_MGR" == "eopkg" ]]; then
+  if [[ "$PKG_MGR" == "eopkg" ]] || [[ "$PKG_MGR" == "moss" ]]; then
     eval "$LIST_CMD" \
       | sed -r 's/\x1B\[[0-9;]*m//g' \
       | awk 'NF>0 {print $1}' \
@@ -228,7 +237,7 @@ fi
 exit 0
 EOF
 
-    if [ "$PACKAGER" = "eopkg" ]; then
+    if [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "moss" ]; then
         "$ESCALATION_TOOL" mv "$tmpfile" /usr/bin/pkg-tui
         "$ESCALATION_TOOL" chmod +x /usr/bin/pkg-tui
         printf "%b\n" "${GREEN}pkg-tui script installed to /usr/bin/pkg-tui${RC}"
