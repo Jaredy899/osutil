@@ -26,7 +26,7 @@ checkSolus() {
 }
 
 hasUnstable() {
-    $PACKAGER list-repo 2>/dev/null | grep -q "^${UNSTABLE_NAME}"
+    "$PACKAGER" list-repo 2>/dev/null | grep -q "^${UNSTABLE_NAME}"
 }
 
 addUnstable() {
@@ -35,8 +35,8 @@ addUnstable() {
         return 0
     fi
     printf "%b\n" "${YELLOW}Adding Unstable repo. Updating on Unstable can be risky; check #solus-packaging on Matrix before system updates.${RC}"
-    "$ESCALATION_TOOL" $PACKAGER add-repo "$UNSTABLE_NAME" "$UNSTABLE_URL"
-    "$ESCALATION_TOOL" $PACKAGER update-repo "$UNSTABLE_NAME"
+    "$ESCALATION_TOOL" "$PACKAGER" add-repo "$UNSTABLE_NAME" "$UNSTABLE_URL"
+    "$ESCALATION_TOOL" "$PACKAGER" update-repo "$UNSTABLE_NAME"
     printf "%b\n" "${GREEN}Unstable repo added and updated.${RC}"
 }
 
@@ -46,18 +46,18 @@ removeUnstable() {
         return 0
     fi
     printf "%b\n" "${YELLOW}Removing Unstable repo.${RC}"
-    "$ESCALATION_TOOL" $PACKAGER remove-repo "$UNSTABLE_NAME"
+    "$ESCALATION_TOOL" "$PACKAGER" remove-repo "$UNSTABLE_NAME"
     printf "%b\n" "${GREEN}Unstable repo removed.${RC}"
 }
 
 listRepos() {
     printf "%b\n" "${CYAN}=== Repositories ===${RC}"
-    $PACKAGER list-repo
+    "$PACKAGER" list-repo
 }
 
 updateRepos() {
     printf "%b\n" "${YELLOW}Updating all repositories...${RC}"
-    "$ESCALATION_TOOL" $PACKAGER update-repo
+    "$ESCALATION_TOOL" "$PACKAGER" update-repo
     printf "%b\n" "${GREEN}Done.${RC}"
 }
 
