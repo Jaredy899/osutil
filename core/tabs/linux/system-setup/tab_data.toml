@@ -186,6 +186,26 @@ script = "freebsd/ports.sh"
 task_list = "I"
 
 [[data]]
+name = "Solus"
+
+[[data.preconditions]]
+matches = true
+data = "command_exists"
+values = ["eopkg"]
+
+[[data.entries]]
+name = "Packaging Environment"
+description = "Prepares Solus for packaging: packager file, dev tools (ent, git, github-cli, go-task, solbuild, ypkg, etc.), solbuild init/update, optional clone of getsolus/packages and lint hooks. See https://help.getsol.us/docs/packaging/prepare-for-packaging"
+script = "solus/packaging-setup.sh"
+task_list = "I SS"
+
+[[data.entries]]
+name = "Unstable Repository"
+description = "Add, remove, list, or update Solus repos (Unstable for packaging/testing). See https://help.getsol.us/docs/user/package-management/repo-management"
+script = "solus/unstable-repo.sh"
+task_list = "PFM"
+
+[[data]]
 name = "RHEL-based"
 
 [[data.preconditions]]
