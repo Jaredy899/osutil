@@ -34,7 +34,6 @@ sh <(curl -fsSL jaredcervantes.com/os)
 | **Void** | xbps |
 | **Solus** | eopkg |
 | **MacOS** | brew |
-|
 
 ## Screenshots
 
