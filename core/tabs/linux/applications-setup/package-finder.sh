@@ -30,7 +30,7 @@ installDependencies() {
             "$ESCALATION_TOOL" "$PACKAGER" -Sy fzf bash coreutils
             ;;
         rpm-ostree)
-            "$ESCALATION_TOOL" rpm-ostree install --allow-inactive fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive fzf bash coreutils
             ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
