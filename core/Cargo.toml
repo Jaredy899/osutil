@@ -9,7 +9,7 @@ include = ["src/*.rs", "Cargo.toml", "tabs/**"]
 
 [dependencies]
 include_dir = "0.7.4"
-temp-dir = "0.1.14"
+temp-dir = "0.2.0"
 serde = { version = "1.0.228", features = ["derive", "std"], default-features = false }
 toml = { version = "0.9.4", features = ["parse", "serde"], default-features = false }
 which = "8.0.0"
