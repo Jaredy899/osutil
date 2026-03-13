@@ -214,20 +214,20 @@ fn create_directory(
             EntryType::Script(script) => {
                 let script_path = command_dir.join(&script).with_extension("sh");
 
-                if script_path.exists() {
-                    if let Some((executable, args)) = get_shebang(&script_path, validate) {
-                        node.append(Rc::new(ListNode {
-                            name: entry.name,
-                            description: entry.description,
-                            command: Command::LocalFile {
-                                executable,
-                                args,
-                                file: script_path,
-                            },
-                            task_list: entry.task_list,
-                            multi_select,
-                        }));
-                    }
+                if script_path.exists()
+                    && let Some((executable, args)) = get_shebang(&script_path, validate)
+                {
+                    node.append(Rc::new(ListNode {
+                        name: entry.name,
+                        description: entry.description,
+                        command: Command::LocalFile {
+                            executable,
+                            args,
+                            file: script_path,
+                        },
+                        task_list: entry.task_list,
+                        multi_select,
+                    }));
                 }
             }
         }
