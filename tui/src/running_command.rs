@@ -1,5 +1,5 @@
 use crate::{float::FloatContent, hint::Shortcut, shortcuts, theme::Theme};
-use oneshot::{channel, Receiver};
+use oneshot::{Receiver, channel};
 use osutil_core::Command;
 use portable_pty::{
     ChildKiller, CommandBuilder, ExitStatus, MasterPty, NativePtySystem, PtySize, PtySystem,
@@ -14,12 +14,12 @@ use std::{
     fs::File,
     io::{Read, Result, Write},
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
     },
     thread::JoinHandle,
 };
-use time::{macros::format_description, OffsetDateTime};
+use time::{OffsetDateTime, macros::format_description};
 use tui_term::widget::PseudoTerminal;
 use vt100_ctt::{Parser, Screen};
 
