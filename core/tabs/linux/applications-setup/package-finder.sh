@@ -33,7 +33,7 @@ installDependencies() {
             "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive fzf coreutils
             ;;
         brew)
-            brew install fzf coreutils
+            "$PACKAGER" install fzf coreutils
             ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
@@ -121,14 +121,7 @@ addAlias() {
 }
 
 # Main
-checkArch
-checkEscalationTool
-checkCommandRequirements "curl id $ESCALATION_TOOL"
-checkPackageManager 'moss nala apt-get dnf pacman zypper apk xbps-install eopkg pkg brew'
-checkCurrentDirectoryWritable
-checkSuperUser
-checkDistro
-checkAURHelper
+checkEnv 'moss nala apt-get dnf pacman zypper apk xbps-install eopkg pkg brew'
 installDependencies
 buildPkgTui
 # addAlias
