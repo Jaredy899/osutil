@@ -121,7 +121,7 @@ addAlias() {
 }
 
 # Main
-checkEnv 'moss nala apt-get dnf pacman zypper apk xbps-install eopkg pkg brew'
+checkEnv
 installDependencies
 buildPkgTui
 # addAlias

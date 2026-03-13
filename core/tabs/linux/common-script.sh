@@ -208,7 +208,7 @@ checkDistro() {
 }
 
 checkEnv() {
-    PACKAGEMANAGER_LIST=${1:-'moss nala apt-get dnf pacman zypper apk xbps-install eopkg pkg'}
+    PACKAGEMANAGER_LIST=${1:-'moss nala apt-get dnf pacman zypper apk xbps-install eopkg pkg brew'}
     checkArch
     checkEscalationTool
     checkCommandRequirements "curl id $ESCALATION_TOOL"
