@@ -1,0 +1,13 @@
+[package]
+name = "pkg-tui"
+version = "0.1.0"
+edition = "2021"
+description = "Cached package manager picker for Linux/macOS"
+license = "MIT"
+repository = "https://github.com/Jaredy899/osutil"
+
+[[bin]]
+name = "pkg-tui"
+path = "src/main.rs"
+
+[workspace]
