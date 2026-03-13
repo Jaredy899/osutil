@@ -6,31 +6,31 @@ installDependencies() {
     printf "%b\n" "${YELLOW}Installing dependencies for pkg-tui...${RC}"
     case "$PACKAGER" in
         pacman)
-            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm fzf coreutils
             ;;
         apt-get|nala)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf coreutils
             ;;
         dnf)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf coreutils
             ;;
         zypper)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf coreutils
             ;;
         apk)
-            "$ESCALATION_TOOL" "$PACKAGER" add fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" add fzf coreutils
             ;;
         eopkg)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf coreutils
             ;;
         moss)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash uutils-coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf uutils-coreutils
             ;;
         xbps-install)
-            "$ESCALATION_TOOL" "$PACKAGER" -Sy fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" -Sy fzf coreutils
             ;;
         rpm-ostree)
-            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive fzf coreutils
             ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
@@ -40,226 +40,62 @@ installDependencies() {
     printf "%b\n" "${GREEN}Dependencies installed.${RC}"
 }
 
-buildPkgTui() {
-    printf "%b\n" "${YELLOW}Building pkg-tui script...${RC}"
-    tmpfile=$(mktemp)
-    cat > "$tmpfile" <<"EOF"
-#!/usr/bin/env bash
-set -e
-
-# Detect first available package manager
-detect_pkg_mgr() {
-  if [ -f /run/ostree-booted ] && command -v rpm-ostree >/dev/null 2>&1; then
-    echo "rpm-ostree"
-    return
-  fi
-  for mgr in nala apt yay pacman dnf zypper apk eopkg xbps-install pkg moss; do
-    if command -v "$mgr" >/dev/null 2>&1; then
-      echo "$mgr"
-      return
+ensureRustToolchain() {
+    if command_exists rustc; then
+        return 0
     fi
-  done
-  echo "none"
+
+    printf "%b\n" "${YELLOW}Rust toolchain not found. Installing via rustup...${RC}"
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+
+    if [ -f "$HOME/.cargo/env" ]; then
+        # shellcheck disable=SC1091
+        . "$HOME/.cargo/env"
+    fi
+
+    if command_exists rustup; then
+        rustup default stable >/dev/null 2>&1 || true
+    fi
+
+    if ! command_exists rustc; then
+        printf "%b\n" "${RED}Failed to install Rust toolchain.${RC}"
+        exit 1
+    fi
 }
 
-PKG_MGR=$(detect_pkg_mgr)
+buildPkgTui() {
+    printf "%b\n" "${YELLOW}Building pkg-tui Rust utility...${RC}"
+    ensureRustToolchain
 
-case "$PKG_MGR" in
-  nala)
-    LIST_CMD="apt-cache pkgnames"
-    INFO_CMD="nala show {1} 2>/dev/null"
-    INSTALL_CMD="sudo nala install -y"
-    REMOVE_CMD="sudo nala remove -y"
-    INSTALLED_LIST=$(dpkg-query -W -f='${Package}\n')
-    ;;
-  apt)
-    LIST_CMD="apt-cache pkgnames"
-    INFO_CMD="apt show {1} 2>/dev/null"
-    INSTALL_CMD="sudo apt install -y"
-    REMOVE_CMD="sudo apt autoremove -y"
-    INSTALLED_LIST=$(dpkg-query -W -f='${Package}\n')
-    ;;
-  yay)
-    LIST_CMD="yay -Slq"
-    INFO_CMD="yay -Si {1}"
-    INSTALL_CMD="yay -S --noconfirm"
-    REMOVE_CMD="yay -R --noconfirm"
-    INSTALLED_LIST=$(yay -Qq)
-    ;;
-  pacman)
-    LIST_CMD="pacman -Slq"
-    INFO_CMD="pacman -Si {1}"
-    INSTALL_CMD="sudo pacman -S --noconfirm"
-    REMOVE_CMD="sudo pacman -R --noconfirm"
-    INSTALLED_LIST=$(pacman -Qq)
-    ;;
-  dnf)
-    LIST_CMD="dnf repoquery --qf '%{name}\n' --quiet"
-    INFO_CMD="dnf info {1}"
-    INSTALL_CMD="sudo dnf install -y"
-    REMOVE_CMD="sudo dnf remove -y"
-    INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
-    ;;
-  rpm-ostree)
-    LIST_CMD="rpm -qa --qf '%{NAME}\n'"
-    INFO_CMD="rpm-ostree search {1}"
-    INSTALL_CMD="sudo rpm-ostree install"
-    REMOVE_CMD="sudo rpm-ostree uninstall"
-    INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
-    ;;
-  zypper)
-    LIST_CMD="zypper se -s | awk 'NR>2 {print \$2; print \$3}' | grep -v '^[|]' | sort -u"
-    INFO_CMD="zypper info {1}"
-    INSTALL_CMD="sudo zypper install -y"
-    REMOVE_CMD="sudo zypper remove -y"
-    INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
-    ;;
-  apk)
-    LIST_CMD="apk search -v | awk -F'-[0-9]' '{print \$1}'"
-    INFO_CMD="apk info -d {1}"
-    INSTALL_CMD="doas apk add"
-    REMOVE_CMD="doas apk del"
-    INSTALLED_LIST=$(apk info | awk -F'-[0-9]' '{print $1}')
-    ;;
-  eopkg)
-    LIST_CMD="eopkg list-available \
-  | sed -r 's/\x1B\[[0-9;]*m//g' \
-  | awk 'NF>0 && !/Repository/ && !/^Installed packages/ { sub(/^[ \t]+/, \"\"); print \$1 }'"
-    INFO_CMD="eopkg info {1}"
-    INSTALL_CMD="sudo eopkg install -y"
-    REMOVE_CMD="sudo eopkg remove -y"
-    INSTALLED_LIST=$(eopkg list-installed | awk '{print $1}')
-    ;;
-  moss)
-    LIST_CMD="moss list available"
-    INFO_CMD="moss info {1}"
-    INSTALL_CMD="moss install -y"
-    REMOVE_CMD="moss remove -y"
-    INSTALLED_LIST=$(moss list installed | awk '{print $1}')
-    ;;
-  xbps-install)
-    LIST_CMD="xbps-query -Rs '' | awk '{print \$2}'"
-    INFO_CMD="xbps-query -RS {1}"
-    INSTALL_CMD="sudo xbps-install -y"
-    REMOVE_CMD="sudo xbps-remove -y"
-    INSTALLED_LIST=$(xbps-query -l | awk '{print $2}')
-    ;;
-  pkg)
-    LIST_CMD="pkg search . | awk '{print \$1}'"
-    INFO_CMD="pkg info {1}"
-    INSTALL_CMD="sudo pkg install -y"
-    REMOVE_CMD="sudo pkg remove -y"
-    INSTALLED_LIST=$(pkg query -a '%n')
-    ;;
-  none)
-    echo "❌ No supported package manager found (apt, pacman, dnf, rpm-ostree, zypper, apk, eopkg, xbps, pkg)."
-    exit 1
-    ;;
-esac
+    if [ -f "$HOME/.cargo/env" ]; then
+        # shellcheck disable=SC1091
+        . "$HOME/.cargo/env"
+    fi
 
-# After case/esac
-declare -A installed
-if [[ "$PKG_MGR" == "eopkg" ]]; then
-  INSTALLED_CACHE="$(
-    eopkg list-installed 2>/dev/null \
-      | sed -r 's/\x1B\[[0-9;]*m//g' \
-      | awk 'NF>0 {print $1}' \
-      | sed 's/[[:space:]]\+$//' \
-      | sort -u
-  )"
-elif [[ "$PKG_MGR" == "moss" ]]; then
-  INSTALLED_CACHE="$(
-    moss list installed 2>/dev/null \
-      | awk 'NF>0 {print $1}' \
-      | sort -u
-  )"
-else
-  while read -r pkg; do
-    [[ -n "$pkg" ]] && installed["$pkg"]=1
-  done <<<"$INSTALLED_LIST"
-fi
+    script_dir=$(dirname "$(realpath "$0")")
+    rust_source="$script_dir/pkg-tui.rs"
+    if [ ! -f "$rust_source" ]; then
+        printf "%b\n" "${RED}Missing Rust source file: $rust_source${RC}"
+        exit 1
+    fi
 
-# Package list function
-list_names() {
-  if [[ "$PKG_MGR" == "eopkg" ]] || [[ "$PKG_MGR" == "moss" ]]; then
-    eval "$LIST_CMD" \
-      | sed -r 's/\x1B\[[0-9;]*m//g' \
-      | awk 'NF>0 {print $1}' \
-      | sed 's/[[:space:]]\+$//' \
-      | sort -u \
-      | while read -r name; do
-          [[ -z "$name" ]] && continue
-          if grep -Fxq "$name" <<<"$INSTALLED_CACHE"; then
-            printf "\033[32m%s ✅\033[0m\n" "$name"
-          else
-            echo "$name"
-          fi
-        done
-  else
-    eval "$LIST_CMD" | sort | while read -r pkg; do
-      [[ -z "$pkg" ]] && continue
-      if [[ -n ${installed[$pkg]} ]]; then
-        printf "\033[32m%s ✅\033[0m\n" "$pkg"
-      else
-        echo "$pkg"
-      fi
-    done
-  fi
-}
-
-# fzf args
-fzf_args=(
-  --multi
-  --ansi
-  --exact
-  --tiebreak=begin,length
-  --preview "$INFO_CMD"
-  --preview-window 'down:30%:wrap'
-  --bind 'enter:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
-  --bind 'alt-i:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
-  --bind 'alt-r:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo remove > /tmp/pkg-tui-mode)+accept'
-  --header "🔎 $PKG_MGR | Enter/Alt-i: Install | Alt-r: Remove"
-  --color 'pointer:green,marker:green'
-)
-
-# Run fzf
-pkg=$(list_names | fzf "${fzf_args[@]}")
-
-if [[ -s /tmp/pkg-tui-action && -s /tmp/pkg-tui-mode ]]; then
-  pkg_names=$(sed 's/ ✅//; s/\x1b\[[0-9;]*m//g' /tmp/pkg-tui-action | awk '{print $1}' | tr -d '"'"'" | tr '\n' ' ')
-  action=$(cat /tmp/pkg-tui-mode)
-
-  case "$action" in
-    install)
-      echo "➡️ Installing: $pkg_names"
-      $INSTALL_CMD $pkg_names
-      ;;
-    remove)
-      echo "🗑️ Removing: $pkg_names"
-      $REMOVE_CMD $pkg_names
-      ;;
-  esac
-
-  rm -f /tmp/pkg-tui-action /tmp/pkg-tui-mode
-
-  echo "✅ Action '$action' complete for: $pkg_names"
-  
-  exit 0
-fi
-
-# Exit if no packages were selected
-exit 0
-EOF
+    tmpdir=$(mktemp -d)
+    binfile="$tmpdir/pkg-tui"
+    rustc --edition=2021 -O "$rust_source" -o "$binfile"
 
     if [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "moss" ] || [ "$PACKAGER" = "rpm-ostree" ]; then
-        "$ESCALATION_TOOL" mv "$tmpfile" /usr/bin/pkg-tui
-        "$ESCALATION_TOOL" chmod +x /usr/bin/pkg-tui
-        printf "%b\n" "${GREEN}pkg-tui script installed to /usr/bin/pkg-tui${RC}"
+        target="/usr/bin/pkg-tui"
     else
-        "$ESCALATION_TOOL" mv "$tmpfile" /usr/local/bin/pkg-tui
-        "$ESCALATION_TOOL" chmod +x /usr/local/bin/pkg-tui
-        printf "%b\n" "${GREEN}pkg-tui script installed to /usr/local/bin/pkg-tui${RC}"
+        target="/usr/local/bin/pkg-tui"
     fi
+
+    "$ESCALATION_TOOL" mv "$binfile" "$target"
+    "$ESCALATION_TOOL" chmod +x "$target"
+    rm -rf "$tmpdir"
+    printf "%b\n" "${GREEN}pkg-tui installed to ${target}${RC}"
+
+    printf "%b\n" "${YELLOW}Pre-warming package cache (first run optimization)...${RC}"
+    "$target" --refresh-cache >/dev/null 2>&1 || printf "%b\n" "${YELLOW}Cache warm-up failed; pkg-tui will refresh on first use.${RC}"
 }
 
 addAlias() {
