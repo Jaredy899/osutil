@@ -319,13 +319,11 @@ impl RunningCommand {
 
     /// This function will block if the command is not finished
     fn get_exit_status(&mut self) -> ExitStatus {
-        if self.command_thread.is_some() {
-            if let Some(handle) = self.command_thread.take() {
-                if let Ok(exit_status) = handle.join() {
-                    self.status = Some(exit_status.clone());
-                    return exit_status;
-                }
-            }
+        if let Some(handle) = self.command_thread.take()
+            && let Ok(exit_status) = handle.join()
+        {
+            self.status = Some(exit_status.clone());
+            return exit_status;
         }
         // Return a default exit status if we can't get the real one
         self.status
@@ -336,14 +334,12 @@ impl RunningCommand {
 
     /// Kill the child process
     pub fn kill_child(&mut self) {
-        if !self.is_finished() {
-            if let Some(rx) = self.child_killer.take() {
-                if let Ok(mut killer) = rx.recv() {
-                    if let Err(e) = killer.kill() {
-                        eprintln!("Failed to kill child process: {e}");
-                    }
-                }
-            }
+        if !self.is_finished()
+            && let Some(rx) = self.child_killer.take()
+            && let Ok(mut killer) = rx.recv()
+            && let Err(e) = killer.kill()
+        {
+            eprintln!("Failed to kill child process: {e}");
         }
     }
 
