@@ -32,6 +32,9 @@ installDependencies() {
         rpm-ostree)
             "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive fzf coreutils
             ;;
+        brew)
+            brew install fzf coreutils
+            ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
             exit 1
@@ -85,12 +88,19 @@ buildPkgTui() {
 
     if [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "moss" ] || [ "$PACKAGER" = "rpm-ostree" ]; then
         target="/usr/bin/pkg-tui"
+    elif [ "$PACKAGER" = "brew" ]; then
+        target="$(brew --prefix)/bin/pkg-tui"
     else
         target="/usr/local/bin/pkg-tui"
     fi
 
-    "$ESCALATION_TOOL" mv "$binfile" "$target"
-    "$ESCALATION_TOOL" chmod +x "$target"
+    if [ "$PACKAGER" = "brew" ]; then
+        mv "$binfile" "$target"
+        chmod +x "$target"
+    else
+        "$ESCALATION_TOOL" mv "$binfile" "$target"
+        "$ESCALATION_TOOL" chmod +x "$target"
+    fi
     rm -rf "$tmpdir"
     printf "%b\n" "${GREEN}pkg-tui installed to ${target}${RC}"
 
@@ -111,8 +121,14 @@ addAlias() {
 }
 
 # Main
-checkEnv
+checkArch
 checkEscalationTool
+checkCommandRequirements "curl id $ESCALATION_TOOL"
+checkPackageManager 'moss nala apt-get dnf pacman zypper apk xbps-install eopkg pkg brew'
+checkCurrentDirectoryWritable
+checkSuperUser
+checkDistro
+checkAURHelper
 installDependencies
 buildPkgTui
 # addAlias

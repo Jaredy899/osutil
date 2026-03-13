@@ -2,7 +2,7 @@
 
 # Complete macOS Setup Script
 # Combines multiple setup scripts into one comprehensive installation script
-# Skips eza and package-finder (not present in macos; shell setup handles core deps via zsh.sh)
+# Skips eza (not present in macOS; shell setup handles core deps via zsh.sh)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MACOS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -78,7 +78,7 @@ if ! source_script "$MACOS_DIR/applications-setup/developer-tools/zellij.sh"; th
 fi
 printf "%b\n" ""
 
-# 5. Shell Setup (zsh, dotfiles, starship, etc. — eza/package-finder not in macos zsh.sh)
+# 5. Shell Setup (zsh, dotfiles, starship, etc. — eza not in macOS zsh.sh)
 printf "%b\n" "${CYAN}=== Step 5: Shell Setup ===${RC}"
 if ! source_script "$MACOS_DIR/applications-setup/zsh.sh"; then
     printf "%b\n" "${YELLOW}Shell setup failed or skipped, continuing...${RC}"

@@ -59,10 +59,61 @@ enum PackageManager {
     Moss,
     XbpsInstall,
     Pkg,
+    Brew,
 }
 
 impl PackageManager {
+    fn from_name(name: &str) -> Option<Self> {
+        match name.to_ascii_lowercase().as_str() {
+            "nala" => Some(Self::Nala),
+            "apt" | "apt-get" => Some(Self::Apt),
+            "yay" => Some(Self::Yay),
+            "pacman" => Some(Self::Pacman),
+            "dnf" => Some(Self::Dnf),
+            "rpm-ostree" => Some(Self::RpmOstree),
+            "zypper" => Some(Self::Zypper),
+            "apk" => Some(Self::Apk),
+            "eopkg" => Some(Self::Eopkg),
+            "moss" => Some(Self::Moss),
+            "xbps-install" | "xbps" => Some(Self::XbpsInstall),
+            "pkg" => Some(Self::Pkg),
+            "brew" | "homebrew" => Some(Self::Brew),
+            _ => None,
+        }
+    }
+
+    fn probe_binary(self) -> &'static str {
+        match self {
+            Self::Nala => "nala",
+            Self::Apt => "apt",
+            Self::Yay => "yay",
+            Self::Pacman => "pacman",
+            Self::Dnf => "dnf",
+            Self::RpmOstree => "rpm-ostree",
+            Self::Zypper => "zypper",
+            Self::Apk => "apk",
+            Self::Eopkg => "eopkg",
+            Self::Moss => "moss",
+            Self::XbpsInstall => "xbps-install",
+            Self::Pkg => "pkg",
+            Self::Brew => "brew",
+        }
+    }
+
     fn detect() -> Option<Self> {
+        if let Ok(requested) = env::var("PKG_TUI_MANAGER") {
+            if let Some(manager) = Self::from_name(requested.trim()) {
+                let available = if matches!(manager, Self::RpmOstree) {
+                    Path::new("/run/ostree-booted").exists() && command_exists(manager.probe_binary())
+                } else {
+                    command_exists(manager.probe_binary())
+                };
+                if available {
+                    return Some(manager);
+                }
+            }
+        }
+
         if Path::new("/run/ostree-booted").exists() && command_exists("rpm-ostree") {
             return Some(Self::RpmOstree);
         }
@@ -79,6 +130,7 @@ impl PackageManager {
             ("xbps-install", Self::XbpsInstall),
             ("pkg", Self::Pkg),
             ("moss", Self::Moss),
+            ("brew", Self::Brew),
         ];
 
         managers
@@ -100,6 +152,7 @@ impl PackageManager {
             Self::Moss => "moss",
             Self::XbpsInstall => "xbps-install",
             Self::Pkg => "pkg",
+            Self::Brew => "brew",
         }
     }
 }
@@ -113,7 +166,7 @@ fn main() {
 
 fn run() -> Result<(), String> {
     let manager = PackageManager::detect().ok_or_else(|| {
-        "No supported package manager found (apt, pacman, dnf, rpm-ostree, zypper, apk, eopkg, xbps-install, pkg, moss).".to_string()
+        "No supported package manager found (apt, pacman, dnf, rpm-ostree, zypper, apk, eopkg, xbps-install, pkg, moss, brew).".to_string()
     })?;
 
     let args: Vec<String> = env::args().collect();
@@ -158,6 +211,7 @@ fn print_help() {
         "  PKG_TUI_INSTALLED_TTL={} (seconds)",
         DEFAULT_INSTALLED_TTL_SECS
     );
+    println!("  PKG_TUI_MANAGER=<manager>  (optional forced manager)");
 }
 
 fn interactive_mode(manager: PackageManager) -> Result<(), String> {
@@ -300,6 +354,10 @@ fn preview_package(manager: PackageManager, package: String) {
         PackageManager::Moss => ("moss", vec!["info".to_string(), package]),
         PackageManager::XbpsInstall => ("xbps-query", vec!["-RS".to_string(), package]),
         PackageManager::Pkg => ("pkg", vec!["info".to_string(), package]),
+        PackageManager::Brew => (
+            "brew",
+            vec!["info".to_string(), "--formula".to_string(), package],
+        ),
     };
 
     match Command::new(program).args(&args).output() {
@@ -413,6 +471,16 @@ fn action_command(manager: PackageManager, action: Action) -> (&'static str, Vec
         (PackageManager::XbpsInstall, Action::Remove) => ("xbps-remove", vec!["-y".into()], true),
         (PackageManager::Pkg, Action::Install) => ("pkg", vec!["install".into(), "-y".into()], true),
         (PackageManager::Pkg, Action::Remove) => ("pkg", vec!["remove".into(), "-y".into()], true),
+        (PackageManager::Brew, Action::Install) => (
+            "brew",
+            vec!["install".into(), "--formula".into()],
+            false,
+        ),
+        (PackageManager::Brew, Action::Remove) => (
+            "brew",
+            vec!["uninstall".into(), "--formula".into()],
+            false,
+        ),
     }
 }
 
@@ -469,6 +537,7 @@ fn fetch_package_list(manager: PackageManager, kind: CacheKind) -> Result<Vec<St
             run_shell_capture("xbps-query -Rs '' | awk '{print $2}'")?
         }
         (PackageManager::Pkg, CacheKind::Available) => run_shell_capture("pkg search . | awk '{print $1}'")?,
+        (PackageManager::Brew, CacheKind::Available) => run_capture("brew", &["formulae"])?,
 
         (PackageManager::Nala, CacheKind::Installed) | (PackageManager::Apt, CacheKind::Installed) => {
             run_capture("dpkg-query", &["-W", "-f=${Package}\\n"])?
@@ -489,6 +558,9 @@ fn fetch_package_list(manager: PackageManager, kind: CacheKind) -> Result<Vec<St
             run_shell_capture("xbps-query -l | awk '{print $2}'")?
         }
         (PackageManager::Pkg, CacheKind::Installed) => run_capture("pkg", &["query", "-a", "%n"])?,
+        (PackageManager::Brew, CacheKind::Installed) => {
+            run_capture("brew", &["list", "--formula"])?
+        }
     };
 
     let parsed = match manager {

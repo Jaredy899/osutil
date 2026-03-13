@@ -247,6 +247,12 @@ script = "onyx.sh"
 task_list = "I"
 
 [[data]]
+name = "Package Installer"
+description = "An fzf package installer with cache-backed Homebrew lookups."
+script = "package-finder.sh"
+task_list = "I FM"
+
+[[data]]
 name = "Raycast"
 description = "Control your tools with a few keystrokes"
 script = "raycast.sh"
