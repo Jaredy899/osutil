@@ -62,94 +62,111 @@ detect_pkg_mgr() {
   echo "none"
 }
 
+detect_escalation_tool() {
+  if [ "$(id -u)" = "0" ]; then
+    echo "eval"
+    return
+  fi
+
+  for tool in sudo-rs sudo doas; do
+    if command -v "$tool" >/dev/null 2>&1; then
+      echo "$tool"
+      return
+    fi
+  done
+
+  echo "sudo"
+}
+
 PKG_MGR=$(detect_pkg_mgr)
+ESCALATION_TOOL=$(detect_escalation_tool)
 
 case "$PKG_MGR" in
   nala)
     LIST_CMD="apt-cache pkgnames"
     INFO_CMD="nala show {1} 2>/dev/null"
-    INSTALL_CMD="sudo nala install -y"
-    REMOVE_CMD="sudo nala remove -y"
-    INSTALLED_LIST=$(dpkg-query -W -f='${Package}\n')
+    INSTALL_CMD="$ESCALATION_TOOL nala install -y"
+    REMOVE_CMD="$ESCALATION_TOOL nala remove -y"
+    INSTALLED_CMD="dpkg-query -W -f='\${Package}\n'"
     ;;
   apt)
     LIST_CMD="apt-cache pkgnames"
     INFO_CMD="apt show {1} 2>/dev/null"
-    INSTALL_CMD="sudo apt install -y"
-    REMOVE_CMD="sudo apt autoremove -y"
-    INSTALLED_LIST=$(dpkg-query -W -f='${Package}\n')
+    INSTALL_CMD="$ESCALATION_TOOL apt install -y"
+    REMOVE_CMD="$ESCALATION_TOOL apt autoremove -y"
+    INSTALLED_CMD="dpkg-query -W -f='\${Package}\n'"
     ;;
   yay)
     LIST_CMD="yay -Slq"
     INFO_CMD="yay -Si {1}"
     INSTALL_CMD="yay -S --noconfirm"
     REMOVE_CMD="yay -R --noconfirm"
-    INSTALLED_LIST=$(yay -Qq)
+    INSTALLED_CMD="yay -Qq"
     ;;
   pacman)
     LIST_CMD="pacman -Slq"
     INFO_CMD="pacman -Si {1}"
-    INSTALL_CMD="sudo pacman -S --noconfirm"
-    REMOVE_CMD="sudo pacman -R --noconfirm"
-    INSTALLED_LIST=$(pacman -Qq)
+    INSTALL_CMD="$ESCALATION_TOOL pacman -S --noconfirm"
+    REMOVE_CMD="$ESCALATION_TOOL pacman -R --noconfirm"
+    INSTALLED_CMD="pacman -Qq"
     ;;
   dnf)
     LIST_CMD="dnf repoquery --qf '%{name}\n' --quiet"
     INFO_CMD="dnf info {1}"
-    INSTALL_CMD="sudo dnf install -y"
-    REMOVE_CMD="sudo dnf remove -y"
-    INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
+    INSTALL_CMD="$ESCALATION_TOOL dnf install -y"
+    REMOVE_CMD="$ESCALATION_TOOL dnf remove -y"
+    INSTALLED_CMD="rpm -qa --qf '%{NAME}\n'"
     ;;
   rpm-ostree)
     LIST_CMD="rpm -qa --qf '%{NAME}\n'"
     INFO_CMD="rpm-ostree search {1}"
-    INSTALL_CMD="sudo rpm-ostree install"
-    REMOVE_CMD="sudo rpm-ostree uninstall"
-    INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
+    INSTALL_CMD="$ESCALATION_TOOL rpm-ostree install"
+    REMOVE_CMD="$ESCALATION_TOOL rpm-ostree uninstall"
+    INSTALLED_CMD="rpm -qa --qf '%{NAME}\n'"
     ;;
   zypper)
     LIST_CMD="zypper se -s | awk 'NR>2 {print \$2; print \$3}' | grep -v '^[|]' | sort -u"
     INFO_CMD="zypper info {1}"
-    INSTALL_CMD="sudo zypper install -y"
-    REMOVE_CMD="sudo zypper remove -y"
-    INSTALLED_LIST=$(rpm -qa --qf '%{NAME}\n')
+    INSTALL_CMD="$ESCALATION_TOOL zypper install -y"
+    REMOVE_CMD="$ESCALATION_TOOL zypper remove -y"
+    INSTALLED_CMD="rpm -qa --qf '%{NAME}\n'"
     ;;
   apk)
     LIST_CMD="apk search -v | awk -F'-[0-9]' '{print \$1}'"
     INFO_CMD="apk info -d {1}"
-    INSTALL_CMD="doas apk add"
-    REMOVE_CMD="doas apk del"
-    INSTALLED_LIST=$(apk info | awk -F'-[0-9]' '{print $1}')
+    INSTALL_CMD="$ESCALATION_TOOL apk add"
+    REMOVE_CMD="$ESCALATION_TOOL apk del"
+    INSTALLED_CMD="apk info | awk -F'-[0-9]' '{print \$1}'"
     ;;
   eopkg)
     LIST_CMD="eopkg list-available \
   | sed -r 's/\x1B\[[0-9;]*m//g' \
   | awk 'NF>0 && !/Repository/ && !/^Installed packages/ { sub(/^[ \t]+/, \"\"); print \$1 }'"
     INFO_CMD="eopkg info {1}"
-    INSTALL_CMD="sudo eopkg install -y"
-    REMOVE_CMD="sudo eopkg remove -y"
-    INSTALLED_LIST=$(eopkg list-installed | awk '{print $1}')
+    INSTALL_CMD="$ESCALATION_TOOL eopkg install -y"
+    REMOVE_CMD="$ESCALATION_TOOL eopkg remove -y"
+    INSTALLED_CMD="eopkg list-installed | awk '{print \$1}'"
     ;;
   moss)
     LIST_CMD="moss list available"
     INFO_CMD="moss info {1}"
-    INSTALL_CMD="moss install -y"
-    REMOVE_CMD="moss remove -y"
-    INSTALLED_LIST=$(moss list installed | awk '{print $1}')
+    INSTALL_CMD="$ESCALATION_TOOL moss install -y"
+    REMOVE_CMD="$ESCALATION_TOOL moss remove -y"
+    INSTALLED_CMD="moss list installed | awk '{print \$1}'"
     ;;
   xbps-install)
     LIST_CMD="xbps-query -Rs '' | awk '{print \$2}'"
     INFO_CMD="xbps-query -RS {1}"
-    INSTALL_CMD="sudo xbps-install -y"
-    REMOVE_CMD="sudo xbps-remove -y"
-    INSTALLED_LIST=$(xbps-query -l | awk '{print $2}')
+    INSTALL_CMD="$ESCALATION_TOOL xbps-install -y"
+    REMOVE_CMD="$ESCALATION_TOOL xbps-remove -y"
+    INSTALLED_CMD="xbps-query -l | awk '{print \$2}'"
     ;;
   pkg)
     LIST_CMD="pkg search . | awk '{print \$1}'"
     INFO_CMD="pkg info {1}"
-    INSTALL_CMD="sudo pkg install -y"
-    REMOVE_CMD="sudo pkg remove -y"
-    INSTALLED_LIST=$(pkg query -a '%n')
+    INSTALL_CMD="$ESCALATION_TOOL pkg install -y"
+    REMOVE_CMD="$ESCALATION_TOOL pkg remove -y"
+    INSTALLED_CMD="pkg query -a '%n'"
     ;;
   none)
     echo "❌ No supported package manager found (apt, pacman, dnf, rpm-ostree, zypper, apk, eopkg, xbps, pkg)."
@@ -157,55 +174,103 @@ case "$PKG_MGR" in
     ;;
 esac
 
-# After case/esac
+CACHE_TTL_SECONDS="${PKG_TUI_CACHE_TTL_SECONDS:-3600}"
+CACHE_ROOT="${XDG_CACHE_HOME:-$HOME/.cache}/pkg-tui"
+CACHE_DIR="$CACHE_ROOT/$PKG_MGR"
+LIST_CACHE_FILE="$CACHE_DIR/package-list.cache"
+INSTALLED_CACHE_FILE="$CACHE_DIR/installed-list.cache"
+mkdir -p "$CACHE_DIR"
+
+cache_file_is_fresh() {
+  local file="$1"
+  [[ -s "$file" ]] || return 1
+  [[ "$CACHE_TTL_SECONDS" -gt 0 ]] || return 1
+
+  local now mtime age
+  now=$(date +%s)
+  mtime=$(stat -c %Y "$file" 2>/dev/null || echo 0)
+  age=$((now - mtime))
+
+  (( age < CACHE_TTL_SECONDS ))
+}
+
+populate_pkg_cache() {
+  local cache_file="$1"
+  local cache_cmd="$2"
+  local tmp_file="${cache_file}.tmp"
+
+  if cache_file_is_fresh "$cache_file"; then
+    return 0
+  fi
+
+  eval "$cache_cmd" 2>/dev/null \
+    | sed -r 's/\x1B\[[0-9;]*m//g' \
+    | awk 'NF>0 { sub(/^[ \t]+/, ""); sub(/[ \t]+$/, ""); print $1 }' \
+    | sort -u > "$tmp_file"
+
+  if [[ -s "$tmp_file" ]]; then
+    mv "$tmp_file" "$cache_file"
+  else
+    rm -f "$tmp_file"
+    [[ -f "$cache_file" ]] || : > "$cache_file"
+  fi
+}
+
+invalidate_pkg_cache() {
+  rm -f "$LIST_CACHE_FILE" "$INSTALLED_CACHE_FILE" "$CACHE_DIR"/info-*.cache 2>/dev/null || true
+}
+
+preview_pkg_info() {
+  local raw_name="$1"
+  local pkg_name cache_key info_cache_file tmp_file info_cmd
+
+  pkg_name=$(
+    printf '%s\n' "$raw_name" \
+      | sed 's/\x1B\[[0-9;]*m//g; s/✅//g' \
+      | awk 'NF>0 {print $1}'
+  )
+  [[ -n "$pkg_name" ]] || exit 0
+
+  cache_key=$(printf '%s' "$pkg_name" | tr -c '[:alnum:]._-' '_')
+  info_cache_file="$CACHE_DIR/info-${cache_key}.cache"
+  tmp_file="${info_cache_file}.tmp"
+
+  if ! cache_file_is_fresh "$info_cache_file"; then
+    info_cmd="${INFO_CMD//\{1\}/$pkg_name}"
+    eval "$info_cmd" > "$tmp_file" 2>&1 || true
+    if [[ -s "$tmp_file" ]]; then
+      mv "$tmp_file" "$info_cache_file"
+    else
+      printf "No package information available for %s\n" "$pkg_name" > "$info_cache_file"
+      rm -f "$tmp_file"
+    fi
+  fi
+
+  cat "$info_cache_file"
+}
+
+populate_pkg_cache "$LIST_CACHE_FILE" "$LIST_CMD"
+populate_pkg_cache "$INSTALLED_CACHE_FILE" "$INSTALLED_CMD"
+
 declare -A installed
-if [[ "$PKG_MGR" == "eopkg" ]]; then
-  INSTALLED_CACHE="$(
-    eopkg list-installed 2>/dev/null \
-      | sed -r 's/\x1B\[[0-9;]*m//g' \
-      | awk 'NF>0 {print $1}' \
-      | sed 's/[[:space:]]\+$//' \
-      | sort -u
-  )"
-elif [[ "$PKG_MGR" == "moss" ]]; then
-  INSTALLED_CACHE="$(
-    moss list installed 2>/dev/null \
-      | awk 'NF>0 {print $1}' \
-      | sort -u
-  )"
-else
-  while read -r pkg; do
-    [[ -n "$pkg" ]] && installed["$pkg"]=1
-  done <<<"$INSTALLED_LIST"
-fi
+while read -r pkg; do
+  [[ -n "$pkg" ]] && installed["$pkg"]=1
+done < "$INSTALLED_CACHE_FILE"
 
 # Package list function
 list_names() {
-  if [[ "$PKG_MGR" == "eopkg" ]] || [[ "$PKG_MGR" == "moss" ]]; then
-    eval "$LIST_CMD" \
-      | sed -r 's/\x1B\[[0-9;]*m//g' \
-      | awk 'NF>0 {print $1}' \
-      | sed 's/[[:space:]]\+$//' \
-      | sort -u \
-      | while read -r name; do
-          [[ -z "$name" ]] && continue
-          if grep -Fxq "$name" <<<"$INSTALLED_CACHE"; then
-            printf "\033[32m%s ✅\033[0m\n" "$name"
-          else
-            echo "$name"
-          fi
-        done
-  else
-    eval "$LIST_CMD" | sort | while read -r pkg; do
-      [[ -z "$pkg" ]] && continue
-      if [[ -n ${installed[$pkg]} ]]; then
-        printf "\033[32m%s ✅\033[0m\n" "$pkg"
-      else
-        echo "$pkg"
-      fi
-    done
-  fi
+  while read -r pkg; do
+    [[ -z "$pkg" ]] && continue
+    if [[ -n ${installed[$pkg]} ]]; then
+      printf "\033[32m%s ✅\033[0m\n" "$pkg"
+    else
+      echo "$pkg"
+    fi
+  done < "$LIST_CACHE_FILE"
 }
+
+export INFO_CMD CACHE_DIR CACHE_TTL_SECONDS
+export -f cache_file_is_fresh preview_pkg_info
 
 # fzf args
 fzf_args=(
@@ -213,7 +278,7 @@ fzf_args=(
   --ansi
   --exact
   --tiebreak=begin,length
-  --preview "$INFO_CMD"
+  --preview 'bash -c '\''preview_pkg_info "$1"'\'' _ {1}'
   --preview-window 'down:30%:wrap'
   --bind 'enter:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
   --bind 'alt-i:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
@@ -233,10 +298,12 @@ if [[ -s /tmp/pkg-tui-action && -s /tmp/pkg-tui-mode ]]; then
     install)
       echo "➡️ Installing: $pkg_names"
       $INSTALL_CMD $pkg_names
+      invalidate_pkg_cache
       ;;
     remove)
       echo "🗑️ Removing: $pkg_names"
       $REMOVE_CMD $pkg_names
+      invalidate_pkg_cache
       ;;
   esac
 
