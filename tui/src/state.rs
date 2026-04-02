@@ -1,17 +1,17 @@
 use crate::{
-    root::check_root_status,
     cli::Args,
     confirmation::{ConfirmPrompt, ConfirmStatus},
     filter::{Filter, SearchAction},
     float::{Float, FloatContent},
     floating_text::FloatingText,
-    hint::{create_shortcut_list, Shortcut},
+    hint::{Shortcut, create_shortcut_list},
+    root::check_root_status,
     running_command::RunningCommand,
     shortcuts,
     theme::Theme,
 };
 #[allow(unused_imports)]
-use osutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
+use osutil_core::{Command, Config, ConfigValues, ListNode, TabList, ego_tree::NodeId};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind},
     layout::Flex,
@@ -788,8 +788,7 @@ impl AppState {
         if let Some(command_description) = self.get_selected_description()
             && !command_description.is_empty()
         {
-            let description =
-                FloatingText::new(command_description, "Command Description", true);
+            let description = FloatingText::new(command_description, "Command Description", true);
             self.spawn_float(description, FLOAT_SIZE, FLOAT_SIZE);
         }
     }
