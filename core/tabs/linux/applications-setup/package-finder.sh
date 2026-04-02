@@ -6,31 +6,31 @@ installDependencies() {
     printf "%b\n" "${YELLOW}Installing dependencies for pkg-tui...${RC}"
     case "$PACKAGER" in
         pacman)
-            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm fzf curl
             ;;
         apt-get|nala)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf curl
             ;;
         dnf)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf curl
             ;;
         zypper)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf curl
             ;;
         apk)
-            "$ESCALATION_TOOL" "$PACKAGER" add fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" add fzf curl
             ;;
         eopkg)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf curl
             ;;
         moss)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf bash uutils-coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf curl
             ;;
         xbps-install)
-            "$ESCALATION_TOOL" "$PACKAGER" -Sy fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" -Sy fzf curl
             ;;
         rpm-ostree)
-            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive fzf bash coreutils
+            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive fzf curl
             ;;
         *)
             printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
@@ -44,7 +44,7 @@ buildPkgTui() {
     printf "%b\n" "${YELLOW}Building pkg-tui script...${RC}"
     tmpfile=$(mktemp)
     cat > "$tmpfile" <<"EOF"
-#!/usr/bin/env bash
+#!/bin/sh
 set -e
 
 # Detect first available package manager
@@ -76,6 +76,129 @@ detect_escalation_tool() {
   done
 
   echo "sudo"
+}
+
+write_lib_script() {
+  _lib="$1"
+  cat > "$_lib" <<'LIBEOF'
+# Sourced by pkg-tui and preview subprocess (POSIX sh)
+_cache_mtime() {
+  _f="$1"
+  if _m=$(stat -c %Y "$_f" 2>/dev/null); then
+    printf %s "$_m"
+  elif _m=$(stat -f %m "$_f" 2>/dev/null); then
+    printf %s "$_m"
+  else
+    echo 0
+  fi
+}
+
+cache_file_is_fresh() {
+  _file="$1"
+  [ -s "$_file" ] || return 1
+  [ "$CACHE_TTL_SECONDS" -gt 0 ] || return 1
+  _now=$(date +%s)
+  _mtime=$(_cache_mtime "$_file")
+  _age=$((_now - _mtime))
+  [ "$_age" -lt "$CACHE_TTL_SECONDS" ]
+}
+LIBEOF
+}
+
+populate_pkg_cache() {
+  _cache_file="$1"
+  _cache_cmd="$2"
+  _tmp_file="${_cache_file}.tmp"
+
+  if cache_file_is_fresh "$_cache_file"; then
+    return 0
+  fi
+
+  eval "$_cache_cmd" 2>/dev/null \
+    | sed -E 's/\x1B\[[0-9;]*m//g' \
+    | awk 'NF>0 { sub(/^[ \t]+/, ""); sub(/[ \t]+$/, ""); print $1 }' \
+    | sort -u > "$_tmp_file"
+
+  if [ -s "$_tmp_file" ]; then
+    mv "$_tmp_file" "$_cache_file"
+  else
+    rm -f "$_tmp_file"
+    [ -f "$_cache_file" ] || : > "$_cache_file"
+  fi
+}
+
+populate_pkg_cache_force() {
+  _cache_file="$1"
+  _cache_cmd="$2"
+  _tmp_file="${_cache_file}.tmp"
+
+  eval "$_cache_cmd" 2>/dev/null \
+    | sed -E 's/\x1B\[[0-9;]*m//g' \
+    | awk 'NF>0 { sub(/^[ \t]+/, ""); sub(/[ \t]+$/, ""); print $1 }' \
+    | sort -u > "$_tmp_file"
+
+  if [ -s "$_tmp_file" ]; then
+    mv "$_tmp_file" "$_cache_file"
+  else
+    rm -f "$_tmp_file"
+    [ -f "$_cache_file" ] || : > "$_cache_file"
+  fi
+}
+
+invalidate_pkg_cache() {
+  rm -f "$LIST_CACHE_FILE" "$INSTALLED_CACHE_FILE" "$CACHE_DIR"/info-*.cache 2>/dev/null || true
+}
+
+write_merge_script() {
+  _merger="$1"
+  cat > "$_merger" <<MHEREDOC
+#!/bin/sh
+# Stream LIST line-by-line (no FNR==NR stall on installed file); fflush = line-buffered to fzf
+exec awk -v instf="$INSTALLED_CACHE_FILE" 'BEGIN {
+  while ((getline line < instf) > 0) {
+    gsub(/^[ \t]+|[ \t]+$/, "", line)
+    if (line != "") inst[line] = 1
+  }
+  close(instf)
+}
+NF > 0 {
+  p = \$1
+  gsub(/^[ \t]+|[ \t]+$/, "", p)
+  if (p == "") next
+  if (p in inst) printf "\\033[32m%s ✅\\033[0m\\n", p
+  else print p
+  fflush()
+}' "$LIST_CACHE_FILE"
+MHEREDOC
+  chmod +x "$_merger"
+}
+
+# Written at runtime: dot-sources lib, $1 = fzf line (avoids broken sh -c quoting in --preview)
+write_preview_script() {
+  _out="$1"
+  {
+    printf '#!/bin/sh\n. "%s"\n' "$LIB_SCRIPT"
+    cat <<'PREBODY'
+raw="$1"
+pkg_name=$(printf '%s\n' "$raw" | sed -E 's/\x1B\[[0-9;]*m//g; s/✅//g' | awk 'NF>0 {print $1}')
+[ -n "$pkg_name" ] || exit 0
+cache_key=$(printf '%s' "$pkg_name" | tr -c '[:alnum:]._-' '_')
+info_cache_file="$CACHE_DIR/info-${cache_key}.cache"
+tmp_file="${info_cache_file}.tmp"
+if ! cache_file_is_fresh "$info_cache_file"; then
+  info_cmd=$(printf '%s\n' "$INFO_CMD" | awk -v n="$pkg_name" '{ gsub(/\{1\}/, n); print }')
+  eval "$info_cmd" > "$tmp_file" 2>&1 || true
+  if [ -s "$tmp_file" ]; then
+    mv "$tmp_file" "$info_cache_file"
+  else
+    printf "No package information available for %s\n" "$pkg_name" > "$info_cache_file"
+    rm -f "$tmp_file"
+  fi
+fi
+cat "$info_cache_file"
+PREBODY
+  } > "$_out"
+  chmod +x "$_out"
 }
 
 PKG_MGR=$(detect_pkg_mgr)
@@ -140,7 +263,7 @@ case "$PKG_MGR" in
     ;;
   eopkg)
     LIST_CMD="eopkg list-available \
-  | sed -r 's/\x1B\[[0-9;]*m//g' \
+  | sed -E 's/\x1B\[[0-9;]*m//g' \
   | awk 'NF>0 && !/Repository/ && !/^Installed packages/ { sub(/^[ \t]+/, \"\"); print \$1 }'"
     INFO_CMD="eopkg info {1}"
     INSTALL_CMD="$ESCALATION_TOOL eopkg install -y"
@@ -181,140 +304,132 @@ LIST_CACHE_FILE="$CACHE_DIR/package-list.cache"
 INSTALLED_CACHE_FILE="$CACHE_DIR/installed-list.cache"
 mkdir -p "$CACHE_DIR"
 
-cache_file_is_fresh() {
-  local file="$1"
-  [[ -s "$file" ]] || return 1
-  [[ "$CACHE_TTL_SECONDS" -gt 0 ]] || return 1
+LIB_SCRIPT="$CACHE_DIR/pkg-tui-lib.sh"
+write_lib_script "$LIB_SCRIPT"
+. "$LIB_SCRIPT"
 
-  local now mtime age
-  now=$(date +%s)
-  mtime=$(stat -c %Y "$file" 2>/dev/null || echo 0)
-  age=$((now - mtime))
+case "$1" in
+  --refresh-worker)
+    sleep 0.05
+    populate_pkg_cache_force "$PKG_TUI_LIST_CACHE" "$PKG_TUI_LIST_CMD"
+    populate_pkg_cache_force "$PKG_TUI_INSTALLED_CACHE" "$PKG_TUI_INSTALLED_CMD"
+    if [ -n "$PKG_TUI_FZF_URL" ] && command -v curl >/dev/null 2>&1; then
+      _reload_payload=$(printf 'reload-sync(sh %s)+change-header(🔎 %s | list updated | Enter/Alt-i: Install | Alt-r: Remove | Ctrl-r: Refresh)' "$PKG_TUI_MERGER" "$PKG_TUI_PKG_MGR")
+      curl -sS -g -X POST "$PKG_TUI_FZF_URL" --data-binary "$_reload_payload" >/dev/null 2>&1 || true
+    fi
+    exit 0
+    ;;
+esac
 
-  (( age < CACHE_TTL_SECONDS ))
-}
+[ -f "$LIST_CACHE_FILE" ] || : > "$LIST_CACHE_FILE"
+[ -f "$INSTALLED_CACHE_FILE" ] || : > "$INSTALLED_CACHE_FILE"
 
-populate_pkg_cache() {
-  local cache_file="$1"
-  local cache_cmd="$2"
-  local tmp_file="${cache_file}.tmp"
+MERGER_SCRIPT="$CACHE_DIR/pkg-tui-merge-list.sh"
+write_merge_script "$MERGER_SCRIPT"
 
-  if cache_file_is_fresh "$cache_file"; then
-    return 0
-  fi
+PREVIEW_SCRIPT="$CACHE_DIR/pkg-tui-preview.sh"
+write_preview_script "$PREVIEW_SCRIPT"
 
-  eval "$cache_cmd" 2>/dev/null \
-    | sed -r 's/\x1B\[[0-9;]*m//g' \
-    | awk 'NF>0 { sub(/^[ \t]+/, ""); sub(/[ \t]+$/, ""); print $1 }' \
-    | sort -u > "$tmp_file"
+if command -v python3 >/dev/null 2>&1; then
+  FZF_LISTEN_PORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()' 2>/dev/null) || FZF_LISTEN_PORT=
+fi
+if [ -z "$FZF_LISTEN_PORT" ]; then
+  FZF_LISTEN_PORT=$((42000 + ($$ % 25000)))
+fi
+FZF_LISTEN_ADDR="127.0.0.1:${FZF_LISTEN_PORT}"
+PKG_TUI_FZF_URL="http://${FZF_LISTEN_ADDR}/"
 
-  if [[ -s "$tmp_file" ]]; then
-    mv "$tmp_file" "$cache_file"
+ACTION_BASE="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}"
+ACTION_DIR=$(mktemp -d "${ACTION_BASE}/pkg-tui-act.XXXXXX" 2>/dev/null || mktemp -d /tmp/pkg-tui-act.XXXXXX)
+ACTION_FILE="$ACTION_DIR/selection"
+MODE_FILE="$ACTION_DIR/mode"
+trap 'rm -rf "$ACTION_DIR"' EXIT INT HUP
+
+export INFO_CMD CACHE_DIR CACHE_TTL_SECONDS LIST_CACHE_FILE INSTALLED_CACHE_FILE
+export PKG_TUI_LIST_CACHE="$LIST_CACHE_FILE"
+export PKG_TUI_INSTALLED_CACHE="$INSTALLED_CACHE_FILE"
+export PKG_TUI_LIST_CMD="$LIST_CMD"
+export PKG_TUI_INSTALLED_CMD="$INSTALLED_CMD"
+export PKG_TUI_FZF_URL
+export PKG_TUI_MERGER="$MERGER_SCRIPT"
+export PKG_TUI_PKG_MGR="$PKG_MGR"
+
+MYSELF=$(command -v "$0" 2>/dev/null || printf '%s\n' "$0")
+
+# Feed fzf as soon as each line is ready (installed loaded in BEGIN; fflush avoids pipe block-buffering)
+_pkg_tui_stream_list() {
+  if command -v stdbuf >/dev/null 2>&1; then
+    stdbuf -oL awk -v instf="$INSTALLED_CACHE_FILE" 'BEGIN {
+      while ((getline line < instf) > 0) {
+        gsub(/^[ \t]+|[ \t]+$/, "", line)
+        if (line != "") inst[line] = 1
+      }
+      close(instf)
+    }
+    NF > 0 {
+      p = $1
+      gsub(/^[ \t]+|[ \t]+$/, "", p)
+      if (p == "") next
+      if (p in inst) printf "\033[32m%s ✅\033[0m\n", p
+      else print p
+      fflush()
+    }' "$LIST_CACHE_FILE"
   else
-    rm -f "$tmp_file"
-    [[ -f "$cache_file" ]] || : > "$cache_file"
+    awk -v instf="$INSTALLED_CACHE_FILE" 'BEGIN {
+      while ((getline line < instf) > 0) {
+        gsub(/^[ \t]+|[ \t]+$/, "", line)
+        if (line != "") inst[line] = 1
+      }
+      close(instf)
+    }
+    NF > 0 {
+      p = $1
+      gsub(/^[ \t]+|[ \t]+$/, "", p)
+      if (p == "") next
+      if (p in inst) printf "\033[32m%s ✅\033[0m\n", p
+      else print p
+      fflush()
+    }' "$LIST_CACHE_FILE"
   fi
 }
 
-invalidate_pkg_cache() {
-  rm -f "$LIST_CACHE_FILE" "$INSTALLED_CACHE_FILE" "$CACHE_DIR"/info-*.cache 2>/dev/null || true
-}
+_pkg_tui_stream_list | fzf --multi --ansi --exact \
+  --tiebreak=begin,length \
+  --listen="$FZF_LISTEN_ADDR" \
+  --preview "\"${PREVIEW_SCRIPT}\" {}" \
+  --preview-window 'down:30%:wrap' \
+  --bind "enter:execute-silent(sh -c 'printf \"%s\\n\" \"{+1}\" > \"${ACTION_FILE}\" && echo install > \"${MODE_FILE}\"')+accept" \
+  --bind "alt-i:execute-silent(sh -c 'printf \"%s\\n\" \"{+1}\" > \"${ACTION_FILE}\" && echo install > \"${MODE_FILE}\"')+accept" \
+  --bind "alt-r:execute-silent(sh -c 'printf \"%s\\n\" \"{+1}\" > \"${ACTION_FILE}\" && echo remove > \"${MODE_FILE}\"')+accept" \
+  --bind "ctrl-r:reload-sync(sh ${MERGER_SCRIPT})+change-header(🔎 ${PKG_MGR} | refreshed | Enter/Alt-i: Install | Alt-r: Remove | Ctrl-r: Refresh)" \
+  --bind "start:execute-silent((sleep 0.2; nice -n 19 \"${MYSELF}\" --refresh-worker) &)" \
+  --header "🔎 ${PKG_MGR} | Enter/Alt-i: Install | Alt-r: Remove | Ctrl-r: Refresh | updating list…" \
+  --color 'pointer:green,marker:green' || true
 
-preview_pkg_info() {
-  local raw_name="$1"
-  local pkg_name cache_key info_cache_file tmp_file info_cmd
-
-  pkg_name=$(
-    printf '%s\n' "$raw_name" \
-      | sed 's/\x1B\[[0-9;]*m//g; s/✅//g' \
-      | awk 'NF>0 {print $1}'
-  )
-  [[ -n "$pkg_name" ]] || exit 0
-
-  cache_key=$(printf '%s' "$pkg_name" | tr -c '[:alnum:]._-' '_')
-  info_cache_file="$CACHE_DIR/info-${cache_key}.cache"
-  tmp_file="${info_cache_file}.tmp"
-
-  if ! cache_file_is_fresh "$info_cache_file"; then
-    info_cmd="${INFO_CMD//\{1\}/$pkg_name}"
-    eval "$info_cmd" > "$tmp_file" 2>&1 || true
-    if [[ -s "$tmp_file" ]]; then
-      mv "$tmp_file" "$info_cache_file"
-    else
-      printf "No package information available for %s\n" "$pkg_name" > "$info_cache_file"
-      rm -f "$tmp_file"
-    fi
-  fi
-
-  cat "$info_cache_file"
-}
-
-populate_pkg_cache "$LIST_CACHE_FILE" "$LIST_CMD"
-populate_pkg_cache "$INSTALLED_CACHE_FILE" "$INSTALLED_CMD"
-
-declare -A installed
-while read -r pkg; do
-  [[ -n "$pkg" ]] && installed["$pkg"]=1
-done < "$INSTALLED_CACHE_FILE"
-
-# Package list function
-list_names() {
-  while read -r pkg; do
-    [[ -z "$pkg" ]] && continue
-    if [[ -n ${installed[$pkg]} ]]; then
-      printf "\033[32m%s ✅\033[0m\n" "$pkg"
-    else
-      echo "$pkg"
-    fi
-  done < "$LIST_CACHE_FILE"
-}
-
-export INFO_CMD CACHE_DIR CACHE_TTL_SECONDS
-export -f cache_file_is_fresh preview_pkg_info
-
-# fzf args
-fzf_args=(
-  --multi
-  --ansi
-  --exact
-  --tiebreak=begin,length
-  --preview 'bash -c '\''preview_pkg_info "$1"'\'' _ {1}'
-  --preview-window 'down:30%:wrap'
-  --bind 'enter:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
-  --bind 'alt-i:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo install > /tmp/pkg-tui-mode)+accept'
-  --bind 'alt-r:execute-silent(sh -c '\''cat > /tmp/pkg-tui-action'\'' <<<"{+1}" && echo remove > /tmp/pkg-tui-mode)+accept'
-  --header "🔎 $PKG_MGR | Enter/Alt-i: Install | Alt-r: Remove"
-  --color 'pointer:green,marker:green'
-)
-
-# Run fzf
-pkg=$(list_names | fzf "${fzf_args[@]}")
-
-if [[ -s /tmp/pkg-tui-action && -s /tmp/pkg-tui-mode ]]; then
-  pkg_names=$(sed 's/ ✅//; s/\x1b\[[0-9;]*m//g' /tmp/pkg-tui-action | awk '{print $1}' | tr -d '"'"'" | tr '\n' ' ')
-  action=$(cat /tmp/pkg-tui-mode)
+if [ -s "$ACTION_FILE" ] && [ -s "$MODE_FILE" ]; then
+  pkg_names=$(sed 's/ ✅//; s/\x1b\[[0-9;]*m//g' "$ACTION_FILE" | awk '{print $1}' | tr '\n' ' ')
+  action=$(cat "$MODE_FILE")
 
   case "$action" in
     install)
       echo "➡️ Installing: $pkg_names"
-      $INSTALL_CMD $pkg_names
+      eval "$INSTALL_CMD $pkg_names"
       invalidate_pkg_cache
       ;;
     remove)
       echo "🗑️ Removing: $pkg_names"
-      $REMOVE_CMD $pkg_names
+      eval "$REMOVE_CMD $pkg_names"
       invalidate_pkg_cache
       ;;
   esac
 
-  rm -f /tmp/pkg-tui-action /tmp/pkg-tui-mode
+  rm -f "$ACTION_FILE" "$MODE_FILE"
 
   echo "✅ Action '$action' complete for: $pkg_names"
-  
+
   exit 0
 fi
 
-# Exit if no packages were selected
 exit 0
 EOF
 
