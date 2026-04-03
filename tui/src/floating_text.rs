@@ -13,9 +13,7 @@ use tree_sitter_highlight::{self as hl, HighlightEvent};
 
 #[cfg(feature = "syntax-highlighting")]
 macro_rules! style {
-    ($r:literal, $g:literal, $b:literal) => {{
-        Style::new().fg(Color::Rgb($r, $g, $b))
-    }};
+    ($r:literal, $g:literal, $b:literal) => {{ Style::new().fg(Color::Rgb($r, $g, $b)) }};
 }
 
 #[cfg(feature = "syntax-highlighting")]

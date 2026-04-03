@@ -1,17 +1,17 @@
 use crate::{
-    root::check_root_status,
     cli::Args,
     confirmation::{ConfirmPrompt, ConfirmStatus},
     filter::{Filter, SearchAction},
     float::{Float, FloatContent},
     floating_text::FloatingText,
-    hint::{create_shortcut_list, Shortcut},
+    hint::{Shortcut, create_shortcut_list},
+    root::check_root_status,
     running_command::RunningCommand,
     shortcuts,
     theme::Theme,
 };
 #[allow(unused_imports)]
-use osutil_core::{ego_tree::NodeId, Command, Config, ConfigValues, ListNode, TabList};
+use osutil_core::{Command, Config, ConfigValues, ListNode, TabList, ego_tree::NodeId};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind},
     layout::Flex,
@@ -557,10 +557,10 @@ impl AppState {
                             self.selected_commands.clear()
                         } else {
                             // Prevents non multi_selectable cmd from being pushed into the selected list
-                            if let Some(node) = self.get_selected_node() {
-                                if !node.multi_select {
-                                    self.selected_commands.retain(|cmd| cmd.name != node.name);
-                                }
+                            if let Some(node) = self.get_selected_node()
+                                && !node.multi_select
+                            {
+                                self.selected_commands.retain(|cmd| cmd.name != node.name);
                             }
                         }
                     }
@@ -652,13 +652,13 @@ impl AppState {
     }
 
     fn toggle_selection(&mut self) {
-        if let Some(node) = self.get_selected_node() {
-            if node.multi_select {
-                if self.selected_commands.contains(&node) {
-                    self.selected_commands.retain(|c| c != &node);
-                } else {
-                    self.selected_commands.push(node);
-                }
+        if let Some(node) = self.get_selected_node()
+            && node.multi_select
+        {
+            if self.selected_commands.contains(&node) {
+                self.selected_commands.retain(|c| c != &node);
+            } else {
+                self.selected_commands.push(node);
             }
         }
     }
@@ -712,10 +712,10 @@ impl AppState {
             }
         }
 
-        if let Some(item) = self.filter.item_list().get(selected_index) {
-            if !item.has_children {
-                return Some(item.node.clone());
-            }
+        if let Some(item) = self.filter.item_list().get(selected_index)
+            && !item.has_children
+        {
+            return Some(item.node.clone());
         }
         None
     }
@@ -739,12 +739,12 @@ impl AppState {
             selected_index - 1
         };
 
-        if let Some(item) = self.filter.item_list().get(actual_index) {
-            if item.has_children {
-                self.visit_stack.push((item.id, selected_index));
-                self.selection.select(Some(0));
-                self.update_items();
-            }
+        if let Some(item) = self.filter.item_list().get(actual_index)
+            && item.has_children
+        {
+            self.visit_stack.push((item.id, selected_index));
+            self.selection.select(Some(0));
+            self.update_items();
         }
     }
 
@@ -785,12 +785,11 @@ impl AppState {
     }
 
     fn enable_description(&mut self) {
-        if let Some(command_description) = self.get_selected_description() {
-            if !command_description.is_empty() {
-                let description =
-                    FloatingText::new(command_description, "Command Description", true);
-                self.spawn_float(description, FLOAT_SIZE, FLOAT_SIZE);
-            }
+        if let Some(command_description) = self.get_selected_description()
+            && !command_description.is_empty()
+        {
+            let description = FloatingText::new(command_description, "Command Description", true);
+            self.spawn_float(description, FLOAT_SIZE, FLOAT_SIZE);
         }
     }
 
@@ -819,10 +818,10 @@ impl AppState {
             SelectedItem::UpDir => self.enter_parent_directory(),
             SelectedItem::Directory => self.go_to_selected_dir(),
             SelectedItem::Command => {
-                if self.selected_commands.is_empty() {
-                    if let Some(node) = self.get_selected_node() {
-                        self.selected_commands.push(node);
-                    }
+                if self.selected_commands.is_empty()
+                    && let Some(node) = self.get_selected_node()
+                {
+                    self.selected_commands.push(node);
                 }
                 self.spawn_confirmprompt();
             }

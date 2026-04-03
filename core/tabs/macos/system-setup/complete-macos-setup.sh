@@ -2,7 +2,7 @@
 
 # Complete macOS Setup Script
 # Combines multiple setup scripts into one comprehensive installation script
-# Skips eza and package-finder (not present in macos; shell setup handles core deps via zsh.sh)
+# Skips eza (Linux-specific); package-finder is available in macOS applications-setup (Homebrew).
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MACOS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -78,15 +78,22 @@ if ! source_script "$MACOS_DIR/applications-setup/developer-tools/zellij.sh"; th
 fi
 printf "%b\n" ""
 
-# 5. Shell Setup (zsh, dotfiles, starship, etc. — eza/package-finder not in macos zsh.sh)
-printf "%b\n" "${CYAN}=== Step 5: Shell Setup ===${RC}"
+# 5. Package Finder (Homebrew fzf TUI)
+printf "%b\n" "${CYAN}=== Step 5: Package Finder Setup ===${RC}"
+if ! source_script "$MACOS_DIR/applications-setup/package-finder.sh"; then
+    printf "%b\n" "${YELLOW}Package finder setup failed or skipped, continuing...${RC}"
+fi
+printf "%b\n" ""
+
+# 6. Shell Setup (zsh, dotfiles, starship, etc.)
+printf "%b\n" "${CYAN}=== Step 6: Shell Setup ===${RC}"
 if ! source_script "$MACOS_DIR/applications-setup/zsh.sh"; then
     printf "%b\n" "${YELLOW}Shell setup failed or skipped, continuing...${RC}"
 fi
 printf "%b\n" ""
 
-# 6. Yazi Setup
-printf "%b\n" "${CYAN}=== Step 6: Yazi Setup ===${RC}"
+# 7. Yazi Setup
+printf "%b\n" "${CYAN}=== Step 7: Yazi Setup ===${RC}"
 if ! source_script "$MACOS_DIR/applications-setup/yazi.sh"; then
     printf "%b\n" "${YELLOW}Yazi setup failed or skipped, continuing...${RC}"
 fi

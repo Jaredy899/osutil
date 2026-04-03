@@ -12,20 +12,20 @@ mod theme;
 use crate::cli::Args;
 use clap::Parser;
 use ratatui::{
+    Terminal,
     backend::CrosstermBackend,
     crossterm::{
+        ExecutableCommand,
         event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyEventKind},
         style::ResetColor,
-        terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-        ExecutableCommand,
+        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
     },
-    Terminal,
 };
 use running_command::TERMINAL_UPDATED;
 use state::AppState;
 use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 use std::{
-    io::{stdout, Result, Stdout},
+    io::{Result, Stdout, stdout},
     sync::atomic::Ordering,
     time::Duration,
 };
