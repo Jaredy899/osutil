@@ -10,12 +10,6 @@ script = "communication-apps/discord-setup.sh"
 task_list = "I"
 
 [[data.entries]]
-name = "Jitsi"
-description = "Jitsi Meet is an open-source video conferencing tool that allows users to host and join secure meetings directly from their web browsers without the need for downloads."
-script = "communication-apps/jitsi-setup.sh"
-task_list = "I"
-
-[[data.entries]]
 name = "Signal"
 description = "Signal is a privacy-focused messaging app that provides end-to-end encryption for secure text, voice, and video communication."
 script = "communication-apps/signal-setup.sh"
@@ -37,12 +31,6 @@ task_list = "I"
 name = "Thunderbird"
 description = "Thunderbird is a free, open-source email client that offers powerful features like customizable email management, a built-in calendar, and extensive add-ons for enhanced functionality."
 script = "communication-apps/thunderbird-setup.sh"
-task_list = "I"
-
-[[data.entries]]
-name = "ZapZap"
-description = "ZapZap is an open source whatsapp desktop client for Linux users developed by rafatosta."
-script = "communication-apps/zapzap-setup.sh"
 task_list = "I"
 
 [[data.entries]]
@@ -369,23 +357,6 @@ script = "browsers/helium.sh"
 task_list = "I"
 
 [[data]]
-name = "Android Debloater"
-description = "Universal Android Debloater (UAD) is a tool designed to help users remove bloatware and unnecessary pre-installed applications from Android devices, enhancing performance and user experience."
-script = "android-debloat.sh"
-task_list = "I"
-
-[[data.preconditions]]
-matches = false
-data = "command_exists"
-values = ["eopkg"]
-
-[[data]]
-name = "Auto CPU Frequency"
-description = "Automatic CPU speed & power optimizer.\nhttps://github.com/AdnanHodzic/auto-cpufreq"
-script = "auto-cpufreq.sh"
-task_list = "I SS"
-
-[[data]]
 name = "Bottles"
 description = "Bottles allows Windows software, like applications and games, to run on Linux. Bottles also provides tools to categorize, organize and optimize your applications."
 script = "bottles-setup.sh"
@@ -420,11 +391,11 @@ matches = false
 data = "command_exists"
 values = ["eopkg"]
 
-[[data]]
-name = "DWM-Titus"
-description = "DWM is a dynamic window manager for X.\nIt manages windows in tiled, monocle and floating layouts.\nAll of the layouts can be applied dynamically, optimising the environment for the application in use and the task performed.\nThis command installs and configures DWM and a desktop manager.\nThe list of patches applied can be found in CTT's DWM repository\nhttps://github.com/ChrisTitusTech/dwm-titus"
-script = "dwmtitus-setup.sh"
-task_list = "I PFM SS"
+# [[data]]
+# name = "DWM-Titus"
+# description = "DWM is a dynamic window manager for X.\nIt manages windows in tiled, monocle and floating layouts.\nAll of the layouts can be applied dynamically, optimising the environment for the application in use and the task performed.\nThis command installs and configures DWM and a desktop manager.\nThe list of patches applied can be found in CTT's DWM repository\nhttps://github.com/ChrisTitusTech/dwm-titus"
+# script = "dwmtitus-setup.sh"
+# task_list = "I PFM SS"
 
 [[data]]
 name = "Fastfetch"
@@ -437,34 +408,6 @@ name = "Flatpak / Flathub"
 description = "Flatpak is a universal application sandbox for Linux that uses isolated packages from Flathub to prevent conflicts and system alterations, while alleviating dependency concerns. This command installs Flatpak and adds the Flathub repository"
 script = "setup-flatpak.sh"
 task_list = "I"
-
-[[data]]
-name = "Grub Theme"
-description = "Installs ChrisTitusTech's Top 5 Bootloader Themes script to allow for easy customization of GRUB."
-script = "grub-theme.sh"
-task_list = "PFM"
-
-[[data]]
-name = "Linutil Installer"
-description = "Installs a distro-specific Linutil package locally."
-script = "linutil-installer.sh"
-task_list = "I"
-
-[[data.preconditions]]
-matches = false
-data = "command_exists"
-values = ["linutil"]
-
-[[data]]
-name = "Linutil Updater"
-description = "Updates your local Linutil crate installation."
-script = "linutil-updater.sh"
-task_list = "I"
-
-[[data.preconditions]]
-matches = true
-data = "command_exists"
-values = ["linutil"]
 
 [[data]]
 name = "Package Installer"
@@ -483,21 +426,6 @@ name = "Shell Setup"
 description = "Sets up aliases and shell features."
 script = "shell-setup.sh"
 task_list = "I FM"
-
-[[data]]
-name = "Waydroid"
-description = "Waydroid is an emulator that allows you to run Android apps and games on Linux."
-script = "waydroid-setup.sh"
-task_list = "I SS"
-[[data.preconditions]]
-matches = true
-data = { environment = "XDG_SESSION_TYPE" }
-values = ["wayland", "Wayland"]
-
-[[data.preconditions]]
-matches = false
-data = "command_exists"
-values = ["xbps-install", "eopkg", "apk", "zypper", "pkg"]
 
 [[data]]
 name = "Yazi"

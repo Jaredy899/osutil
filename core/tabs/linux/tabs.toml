@@ -1,7 +1,6 @@
 directories = [
     "applications-setup",
     "desktop-environments",
-    "gaming",
     "development",
     "security",
     "system-setup",
