@@ -1,6 +1,6 @@
 [workspace.package]
 license = "MIT"
-version = "2.1.1"
+version = "2.1.2"
 edition = "2024"
 
 [workspace]
