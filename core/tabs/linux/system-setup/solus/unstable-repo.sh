@@ -62,25 +62,29 @@ updateRepos() {
 }
 
 runChoice() {
-    printf "%b\n" "${CYAN}Unstable repo: add / remove / list / update-all${RC}"
-    printf "%b" "${CYAN}Choice [list]: ${RC}"
+    printf "%b\n" "${YELLOW}Solus Unstable repository:${RC}"
+    printf "%b\n" "1. ${CYAN}Add Unstable repository${RC}"
+    printf "%b\n" "2. ${CYAN}Remove Unstable repository${RC}"
+    printf "%b\n" "3. ${CYAN}List repositories${RC}"
+    printf "%b\n" "4. ${CYAN}Update all repositories${RC}"
+    printf "%b" "Enter your choice [1-4]: "
     read -r choice
-    [ -z "$choice" ] && choice="list"
+    [ -z "$choice" ] && choice=3
     case "$choice" in
-        add|Add|ADD)
+        1)
             addUnstable
             ;;
-        remove|Remove|REMOVE)
+        2)
             removeUnstable
             ;;
-        list|List|LIST)
+        3)
             listRepos
             ;;
-        update|update-all|Update)
+        4)
             updateRepos
             ;;
         *)
-            printf "%b\n" "${YELLOW}Unknown option. Showing repos.${RC}"
+            printf "%b\n" "${RED}Invalid choice. Showing repositories.${RC}"
             listRepos
             ;;
     esac
