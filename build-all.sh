@@ -1,8 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 APP_NAME="osutil"
 OUT_DIR="dist"
+
+# Load rust/zig from mise.toml when mise is available
+if command -v mise >/dev/null 2>&1; then
+    echo "==> Activating mise (rust, zig from mise.toml)..."
+    eval "$(mise env -s bash)"
+    mise install
+elif [[ -f "${HOME}/.cargo/env" ]]; then
+    # shellcheck source=/dev/null
+    source "${HOME}/.cargo/env"
+fi
+
+if ! command -v cargo >/dev/null 2>&1; then
+    echo "error: cargo not found. Run 'mise install' in this repo, or fix ~/.cargo/bin/rustup if it points to a missing binary." >&2
+    exit 1
+fi
 
 # Detect OS
 OS="$(uname -s)"

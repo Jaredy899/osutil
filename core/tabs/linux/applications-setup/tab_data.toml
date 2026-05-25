@@ -208,6 +208,12 @@ script = "terminal-emulators/alacritty-setup.sh"
 task_list = "I FM"
 
 [[data.entries]]
+name = "foot"
+description = "foot is a fast, lightweight, Wayland-native terminal emulator with server/daemon mode, scrollback search, and minimal dependencies. This command installs foot from your distribution's package repositories."
+script = "terminal-emulators/foot-setup.sh"
+task_list = "I FM"
+
+[[data.entries]]
 name = "Ghostty"
 description = "Ghostty is a fast, feature-rich, and cross-platform terminal emulator that uses platform-native UI and GPU acceleration."
 script = "terminal-emulators/ghostty-setup.sh"
