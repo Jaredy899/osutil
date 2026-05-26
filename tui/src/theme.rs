@@ -37,8 +37,8 @@ impl Theme {
 
     pub const fn tab_color(&self) -> Color {
         match self {
-            Theme::Default => Color::Rgb(255, 255, 85),
-            Theme::Compatible => Color::Yellow,
+            Theme::Default => Color::White,
+            Theme::Compatible => Color::White,
         }
     }
 
