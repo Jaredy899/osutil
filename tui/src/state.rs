@@ -539,13 +539,14 @@ impl AppState {
             return true;
         }
 
-        match &mut self.focus {
-            Focus::FloatingWindow(command) => {
-                if command.handle_key_event(key) {
-                    self.focus = Focus::List;
-                }
-            }
+        if let Focus::FloatingWindow(command) = &mut self.focus
+            && command.handle_key_event(key)
+        {
+            self.focus = Focus::List;
+            return true;
+        }
 
+        match &mut self.focus {
             Focus::ConfirmationPrompt(confirm) => {
                 confirm.content.handle_key_event(key);
                 match confirm.content.status {
