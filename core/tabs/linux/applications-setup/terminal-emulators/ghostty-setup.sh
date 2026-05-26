@@ -34,6 +34,21 @@ installGhostty() {
                 "$ESCALATION_TOOL" "$PACKAGER" copr enable scottames/ghostty -y
                 "$ESCALATION_TOOL" "$PACKAGER" install ghostty -y
                 ;;
+            apt-get|nala)
+                if [ "$DTYPE" = "ubuntu" ]; then
+                    UBUNTU_MAJOR="${VERSION_ID%%.*}"
+                    if [ -n "$UBUNTU_MAJOR" ] && [ "$UBUNTU_MAJOR" -ge 26 ]; then
+                        "$ESCALATION_TOOL" "$PACKAGER" update
+                        "$ESCALATION_TOOL" "$PACKAGER" install -y ghostty
+                    else
+                        printf "%b\n" "${RED}Ghostty is only available in Ubuntu repositories for 26.04 and newer.${RC}"
+                        return 1
+                    fi
+                else
+                    printf "%b\n" "${RED}Ghostty apt package support is currently enabled only for Ubuntu 26.04+.${RC}"
+                    return 1
+                fi
+                ;;
             *)
                 printf "%b\n" "${RED}Binary installation not available for your distribution.${RC}"
                 return 1
