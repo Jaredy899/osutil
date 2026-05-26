@@ -21,7 +21,7 @@ use std::{
 };
 use time::{OffsetDateTime, macros::format_description};
 use tui_term::widget::PseudoTerminal;
-use vt100_ctt::{Parser, Screen};
+use vt100::{Parser, Screen};
 
 pub struct RunningCommand {
     /// A buffer to save all the command output (accumulates, until the command exits)
