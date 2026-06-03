@@ -1,9 +1,10 @@
 #!/bin/sh -e
 
-. ../common-script.sh
+. ../../common-script.sh
 
 installGhostty() {
     if ! brewprogram_exists ghostty; then
+        printf "%b\n" "${YELLOW}Installing Ghostty...${RC}"
         if ! brew install --cask ghostty; then
             printf "%b\n" "${RED}Failed to install Ghostty. Please check your Homebrew installation or try again later.${RC}"
             exit 1

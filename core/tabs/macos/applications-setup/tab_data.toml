@@ -109,6 +109,63 @@ script = "developer-tools/zellij.sh"
 task_list = "I"
 
 [[data]]
+name = "Terminal Emulators"
+
+[[data.entries]]
+name = "Alacritty"
+description = "Alacritty is a modern terminal emulator that comes with sensible defaults, but allows for extensive configuration. By integrating with other applications, rather than reimplementing their functionality, it manages to provide a flexible set of features with high performance. The supported platforms currently consist of BSD, Linux, macOS and Windows. This command installs and configures alacritty terminal emulator."
+script = "terminal-emulators/alacritty.sh"
+task_list = "I FM"
+
+[[data.entries]]
+name = "Ghostty"
+description = "Ghostty is a fast, feature-rich, and cross-platform terminal emulator that uses platform-native UI and GPU acceleration."
+script = "terminal-emulators/ghostty.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "iTerm2"
+description = "iTerm2 is a popular macOS terminal emulator with split panes, search, autocomplete, and extensive customization."
+script = "terminal-emulators/iterm2.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Kitty"
+description = "kitty is a free and open-source GPU-accelerated terminal emulator for Linux, macOS, and some BSD distributions, focused on performance and features. kitty is written in a mix of C and Python programming languages. This command installs and configures kitty."
+script = "terminal-emulators/kitty.sh"
+task_list = "I FM"
+
+[[data.entries]]
+name = "Rio"
+description = "Rio is a hardware-accelerated GPU terminal emulator built for speed and a native macOS experience."
+script = "terminal-emulators/rio.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Tabby"
+description = "Tabby is a modern terminal emulator with SSH, serial, and Telnet clients, themes, and split panes."
+script = "terminal-emulators/tabby.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Termius"
+description = "Termius is an SSH client and terminal how it should be. Connect with one tap from any mobile and desktop device—no re-entering IP addresses, ports, and passwords."
+script = "terminal-emulators/termius.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "Warp"
+description = "Warp is the intelligent terminal with AI and your dev team's knowledge built-in."
+script = "terminal-emulators/warp.sh"
+task_list = "I"
+
+[[data.entries]]
+name = "WezTerm"
+description = "WezTerm is a GPU-accelerated cross-platform terminal emulator and multiplexer with ligatures, tabs, and panes."
+script = "terminal-emulators/wezterm.sh"
+task_list = "I"
+
+[[data]]
 name = "Multimedia"
 
 [[data.entries]]
@@ -199,12 +256,6 @@ script = "browsers/helium.sh"
 task_list = "I"
 
 [[data]]
-name = "Alacritty"
-description = "Alacritty is a modern terminal emulator that comes with sensible defaults, but allows for extensive configuration. By integrating with other applications, rather than reimplementing their functionality, it manages to provide a flexible set of features with high performance. The supported platforms currently consist of BSD, Linux, macOS and Windows. This command installs and configures alacritty terminal emulator."
-script = "alacritty.sh"
-task_list = "I FM"
-
-[[data]]
 name = "Applite"
 description = "Gui to install Mac applications through homebrew"
 script = "applite.sh"
@@ -223,22 +274,10 @@ script = "fastfetch.sh"
 task_list = "I FM"
 
 [[data]]
-name = "Ghostty"
-description = "Ghostty is a fast, feature-rich, and cross-platform terminal emulator that uses platform-native UI and GPU acceleration."
-script = "ghostty.sh"
-task_list = "I"
-
-[[data]]
 name = "GrandPerspective"
 description = "Graphically shows disk usage within a file system"
 script = "grandperspective.sh"
 task_list = "I"
-
-[[data]]
-name = "Kitty"
-description = "kitty is a free and open-source GPU-accelerated terminal emulator for Linux, macOS, and some BSD distributions, focused on performance and features. kitty is written in a mix of C and Python programming languages. This command installs and configures kitty."
-script = "kitty.sh"
-task_list = "I FM"
 
 [[data]]
 name = "OnyX"
