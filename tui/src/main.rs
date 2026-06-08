@@ -4,9 +4,11 @@ mod filter;
 mod float;
 mod floating_text;
 mod hint;
+mod logo;
 mod root;
 mod running_command;
 mod state;
+mod system_info;
 mod theme;
 
 use crate::cli::Args;
