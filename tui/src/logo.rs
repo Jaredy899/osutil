@@ -98,16 +98,13 @@ impl Logo {
             let image_area = Rect::new(image_x, area.y, draw_width, draw_height);
             let mut use_blocks = matches!(self.renderer, Renderer::Blocks);
 
-            if !use_blocks {
-                if let Renderer::Protocol { protocol, resize } = &mut self.renderer {
-                    let widget =
-                        StatefulImage::<StatefulProtocol>::default().resize(resize.clone());
-                    frame.render_stateful_widget(widget, image_area, protocol.as_mut());
-                    if let Some(result) = protocol.last_encoding_result() {
-                        if result.is_err() {
-                            use_blocks = true;
-                        }
-                    }
+            if !use_blocks && let Renderer::Protocol { protocol, resize } = &mut self.renderer {
+                let widget = StatefulImage::<StatefulProtocol>::default().resize(resize.clone());
+                frame.render_stateful_widget(widget, image_area, protocol.as_mut());
+                if let Some(result) = protocol.last_encoding_result()
+                    && result.is_err()
+                {
+                    use_blocks = true;
                 }
             }
 
