@@ -5,6 +5,7 @@ use crate::{
     float::{Float, FloatContent},
     floating_text::FloatingText,
     hint::{Shortcut, create_shortcut_list},
+    logo::Logo,
     root::check_root_status,
     running_command::RunningCommand,
     shortcuts,
@@ -27,7 +28,6 @@ const MIN_HEIGHT: u16 = 25;
 const FLOAT_SIZE: u16 = 95;
 const CONFIRM_PROMPT_FLOAT_SIZE: u16 = 40;
 const LEFT_EXTRA_WIDTH: u16 = 4;
-const BRAND_HEIGHT: u16 = 3;
 const TITLE: &str = " OSUTIL ";
 const LIST_HIGHLIGHT_SYMBOL: &str = "> ";
 const ACTIONS_GUIDE: &str = "List of important tasks performed by commands' names:
@@ -72,6 +72,7 @@ pub struct AppState {
     skip_confirmation: bool,
     mouse_enabled: bool,
     system_info: Option<SystemInfo>,
+    logo: Option<Logo>,
 }
 
 pub enum Focus {
@@ -135,6 +136,7 @@ impl AppState {
             skip_confirmation: args.skip_confirmation,
             mouse_enabled: args.mouse,
             system_info: SystemInfo::gather(),
+            logo: Logo::load(),
         };
 
         if let Some(root_warning) = root_warning {
@@ -322,22 +324,41 @@ impl AppState {
         let info_height = self
             .system_info
             .as_ref()
-            .map(|info| info.entries_len() as u16 + 2)
+            .map(|info| info.entries_len() as u16)
             .unwrap_or(0);
         let show_info = info_height > 0 && horizontal[0].height > info_height.saturating_add(3);
 
+        let reserved_info_height = if show_info { info_height } else { 0 };
+        let max_logo_area_height = horizontal[0]
+            .height
+            .saturating_sub(reserved_info_height)
+            .saturating_sub(1);
+        let logo_height = if let Some(logo) = &self.logo {
+            logo.area_height_for_width(horizontal[0].width, max_logo_area_height)
+        } else {
+            max_logo_area_height.min(1)
+        };
         let left_chunks = if show_info {
             Layout::vertical([
-                Constraint::Length(BRAND_HEIGHT),
+                Constraint::Length(logo_height),
                 Constraint::Min(1),
                 Constraint::Length(info_height),
             ])
             .split(horizontal[0])
         } else {
-            Layout::vertical([Constraint::Length(BRAND_HEIGHT), Constraint::Min(1)])
+            Layout::vertical([Constraint::Length(logo_height), Constraint::Min(1)])
                 .split(horizontal[0])
         };
-        self.draw_brand(frame, left_chunks[0]);
+        if let Some(logo) = &mut self.logo {
+            logo.draw(frame, left_chunks[0], &self.theme);
+        } else {
+            let label = Paragraph::new(Line::styled(
+                format!("OSutil v{}", env!("CARGO_PKG_VERSION")),
+                Style::default().fg(self.theme.tab_color()).bold(),
+            ))
+            .alignment(Alignment::Center);
+            frame.render_widget(label, left_chunks[0]);
+        }
 
         self.areas = Some(Areas {
             tab_list: left_chunks[1],
@@ -494,36 +515,15 @@ impl AppState {
         frame.render_widget(keybind_para, vertical[1]);
     }
 
-    fn draw_brand(&self, frame: &mut Frame, area: Rect) {
-        let block = Block::bordered()
-            .border_set(border::PLAIN)
-            .border_style(Style::default().fg(self.theme.unfocused_color()));
-        let brand = Paragraph::new(Line::styled(
-            format!("OSutil V{}", env!("CARGO_PKG_VERSION")),
-            Style::default().fg(self.theme.tab_color()).bold(),
-        ))
-        .alignment(Alignment::Center)
-        .block(block);
-
-        frame.render_widget(brand, area);
-    }
-
     fn draw_system_info(&self, frame: &mut Frame, area: Rect) {
-        let block = Block::bordered()
-            .border_set(border::PLAIN)
-            .border_style(Style::default().fg(self.theme.unfocused_color()))
-            .title(" SYSTEM ")
-            .title_style(Style::default().fg(self.theme.tab_color()).bold())
-            .padding(Padding::horizontal(1));
-
-        let max_width = block.inner(area).width as usize;
+        let max_width = area.width as usize;
         let lines = self
             .system_info
             .as_ref()
             .map(|info| info.render_lines(&self.theme, max_width))
             .unwrap_or_default();
 
-        frame.render_widget(Paragraph::new(Text::from(lines)).block(block), area);
+        frame.render_widget(Paragraph::new(Text::from(lines)), area);
     }
 
     pub fn handle_mouse(&mut self, event: &MouseEvent) -> bool {

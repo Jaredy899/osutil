@@ -20,16 +20,26 @@ struct InfoEntry {
 
 impl SystemInfo {
     pub fn gather() -> Option<Self> {
-        let mut entries = Vec::new();
+        let entries = vec![
+            InfoEntry {
+                label: " OS",
+                value: detect_os(),
+            },
+            InfoEntry {
+                label: "CPU",
+                value: detect_cpu().unwrap_or_else(|| "n/a".to_string()),
+            },
+            InfoEntry {
+                label: "RAM",
+                value: detect_memory().unwrap_or_else(|| "n/a".to_string()),
+            },
+            InfoEntry {
+                label: "DISK",
+                value: detect_disk().unwrap_or_else(|| "n/a".to_string()),
+            },
+        ];
 
-        push_entry(&mut entries, "Distro", Some(detect_distro()));
-        push_entry(&mut entries, "Kernel", command_output("uname", &["-r"]));
-        push_entry(&mut entries, "CPU", detect_cpu());
-        push_entry(&mut entries, "Memory", detect_memory());
-        push_entry(&mut entries, "Disk", detect_disk());
-        push_entry(&mut entries, "GPU", detect_gpu());
-
-        (!entries.is_empty()).then_some(Self { entries })
+        Some(Self { entries })
     }
 
     pub fn entries_len(&self) -> usize {
@@ -40,13 +50,17 @@ impl SystemInfo {
         self.entries
             .iter()
             .map(|entry| {
-                let label = format!("{} : ", entry.label);
-                let value_width = max_width.saturating_sub(label.len());
+                let prefix = format!("{:>4}: ", entry.label);
+                let value_width = max_width.saturating_sub(prefix.len());
                 let value = truncate(&entry.value, value_width);
 
                 Line::from(vec![
-                    Span::styled(label, Style::default().fg(theme.tab_color()).bold()),
-                    Span::raw(value),
+                    Span::styled(
+                        format!("{:>4}", entry.label),
+                        Style::default().fg(theme.tab_color()).bold(),
+                    ),
+                    Span::styled(": ", Style::default().fg(theme.unfocused_color())),
+                    Span::styled(value, Style::default().fg(theme.cmd_color())),
                 ])
             })
             .collect()
@@ -54,25 +68,21 @@ impl SystemInfo {
 }
 
 fn truncate(value: &str, max_width: usize) -> String {
-    if value.chars().count() <= max_width {
+    if max_width == 0 {
+        return String::new();
+    }
+
+    let chars: Vec<char> = value.chars().collect();
+    if chars.len() <= max_width {
         return value.to_string();
     }
 
     if max_width <= 3 {
-        return ".".repeat(max_width);
+        return chars.iter().take(max_width).collect();
     }
 
-    let mut truncated = value.chars().take(max_width - 3).collect::<String>();
-    truncated.push_str("...");
-    truncated
-}
-
-fn push_entry(entries: &mut Vec<InfoEntry>, label: &'static str, value: Option<String>) {
-    if let Some(value) = value
-        && !value.is_empty()
-    {
-        entries.push(InfoEntry { label, value });
-    }
+    let slice: String = chars.iter().take(max_width - 3).collect();
+    format!("{slice}...")
 }
 
 fn command_output(program: &str, args: &[&str]) -> Option<String> {
@@ -86,16 +96,52 @@ fn command_output(program: &str, args: &[&str]) -> Option<String> {
     (!value.is_empty()).then_some(value)
 }
 
+fn strip_device_details(value: &str) -> String {
+    let mut trimmed = value.trim().to_string();
+    for pattern in [" @", " (", " ["] {
+        if let Some(idx) = trimmed.find(pattern) {
+            trimmed.truncate(idx);
+            trimmed = trimmed.trim().to_string();
+        }
+    }
+    trimmed
+}
+
 #[cfg(target_os = "linux")]
-fn detect_distro() -> String {
+fn shorten_os(value: &str) -> String {
+    let mut name = value.trim().to_string();
+    if let Some(idx) = name.find(" GNU/Linux") {
+        name.truncate(idx);
+    }
+    if name.ends_with(" Linux") {
+        name.truncate(name.len() - " Linux".len());
+    }
+    name.trim().to_string()
+}
+
+#[cfg(target_os = "linux")]
+fn detect_os() -> String {
     fs::read_to_string("/etc/os-release")
         .ok()
         .and_then(|data| parse_os_release(&data))
-        .unwrap_or_else(|| "Unknown Linux".to_string())
+        .map(|name| shorten_os(&name))
+        .unwrap_or_else(|| "Linux".to_string())
 }
 
-#[cfg(not(target_os = "linux"))]
-fn detect_distro() -> String {
+#[cfg(target_os = "macos")]
+fn detect_os() -> String {
+    match (
+        command_output("sw_vers", &["-productName"]),
+        command_output("sw_vers", &["-productVersion"]),
+    ) {
+        (Some(name), Some(version)) => format!("{name} {version}"),
+        (Some(name), None) => name,
+        _ => "macOS".to_string(),
+    }
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
+fn detect_os() -> String {
     std::env::consts::OS.to_string()
 }
 
@@ -107,15 +153,16 @@ fn detect_cpu() -> Option<String> {
             data.lines().find_map(|line| {
                 line.strip_prefix("model name")
                     .and_then(|line| line.split_once(':'))
-                    .map(|(_, value)| value.trim().to_string())
+                    .map(|(_, value)| strip_device_details(value))
             })
         })
-        .or_else(|| command_output("uname", &["-m"]))
+        .or_else(|| command_output("uname", &["-m"]).map(|value| strip_device_details(&value)))
 }
 
 #[cfg(target_os = "macos")]
 fn detect_cpu() -> Option<String> {
     command_output("sysctl", &["-n", "machdep.cpu.brand_string"])
+        .map(|value| strip_device_details(&value))
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "macos")))]
@@ -127,14 +174,7 @@ fn detect_cpu() -> Option<String> {
 fn detect_memory() -> Option<String> {
     let data = fs::read_to_string("/proc/meminfo").ok()?;
     let total_kib = meminfo_value(&data, "MemTotal")?;
-    let available_kib = meminfo_value(&data, "MemAvailable")?;
-    let used_kib = total_kib.saturating_sub(available_kib);
-
-    Some(format!(
-        "{:.1} GiB / {:.1} GiB",
-        kib_to_gib(used_kib),
-        kib_to_gib(total_kib)
-    ))
+    Some(format!("{:.1} GiB", kib_to_gib(total_kib)))
 }
 
 #[cfg(target_os = "macos")]
@@ -154,43 +194,8 @@ fn detect_disk() -> Option<String> {
     let output = command_output("df", &["-h", "/"])?;
     let line = output.lines().nth(1)?;
     let columns = line.split_whitespace().collect::<Vec<_>>();
-    let [_, size, used, _, _, ..] = columns.as_slice() else {
-        return None;
-    };
-
-    Some(format!("{used} / {size}"))
-}
-
-#[cfg(target_os = "linux")]
-fn detect_gpu() -> Option<String> {
-    let output = command_output("lspci", &[])?;
-    output.lines().find_map(|line| {
-        if line.contains("VGA compatible controller")
-            || line.contains("3D controller")
-            || line.contains("Display controller")
-        {
-            line.split_once(':')
-                .map(|(_, value)| value.trim().to_string())
-        } else {
-            None
-        }
-    })
-}
-
-#[cfg(target_os = "macos")]
-fn detect_gpu() -> Option<String> {
-    command_output("system_profiler", &["SPDisplaysDataType"]).and_then(|output| {
-        output.lines().find_map(|line| {
-            line.trim()
-                .strip_prefix("Chipset Model:")
-                .map(|value| value.trim().to_string())
-        })
-    })
-}
-
-#[cfg(not(any(target_os = "linux", target_os = "macos")))]
-fn detect_gpu() -> Option<String> {
-    None
+    let size = columns.get(1)?;
+    Some(size.to_string())
 }
 
 #[cfg(target_os = "linux")]
@@ -229,11 +234,13 @@ fn parse_os_release(data: &str) -> Option<String> {
         }
     }
 
-    pretty_name.or_else(|| match (name, version) {
-        (Some(name), Some(version)) => Some(format!("{name} {version}")),
-        (Some(name), None) => Some(name),
+    match (name, version, pretty_name) {
+        (_, _, Some(pretty)) if pretty.chars().count() <= 24 => Some(pretty),
+        (Some(name), Some(version), _) => Some(format!("{name} {version}")),
+        (Some(_name), None, Some(pretty)) => Some(pretty),
+        (Some(name), None, None) => Some(name),
         _ => None,
-    })
+    }
 }
 
 #[cfg(target_os = "linux")]
