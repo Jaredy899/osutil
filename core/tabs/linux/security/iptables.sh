@@ -2,23 +2,10 @@
 
 . ../common-script.sh
 
-installPkg() {
+installIptables() {
     if ! command_exists iptables; then
         printf "%b\n" "${YELLOW}Installing iptables...${RC}"
-        case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm iptables
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add iptables
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy iptables
-                ;;
-            *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y iptables
-                ;;
-        esac
+        installPkg iptables
     else
         printf "%b\n" "${GREEN}iptables is already installed${RC}"
     fi
@@ -62,5 +49,5 @@ configureIptables() {
 
 checkEnv
 checkEscalationTool
-installPkg
+installIptables
 configureIptables

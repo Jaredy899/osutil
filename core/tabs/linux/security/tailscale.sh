@@ -8,7 +8,7 @@ installTailscale() {
         printf "%b\n" "${YELLOW}Installing Tailscale...${RC}"
         case "$PACKAGER" in
             eopkg|moss)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y tailscale
+                installPkg tailscale
                 startAndEnableService tailscaled
                 printf "%b\n" "${GREEN}Tailscale installed successfully!${RC}"
                 ;;

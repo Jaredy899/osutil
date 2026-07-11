@@ -5,23 +5,22 @@
 installCUPS() {
     clear
 
+    printf "%b\n" "${YELLOW}Installing CUPS...${RC}"
     case "$PACKAGER" in
-    pacman)
-        "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm cups
-        ;;
-    apt-get|nala|dnf|eopkg)
-        "$ESCALATION_TOOL" "$PACKAGER" install -y cups
-        ;;
-    xbps-install)
-        "$ESCALATION_TOOL" "$PACKAGER" -Sy cups
-        ;;
-    *)
-        printf "%b\n" "${RED}Unsupported package manager ${PACKAGER}${RC}"
-        exit 1
-        ;;
+        pacman|apt-get|nala|dnf|eopkg|moss|zypper|apk|xbps-install|rpm-ostree|pkg)
+            installPkg cups
+            ;;
+        *)
+            unsupportedPackager
+            ;;
     esac
 }
 
-checkEnv
-checkEscalationTool
-installCUPS
+# Only auto-run when executed directly (epson/hp scripts source this file)
+case "${0##*/}" in
+    install-cups.sh)
+        checkEnv
+        checkEscalationTool
+        installCUPS
+        ;;
+esac

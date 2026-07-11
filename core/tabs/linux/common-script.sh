@@ -20,26 +20,7 @@ return 0
 checkFlatpak() {
     if ! command_exists flatpak; then
         printf "%b\n" "${YELLOW}Installing Flatpak...${RC}"
-        case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm flatpak
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add flatpak
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy flatpak
-                ;;
-            moss)
-                "$ESCALATION_TOOL" moss -y install flatpak
-                ;;
-            rpm-ostree)
-                "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive flatpak
-                ;;
-            *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y flatpak
-                ;;
-        esac
+        installPkg flatpak
         printf "%b\n" "${YELLOW}Adding Flathub remote...${RC}"
         "$ESCALATION_TOOL" flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
         printf "%b\n" "${YELLOW}Applications installed by Flatpak may not appear on your desktop until the user session is restarted...${RC}"
@@ -205,6 +186,124 @@ checkDistro() {
         . /etc/os-release
         DTYPE=$ID
     fi
+}
+
+## Install packages with the detected package manager.
+## Usage: installPkg pkg1 [pkg2 ...]
+## Respects pacman/apk/xbps/zypper/dnf/eopkg/moss/rpm-ostree/apt/nala/pkg flags.
+installPkg() {
+    if [ -z "$PACKAGER" ]; then
+        printf "%b\n" "${RED}PACKAGER is not set. Run checkEnv/checkPackageManager first.${RC}"
+        return 1
+    fi
+    if [ "$#" -eq 0 ]; then
+        printf "%b\n" "${RED}installPkg: no packages specified${RC}"
+        return 1
+    fi
+
+    case "$PACKAGER" in
+        pacman)
+            "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm "$@"
+            ;;
+        apt-get|nala)
+            "$ESCALATION_TOOL" "$PACKAGER" install -y "$@"
+            ;;
+        dnf|eopkg|moss)
+            "$ESCALATION_TOOL" "$PACKAGER" install -y "$@"
+            ;;
+        rpm-ostree)
+            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive "$@"
+            ;;
+        zypper)
+            "$ESCALATION_TOOL" "$PACKAGER" --non-interactive install "$@"
+            ;;
+        apk)
+            "$ESCALATION_TOOL" "$PACKAGER" add "$@"
+            ;;
+        xbps-install)
+            "$ESCALATION_TOOL" "$PACKAGER" -Sy "$@"
+            ;;
+        pkg)
+            "$ESCALATION_TOOL" "$PACKAGER" install -y "$@"
+            ;;
+        *)
+            printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}${RC}"
+            return 1
+            ;;
+    esac
+}
+
+## Install AUR packages (Arch only). Requires checkAURHelper.
+## Usage: installAurPkg pkg1 [pkg2 ...]
+installAurPkg() {
+    if [ "$PACKAGER" != "pacman" ]; then
+        printf "%b\n" "${RED}installAurPkg is only for pacman/AUR systems${RC}"
+        return 1
+    fi
+    if [ -z "$AUR_HELPER" ]; then
+        checkAURHelper
+    fi
+    "$AUR_HELPER" -S --needed --noconfirm "$@"
+}
+
+## Ensure Flatpak + Flathub, then install one or more Flatpak app IDs.
+## Usage: installFlatpak [flathub.]app.id [...]
+installFlatpak() {
+    if [ "$#" -eq 0 ]; then
+        printf "%b\n" "${RED}installFlatpak: no Flatpak IDs specified${RC}"
+        return 1
+    fi
+    checkFlatpak
+    for app in "$@"; do
+        case "$app" in
+            */*)
+                "$ESCALATION_TOOL" flatpak install -y "$app"
+                ;;
+            *)
+                "$ESCALATION_TOOL" flatpak install -y flathub "$app"
+                ;;
+        esac
+    done
+}
+
+## Install a dnf package group or zypper pattern.
+## Usage: installGroup "Development Tools"
+##        installGroup xfce-desktop-environment
+##        installGroup patterns-xfce-xfce
+installGroup() {
+    if [ "$#" -eq 0 ]; then
+        printf "%b\n" "${RED}installGroup: no group/pattern specified${RC}"
+        return 1
+    fi
+    case "$PACKAGER" in
+        dnf)
+            if ! "$ESCALATION_TOOL" "$PACKAGER" group install -y "$@" 2>/dev/null; then
+                "$ESCALATION_TOOL" "$PACKAGER" groupinstall -y "$@"
+            fi
+            ;;
+        zypper)
+            for g in "$@"; do
+                case "$g" in
+                    patterns-*)
+                        installPkg "$g"
+                        ;;
+                    *)
+                        "$ESCALATION_TOOL" "$PACKAGER" --non-interactive install -t pattern "$g"
+                        ;;
+                esac
+            done
+            ;;
+        *)
+            # Fall back to normal packages / @groups for moss etc.
+            installPkg "$@"
+            ;;
+    esac
+}
+
+## Abort with a clear unsupported-packager message.
+unsupportedPackager() {
+    printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}${RC}"
+    exit 1
 }
 
 checkEnv() {

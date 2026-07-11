@@ -12,11 +12,7 @@ installAutoCpufreq() {
 
         if ! command_exists git && [ "$PACKAGER" != "pacman" ]; then
             printf "%b\n" "${YELLOW}Installing git.${RC}"
-            case "$PACKAGER" in
-                *)
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y git
-                    ;;
-            esac
+            installPkg git
         fi
 
         case "$PACKAGER" in
@@ -26,7 +22,7 @@ installAutoCpufreq() {
                     "$ESCALATION_TOOL" systemctl disable --now power-profiles-daemon
                 fi
 
-                "$AUR_HELPER" -S --needed --noconfirm auto-cpufreq
+                installAurPkg auto-cpufreq
                 "$ESCALATION_TOOL" systemctl enable --now auto-cpufreq
                 ;;
             *)

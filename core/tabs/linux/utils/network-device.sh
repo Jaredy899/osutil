@@ -41,50 +41,19 @@ install_package() {
     printf "%b\n" "${YELLOW}Installing $package_name...${RC}"
 
     case "$PACKAGER" in
-        pacman)
-            if "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm --needed "$package_name"; then
+        pacman|apt-get|nala|dnf|zypper|eopkg|apk|xbps-install|moss|rpm-ostree|pkg)
+            if installPkg "$package_name"; then
                 printf "%b\n" "${GREEN}$package_name installed successfully.${RC}"
-            else
-                printf "%b\n" "${RED}Failed to install $package_name. Please install it manually.${RC}"
-                exit 1
-            fi
-            ;;
-        rpm-ostree)
-            if "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive "$package_name"; then
-                printf "%b\n" "${GREEN}$package_name installed successfully.${RC}"
-                printf "%b\n" "${YELLOW}Reboot to apply layered package.${RC}"
-            else
-                printf "%b\n" "${RED}Failed to install $package_name. Please install it manually.${RC}"
-                exit 1
-            fi
-            ;;
-        apt-get|nala|dnf|zypper|eopkg)
-            if "$ESCALATION_TOOL" "$PACKAGER" install -y "$package_name"; then
-                printf "%b\n" "${GREEN}$package_name installed successfully.${RC}"
-            else
-                printf "%b\n" "${RED}Failed to install $package_name. Please install it manually.${RC}"
-                exit 1
-            fi
-            ;;
-        apk)
-            if "$ESCALATION_TOOL" "$PACKAGER" add --no-cache "$package_name"; then
-                printf "%b\n" "${GREEN}$package_name installed successfully.${RC}"
-            else
-                printf "%b\n" "${RED}Failed to install $package_name. Please install it manually.${RC}"
-                exit 1
-            fi
-            ;;
-        xbps-install)
-            if "$ESCALATION_TOOL" "$PACKAGER" -Sy "$package_name"; then
-                printf "%b\n" "${GREEN}$package_name installed successfully.${RC}"
+                if [ "$PACKAGER" = "rpm-ostree" ]; then
+                    printf "%b\n" "${YELLOW}Reboot to apply layered package.${RC}"
+                fi
             else
                 printf "%b\n" "${RED}Failed to install $package_name. Please install it manually.${RC}"
                 exit 1
             fi
             ;;
         *)
-            printf "%b\n" "${RED}Unknown package manager. Cannot install package.${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
 }

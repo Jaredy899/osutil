@@ -10,8 +10,12 @@ installFastfetch() {
     if ! command_exists fastfetch; then
         printf "%b\n" "${YELLOW}Installing Fastfetch...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm fastfetch
+            pacman|apk|xbps-install|dnf|zypper|eopkg|moss|rpm-ostree|pkg)
+                if [ "$PACKAGER" = "apk" ]; then
+                    installPkg fastfetch zoxide
+                else
+                    installPkg fastfetch
+                fi
                 ;;
             apt-get|nala)
                 case "$ARCH" in
@@ -27,17 +31,11 @@ installFastfetch() {
                         ;;
                 esac
                 curl -sSLo "/tmp/fastfetch.deb" "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$DEB_FILE"
-                "$ESCALATION_TOOL" "$PACKAGER" install -y /tmp/fastfetch.deb
+                installPkg /tmp/fastfetch.deb
                 rm /tmp/fastfetch.deb
                 ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add fastfetch zoxide
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy fastfetch
-                ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y fastfetch
+                unsupportedPackager
                 ;;
         esac
     else

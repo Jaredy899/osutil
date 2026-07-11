@@ -5,7 +5,7 @@
 installQEMUDesktop() {
     if ! command_exists qemu-img; then
         printf "%b\n" "${YELLOW}Installing QEMU.${RC}"
-        "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm qemu-desktop
+        installPkg qemu-desktop
     else
         printf "%b\n" "${GREEN}QEMU is already installed.${RC}"
     fi
@@ -15,7 +15,7 @@ installQEMUDesktop() {
 installQEMUEmulators() {
     if ! "$PACKAGER" -Q | grep -q "qemu-emulators-full "; then
         printf "%b\n" "${YELLOW}Installing QEMU-Emulators.${RC}"
-        "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm qemu-emulators-full swtpm
+        installPkg qemu-emulators-full swtpm
     else
         printf "%b\n" "${GREEN}QEMU-Emulators already installed.${RC}"
     fi
@@ -24,7 +24,7 @@ installQEMUEmulators() {
 installVirtManager() {
     if ! command_exists virt-manager; then
         printf "%b\n" "${YELLOW}Installing Virt-Manager.${RC}"
-        "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm virt-manager
+        installPkg virt-manager
     else
         printf "%b\n" "${GREEN}Virt-Manager already installed.${RC}"
     fi
@@ -44,7 +44,7 @@ setupLibvirt() {
         "$ESCALATION_TOOL" "$PACKAGER" -Rdd --noconfirm iptables
     fi
 
-    "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm dnsmasq iptables-nft
+    installPkg dnsmasq iptables-nft
     "$ESCALATION_TOOL" sed -i 's/^#\?firewall_backend\s*=\s*".*"/firewall_backend = "iptables"/' "/etc/libvirt/network.conf"
 
     if systemctl is-active --quiet polkit; then
@@ -68,7 +68,7 @@ setupLibvirt() {
 
 installLibvirt() {
     if ! command_exists libvirtd; then
-        "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm libvirt dmidecode
+        installPkg libvirt dmidecode
     else
         printf "%b\n" "${GREEN}Libvirt is already installed.${RC}"
     fi

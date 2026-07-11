@@ -11,24 +11,19 @@ installSignal() {
                 "$ESCALATION_TOOL" tee /usr/share/keyrings/signal-desktop-keyring.gpg < signal-desktop-keyring.gpg > /dev/null
                 printf "%b\n" 'deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main' | "$ESCALATION_TOOL" tee /etc/apt/sources.list.d/signal-xenial.list
                 "$ESCALATION_TOOL" "$PACKAGER" update
-                "$ESCALATION_TOOL" "$PACKAGER" -y install signal-desktop
+                installPkg signal-desktop
                 ;;
-            zypper|eopkg|moss)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y signal-desktop
-                ;;
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm signal-desktop
+            zypper|eopkg|moss|pacman)
+                installPkg signal-desktop
                 ;;
             xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy Signal-Desktop
-                ;;  
-            dnf|apk)
-                checkFlatpak
-                "$ESCALATION_TOOL" flatpak install -y flathub org.signal.Signal
+                installPkg Signal-Desktop
+                ;;
+            dnf|apk|rpm-ostree|pkg)
+                installFlatpak org.signal.Signal
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else

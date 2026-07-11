@@ -19,8 +19,7 @@ removeSnaps() {
                 "$ESCALATION_TOOL" "$PACKAGER" remove -y snapd
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
         printf "%b\n" "${GREEN}Successfully removed snaps.${RC}"

@@ -20,7 +20,7 @@ installRPMFusion() {
                 rhel_version=$(rpm -E %rhel 2>/dev/null || echo "8")
                 
                 # Install RPM Fusion repositories
-                "$ESCALATION_TOOL" "$PACKAGER" install -y \
+                installPkg \
                     "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-${rhel_version}.noarch.rpm" \
                     "https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-${rhel_version}.noarch.rpm"
                 
@@ -35,7 +35,8 @@ installRPMFusion() {
                 
                 # Try to install appstream-data packages (may not be available on all architectures)
                 if "$ESCALATION_TOOL" "$PACKAGER" search rpmfusion-\*-appstream-data 2>/dev/null | grep -q "rpmfusion"; then
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y rpmfusion-\*-appstream-data
+                    # shellcheck disable=SC2086
+                    installPkg rpmfusion-\*-appstream-data
                 else
                     printf "%b\n" "${BLUE}Appstream-data packages not available for this architecture, skipping...${RC}"
                 fi
@@ -51,7 +52,7 @@ installRPMFusion() {
             case "$install_tainted" in
                 [Yy]*)
                     printf "%b\n" "${YELLOW}Installing RPM Fusion tainted repositories...${RC}"
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y rpmfusion-free-release-tainted rpmfusion-nonfree-release-tainted
+                    installPkg rpmfusion-free-release-tainted rpmfusion-nonfree-release-tainted
                     "$ESCALATION_TOOL" "$PACKAGER" config-manager --set-enabled rpmfusion-free-tainted
                     "$ESCALATION_TOOL" "$PACKAGER" config-manager --set-enabled rpmfusion-nonfree-tainted
                     printf "%b\n" "${GREEN}RPM Fusion (including tainted repositories) installed and enabled${RC}"
@@ -63,7 +64,7 @@ installRPMFusion() {
             esac
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported distribution: $DTYPE${RC}"
+            unsupportedPackager
             ;;
     esac
 }

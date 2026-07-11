@@ -3,24 +3,17 @@
 . ../../common-script.sh
 
 installTorBrowser() {
-    if ! command_exists torbrowser-launcher; then
+    if ! command_exists torbrowser-launcher && ! command_exists org.torproject.torbrowser-launcher; then
         printf "%b\n" "${YELLOW}Installing Tor Browser...${RC}"
         case "$PACKAGER" in
-            apt-get|nala|dnf|eopkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y torbrowser-launcher
+            apt-get|nala|dnf|eopkg|pacman|xbps-install|zypper)
+                installPkg torbrowser-launcher
                 ;;
-            zypper)
-                "$ESCALATION_TOOL" "$PACKAGER" --non-interactive install torbrowser-launcher
-                ;;
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm torbrowser-launcher
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy torbrowser-launcher
+            moss|rpm-ostree|apk|pkg)
+                installFlatpak org.torproject.torbrowser-launcher
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else
@@ -31,4 +24,3 @@ installTorBrowser() {
 checkEnv
 checkEscalationTool
 installTorBrowser
-

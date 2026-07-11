@@ -7,27 +7,19 @@ installLibreOffice() {
         printf "%b\n" "${YELLOW}Installing Libre Office...${RC}"
         case "$PACKAGER" in
             apt-get|nala)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y libreoffice-core
-                ;;
-            zypper|dnf)
-                checkFlatpak
-                flatpak install -y flathub org.libreoffice.LibreOffice
+                installPkg libreoffice-core
                 ;;
             pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm libreoffice-fresh
+                installPkg libreoffice-fresh
                 ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add libreoffice
+            apk|xbps-install|eopkg)
+                installPkg libreoffice
                 ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy libreoffice
-                ;;
-            eopkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y libreoffice
+            zypper|dnf|moss|rpm-ostree|pkg)
+                installFlatpak org.libreoffice.LibreOffice
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else

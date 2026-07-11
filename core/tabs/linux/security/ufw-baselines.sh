@@ -2,21 +2,15 @@
 
 . ../common-script.sh
 
-installPkg() {
+installUfw() {
     if ! command_exists ufw; then
-     printf "%b\n" "${YELLOW}Installing UFW...${RC}"
+        printf "%b\n" "${YELLOW}Installing UFW...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm ufw
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add ufw
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy ufw
+            pacman|apt-get|nala|dnf|zypper|apk|xbps-install|eopkg)
+                installPkg ufw
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y ufw
+                unsupportedPackager
                 ;;
         esac
     else
@@ -51,5 +45,5 @@ configureUFW() {
 
 checkEnv
 checkEscalationTool
-installPkg
+installUfw
 configureUFW

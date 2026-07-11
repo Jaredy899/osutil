@@ -24,14 +24,14 @@ installExtra() {
             printf "%b" "${YELLOW}Detected GNOME desktop environment. Would you like to install GNOME Software plugin for Flatpak? (y/N): ${RC}"
             read -r install_gnome
             if [ "$install_gnome" = "y" ] || [ "$install_gnome" = "Y" ]; then
-                "$ESCALATION_TOOL" "$PACKAGER" install -y gnome-software-plugin-flatpak
+                installPkg gnome-software-plugin-flatpak
             fi
         # Useful for Debian KDE spin as well
         elif [ "$DE" = "KDE" ]; then
             printf "%b" "${YELLOW}Detected KDE desktop environment. Would you like to install KDE Plasma Discover backend for Flatpak? (y/N): ${RC}"
             read -r install_kde
             if [ "$install_kde" = "y" ] || [ "$install_kde" = "Y" ]; then
-                "$ESCALATION_TOOL" "$PACKAGER" install -y plasma-discover-backend-flatpak
+                installPkg plasma-discover-backend-flatpak
             fi
         fi
     fi

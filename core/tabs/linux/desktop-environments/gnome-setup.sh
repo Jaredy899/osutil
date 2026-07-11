@@ -18,16 +18,16 @@ installGNOME() {
     case "$PACKAGER" in
         apt-get|nala)
             "$ESCALATION_TOOL" "$PACKAGER" update
-            "$ESCALATION_TOOL" "$PACKAGER" install -y task-gnome-desktop
+            installPkg task-gnome-desktop
             ;;
         pacman)
             "$ESCALATION_TOOL" "$PACKAGER" -Syu --noconfirm
-            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm gnome gnome-extra
+            installPkg gnome gnome-extra
             installDisplayManager
             ;;
         zypper)
             "$ESCALATION_TOOL" "$PACKAGER" refresh
-            "$ESCALATION_TOOL" "$PACKAGER" install -y patterns-gnome-gnome
+            installGroup patterns-gnome-gnome
             installDisplayManager
             ;;
         apk)
@@ -35,7 +35,7 @@ installGNOME() {
             ;;
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Su
-            "$ESCALATION_TOOL" "$PACKAGER" -y gnome
+            installPkg gnome
             installDisplayManager
             ;;
         moss)
@@ -45,8 +45,7 @@ installGNOME() {
             exit 0
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
     
@@ -62,4 +61,4 @@ checkEscalationTool
 if [ "$PACKAGER" != "apk" ]; then
     checkDisplayManager
 fi
-installGNOME 
+installGNOME

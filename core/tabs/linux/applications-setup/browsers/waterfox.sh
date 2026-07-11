@@ -7,11 +7,10 @@ installWaterfox() {
         printf "%b\n" "${YELLOW}Installing waterfox...${RC}"
         case "$PACKAGER" in
             pacman)
-		        "$AUR_HELPER" -S --needed --noconfirm waterfox-bin
+                installAurPkg waterfox-bin
                 ;;
             *)
-		        checkFlatpak
-                flatpak install -y flathub net.waterfox.waterfox
+                installFlatpak net.waterfox.waterfox
                 ;;
         esac
     else

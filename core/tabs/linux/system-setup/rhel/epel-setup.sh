@@ -21,18 +21,18 @@ installEPEL() {
             # Install EPEL based on the distribution
             case "$DTYPE" in
                 rhel|centos)
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y epel-release
+                    installPkg epel-release
                     ;;
                 rocky)
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y epel-release
+                    installPkg epel-release
                     ;;
                 almalinux)
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y epel-release
+                    installPkg epel-release
                     ;;
                 *)
                     printf "%b\n" "${YELLOW}Unknown RHEL variant: $DTYPE${RC}"
                     printf "%b\n" "${YELLOW}Attempting to install EPEL anyway...${RC}"
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y epel-release
+                    installPkg epel-release
                     ;;
             esac
             
@@ -42,8 +42,7 @@ installEPEL() {
             printf "%b\n" "${GREEN}EPEL repository installed successfully.${RC}"
             ;;
         *)
-            printf "%b\n" "${RED}EPEL is only available for RHEL-based systems using dnf.${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
 }

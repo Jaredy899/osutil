@@ -7,17 +7,11 @@ installFoot() {
     if ! command_exists foot; then
         printf "%b\n" "${YELLOW}Installing foot...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm foot
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add foot
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy foot
+            pacman|apk|xbps-install|apt-get|nala|dnf|zypper|eopkg|moss|rpm-ostree|pkg)
+                installPkg foot
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y foot
+                unsupportedPackager
                 ;;
         esac
     else

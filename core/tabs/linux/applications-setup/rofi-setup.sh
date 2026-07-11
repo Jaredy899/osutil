@@ -4,19 +4,18 @@
 
 installRofi() {
     if ! command_exists rofi; then
-    printf "%b\n" "${YELLOW}Installing Rofi...${RC}"
+        printf "%b\n" "${YELLOW}Installing Rofi...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm rofi
+            pacman|apk|xbps-install|apt-get|nala|dnf|zypper|eopkg)
+                installPkg rofi
                 ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add rofi
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy rofi  
+            moss|rpm-ostree|pkg)
+                printf "%b\n" "${YELLOW}Rofi is not packaged for ${PACKAGER}.${RC}"
+                printf "%b\n" "${CYAN}On AerynOS/Wayland, try fuzzel via Package Finder instead.${RC}"
+                return 1
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y rofi
+                unsupportedPackager
                 ;;
         esac
     else

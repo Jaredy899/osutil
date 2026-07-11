@@ -5,17 +5,11 @@
 install_theme_tools() {
     printf "%b\n" "${YELLOW}Installing theme tools (qt6ct and kvantum)...${RC}"
     case "$PACKAGER" in
-        pacman)
-            "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm qt6ct kvantum
-            ;;
-        xbps-install)
-            "$ESCALATION_TOOL" "$PACKAGER" -Sy qt6ct kvantum
-            ;;
-        rpm-ostree)
-            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive qt6ct kvantum
+        pacman|apk|xbps-install|apt-get|nala|dnf|zypper|eopkg|moss|rpm-ostree|pkg)
+            installPkg qt6ct kvantum
             ;;
         *)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y qt6ct kvantum
+            unsupportedPackager
             ;;
     esac
 }

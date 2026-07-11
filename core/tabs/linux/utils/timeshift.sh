@@ -9,14 +9,11 @@ install_timeshift() {
 
     if ! command_exists timeshift; then
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "${PACKAGER}" -S --noconfirm timeshift
-                ;;
-            dnf|zypper|apt-get|nala)
-                "$ESCALATION_TOOL" "${PACKAGER}" install -y timeshift
+            pacman|dnf|zypper|apt-get|nala)
+                installPkg timeshift
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager.${RC}"
+                unsupportedPackager
                 ;;
         esac
     else

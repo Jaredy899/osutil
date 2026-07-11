@@ -9,32 +9,31 @@ InstallTermiusFonts() {
     printf "%b\n" "${YELLOW}Installing Terminus Fonts...${RC}"
         case "$PACKAGER" in
             pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm terminus-font
+                installPkg terminus-font
                 ;;
             apt-get|nala)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y fonts-terminus
+                installPkg fonts-terminus
                 ;;
             dnf)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y terminus-fonts-console
+                installPkg terminus-fonts-console
                 ;;            
             xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy terminus-font
+                installPkg terminus-font
                 ;;
             eopkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y font-terminus-console
+                installPkg font-terminus-console
                 ;;
             moss)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y terminus-font
+                installPkg terminus-font
                 ;;
             zypper)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y terminus-bitmap-fonts
+                installPkg terminus-bitmap-fonts
                 ;;
             apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add font-terminus
+                installPkg font-terminus
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else
@@ -75,8 +74,7 @@ SetTermiusFonts() {
                 printf "%b\n" "${GREEN}Terminus font has been set for TTY.${RC}"
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager for font configuration: ""$PACKAGER""${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
 }

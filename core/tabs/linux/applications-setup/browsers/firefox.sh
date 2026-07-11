@@ -3,30 +3,23 @@
 . ../../common-script.sh
 
 installFirefox() {
-    if ! command_exists firefox; then
+    if ! command_exists firefox && ! command_exists org.mozilla.firefox; then
         printf "%b\n" "${YELLOW}Installing Mozilla Firefox...${RC}"
         case "$PACKAGER" in
             apt-get|nala)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y firefox-esr
+                installPkg firefox-esr
                 ;;
             zypper)
-                "$ESCALATION_TOOL" "$PACKAGER" --non-interactive install MozillaFirefox
+                installPkg MozillaFirefox
                 ;;
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm firefox
+            pacman|dnf|eopkg|moss|xbps-install|apk|pkg)
+                installPkg firefox
                 ;;
-            dnf|eopkg|moss)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y firefox
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy firefox
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add firefox
+            rpm-ostree)
+                installFlatpak org.mozilla.firefox
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else

@@ -26,17 +26,17 @@ installJetBrainsToolBox() {
         printf "%b\n" "${YELLOW}Installing Jetbrains Toolbox...${RC}"
         case "$PACKAGER" in
             pacman)
-                "$AUR_HELPER" -S --needed --noconfirm jetbrains-toolbox
+                installAurPkg jetbrains-toolbox
                 ;;
             dnf|eopkg)
                 manualInstall
                 ;;
             xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy fuse3
+                installPkg fuse3
                 manualInstall
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y libfuse2
+                installPkg libfuse2
                 manualInstall
                 ;;
         esac

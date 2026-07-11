@@ -13,11 +13,10 @@ installBtrfsStack() {
         printf "%b\n" "${YELLOW}==========================================${RC}"
         case "$PACKAGER" in
             dnf)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y btrfs-assistant python3-dnf-plugin-snapper
+                installPkg btrfs-assistant python3-dnf-plugin-snapper
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else
@@ -100,7 +99,7 @@ installGrubBtrfs() {
     if [ -d "$HOME/grub-btrfs" ]; then
         rm -rf "$HOME/grub-btrfs"
     fi
-    "$ESCALATION_TOOL" "$PACKAGER" install -y make git inotify-tools
+    installPkg make git inotify-tools
     cd "$HOME" && git clone https://github.com/Antynea/grub-btrfs
     printf "%b\n" "${YELLOW}Installing grub-btrfs...${RC}"
     cd "$HOME/grub-btrfs"

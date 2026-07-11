@@ -7,11 +7,11 @@ configureVirtualization() {
     case "$PACKAGER" in
         dnf)
             printf "%b\n" "${YELLOW}Installing virtualization tools...${RC}"
-            "$ESCALATION_TOOL" "$PACKAGER" install -y @virtualization 
+            installPkg @virtualization
             printf "%b\n" "${GREEN}Installed virtualization tools...${RC}"
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported distribution: $DTYPE${RC}"
+            unsupportedPackager
             ;;
     esac
 }

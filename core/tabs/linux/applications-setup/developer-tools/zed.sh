@@ -6,18 +6,12 @@ installZed() {
     if ! command_exists dev.zed.Zed && ! command_exists zed && ! command_exists zeditor; then
         printf "%b\n" "${CYAN}Installing Zed.${RC}"
         case "$PACKAGER" in
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add zed
-                ;;
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S zed
+            apk|pacman|eopkg|moss)
+                installPkg zed
                 ;;
             zypper)
                 "$ESCALATION_TOOL" "$PACKAGER" addrepo -f https://download.opensuse.org/repositories/editors/openSUSE_Tumbleweed/editors.repo
-                "$ESCALATION_TOOL" "$PACKAGER" install -y zed
-                ;;
-            eopkg|moss)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y zed
+                installPkg zed
                 ;;
             *)
                 printf "%b\n" "${YELLOW}No official package found for package manager $PACKAGER. Do you want to install flathub package or from source?${RC}"
@@ -28,8 +22,7 @@ installZed() {
                 read -r choice
                 case "$choice" in
                     1)
-                        checkFlatpak
-                        flatpak install -y flathub dev.zed.Zed
+                        installFlatpak dev.zed.Zed
                         ;;
                     2)
                         curl -f https://zed.dev/install.sh | sh

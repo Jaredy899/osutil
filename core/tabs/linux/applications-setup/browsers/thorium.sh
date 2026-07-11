@@ -10,7 +10,7 @@ installThrorium() {
                 "$ESCALATION_TOOL" rm -fv /etc/apt/sources.list.d/thorium.list
                 "$ESCALATION_TOOL" curl http://dl.thorium.rocks/debian/dists/stable/thorium.list -o /etc/apt/sources.list.d/thorium.list
                 "$ESCALATION_TOOL" "$PACKAGER" update
-                "$ESCALATION_TOOL" "$PACKAGER" install -y thorium-browser
+                installPkg thorium-browser
                 ;;
             zypper|dnf)
                 latest_release=$(curl -s https://api.github.com/repos/Alex313031/Thorium/releases/latest)
@@ -36,15 +36,18 @@ installThrorium() {
                 if [ "$PACKAGER" = "zypper" ]; then
                     "$ESCALATION_TOOL" rpm -i thorium-latest.rpm && rm thorium-latest.rpm
                 else
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y thorium-latest.rpm && rm thorium-latest.rpm
+                    installPkg thorium-latest.rpm && rm thorium-latest.rpm
                 fi
                 ;;
             pacman)
-                "$AUR_HELPER" -S --needed --noconfirm thorium-browser-bin
+                installAurPkg thorium-browser-bin
+                ;;
+            moss|rpm-ostree|apk|xbps-install|eopkg|pkg)
+                printf "%b\n" "${YELLOW}Thorium has no package for ${PACKAGER}; installing Chromium Flatpak instead.${RC}"
+                installFlatpak org.chromium.Chromium
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else

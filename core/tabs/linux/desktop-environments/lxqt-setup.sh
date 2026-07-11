@@ -18,21 +18,21 @@ installLXQt() {
     case "$PACKAGER" in
         apt-get|nala)
             "$ESCALATION_TOOL" "$PACKAGER" update
-            "$ESCALATION_TOOL" "$PACKAGER" install -y task-lxqt-desktop
+            installPkg task-lxqt-desktop
             installDisplayManager
             ;;
         dnf)
-            "$ESCALATION_TOOL" "$PACKAGER" group install -y lxqt-desktop-environment
+            installGroup lxqt-desktop-environment
             installDisplayManager
             ;;
         pacman)
             "$ESCALATION_TOOL" "$PACKAGER" -Syu --noconfirm
-            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm xorg-server xorg-xinit lxqt breeze-icons
+            installPkg xorg-server xorg-xinit lxqt breeze-icons
             installDisplayManager
             ;;
         zypper)
             "$ESCALATION_TOOL" "$PACKAGER" refresh
-            "$ESCALATION_TOOL" "$PACKAGER" install -y patterns-lxqt-lxqt
+            installGroup patterns-lxqt-lxqt
             installDisplayManager
             ;;
         apk)
@@ -40,12 +40,11 @@ installLXQt() {
             ;;
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Su
-            "$ESCALATION_TOOL" "$PACKAGER" -y lxqt
+            installPkg lxqt
             installDisplayManager
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
     
@@ -61,4 +60,4 @@ checkEscalationTool
 if [ "$PACKAGER" != "apk" ]; then
     checkDisplayManager
 fi
-installLXQt 
+installLXQt

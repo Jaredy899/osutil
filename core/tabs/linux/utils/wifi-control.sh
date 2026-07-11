@@ -8,31 +8,37 @@ setupNetworkManager() {
     printf "%b\n" "${YELLOW}Installing NetworkManager...${RC}"
     if ! command_exists nmcli; then
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm networkmanager
+            pacman|moss)
+                installPkg networkmanager
                 ;;
             dnf)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y NetworkManager-1
+                installPkg NetworkManager-1
                 ;;
             apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add networkmanager-wifi iwd
+                installPkg networkmanager-wifi iwd
                 ;;
             xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy NetworkManager iwd
+                installPkg NetworkManager iwd
+                ;;
+            apt-get|nala)
+                installPkg network-manager
+                ;;
+            zypper|eopkg)
+                installPkg NetworkManager
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y network-manager
+                unsupportedPackager
                 ;;
         esac
     else
         printf "%b\n" "${YELLOW}NetworkManager is already installed.${RC}"
     fi
-    
+
     # Check if NetworkManager service is running
     if ! isServiceActive NetworkManager; then
         printf "%b\n" "${YELLOW}NetworkManager service is not running. Starting it now...${RC}"
         startAndEnableService NetworkManager
-    else 
+    else
         printf "%b\n" "${GREEN}NetworkManager service started successfully.${RC}"
     fi
 }

@@ -33,7 +33,7 @@ cloneDotfiles() {
 backupExistingConfigs() {
     BACKUP_DIR="$HOME/.config-backup-$(date +%Y%m%d-%H%M%S)"
     
-    for config in .zshrc .config/starship.toml .config/fastfetch .config/mise; do
+    for config in .zshrc .config/starship.toml .config/fastfetch; do
         if [ -e "$HOME/$config" ] && [ ! -L "$HOME/$config" ]; then
             mkdir -p "$BACKUP_DIR"
             cp -r "$HOME/$config" "$BACKUP_DIR/"
@@ -42,7 +42,8 @@ backupExistingConfigs() {
 }
 
 installZshDepend() {
-    DEPENDENCIES="git zsh-autocomplete bat tree multitail fastfetch wget unzip fontconfig starship fzf zoxide mise eza"
+    # Always include eza + fastfetch; mise lives under Development
+    DEPENDENCIES="git zsh-autocomplete bat tree multitail fastfetch wget unzip fontconfig starship fzf zoxide eza"
 
     printf "%b\n" "${CYAN}Installing dependencies...${RC}"
     for package in $DEPENDENCIES; do
@@ -77,7 +78,7 @@ symlinkConfigs() {
     fi
 
     # Create necessary directories
-    mkdir -p "$HOME/.config" "$HOME/.config/fastfetch" "$HOME/.config/mise"
+    mkdir -p "$HOME/.config" "$HOME/.config/fastfetch"
 
     # Symlink zsh configuration
     if [ -f "$DOTFILES_DIR/zsh/.zshrc" ]; then
@@ -112,18 +113,8 @@ symlinkConfigs() {
         printf "%b\n" "${YELLOW}fastfetch config not found in dotfiles repo, skipping...${RC}"
     fi
 
-    # Symlink mise config
-    if [ -f "$DOTFILES_DIR/config/mise/config.toml" ]; then
-        if [ -L "$HOME/.config/mise/config.toml" ] || [ -f "$HOME/.config/mise/config.toml" ]; then
-            rm -f "$HOME/.config/mise/config.toml"
-        fi
-        ln -sf "$DOTFILES_DIR/config/mise/config.toml" "$HOME/.config/mise/config.toml"
-        printf "%b\n" "${GREEN}Symlinked mise config from dotfiles${RC}"
-    else
-        printf "%b\n" "${YELLOW}mise config not found in dotfiles repo, skipping...${RC}"
-    fi
-
     printf "%b\n" "${GREEN}All configuration files symlinked successfully! Restart your shell to see changes.${RC}"
+    printf "%b\n" "${CYAN}For language toolchains, install Mise from the Development tab.${RC}"
 }
 
 checkEnv

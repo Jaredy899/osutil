@@ -10,7 +10,7 @@ installRPMFusion() {
             if [ ! -e /etc/yum.repos.d/rpmfusion-free.repo ] || [ ! -e /etc/yum.repos.d/rpmfusion-nonfree.repo ]; then
                 printf "%b\n" "${YELLOW}Installing RPM Fusion...${RC}"
                 
-                "$ESCALATION_TOOL" "$PACKAGER" install -y \
+                installPkg \
                     "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
                     "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
                 
@@ -21,14 +21,15 @@ installRPMFusion() {
                     "$ESCALATION_TOOL" "$PACKAGER" config-manager --enable fedora-cisco-openh264
                 fi
                 
-                "$ESCALATION_TOOL" "$PACKAGER" install -y rpmfusion-\*-appstream-data
+                # shellcheck disable=SC2086
+                installPkg rpmfusion-\*-appstream-data
                 
                 printf "%b\n" "${YELLOW}Do you want to install tainted repositories? [y/N]: ${RC}"
                 read -r install_tainted
                 case "$install_tainted" in
                     [Yy]*)
                         printf "%b\n" "${YELLOW}Installing RPM Fusion tainted repositories...${RC}"
-                        "$ESCALATION_TOOL" "$PACKAGER" install -y rpmfusion-free-release-tainted rpmfusion-nonfree-release-tainted
+                        installPkg rpmfusion-free-release-tainted rpmfusion-nonfree-release-tainted
                         
                         if [ "$fedora_version" -ge 41 ]; then
                             "$ESCALATION_TOOL" "$PACKAGER" config-manager setopt rpmfusion-free-tainted.enabled=1
@@ -51,7 +52,7 @@ installRPMFusion() {
         rpm-ostree)
             if [ ! -e /etc/yum.repos.d/rpmfusion-free.repo ] || [ ! -e /etc/yum.repos.d/rpmfusion-nonfree.repo ]; then
                 printf "%b\n" "${YELLOW}Layering RPM Fusion (reboot to apply)...${RC}"
-                "$ESCALATION_TOOL" "$PACKAGER" install \
+                installPkg \
                     "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
                     "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
                 printf "%b\n" "${GREEN}RPM Fusion layered. Reboot to apply.${RC}"
@@ -60,7 +61,7 @@ installRPMFusion() {
             fi
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported distribution: $DTYPE${RC}"
+            unsupportedPackager
             ;;
     esac
 }

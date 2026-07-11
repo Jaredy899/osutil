@@ -69,13 +69,95 @@ detectShell() {
   echo "sh"
 }
 
+installEza() {
+  if command_exists eza; then
+    printf "%b\n" "${GREEN}eza already installed${RC}"
+    return 0
+  fi
+
+  printf "%b\n" "${YELLOW}Installing eza...${RC}"
+  case "$PACKAGER" in
+  pacman | apk | xbps-install | zypper | eopkg | moss | dnf | rpm-ostree | pkg)
+    installPkg eza || true
+    ;;
+  apt-get | nala)
+    if ! installPkg eza 2>/dev/null; then
+      "$ESCALATION_TOOL" mkdir -p /etc/apt/keyrings
+      wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc |
+        "$ESCALATION_TOOL" gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+      echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" |
+        "$ESCALATION_TOOL" tee /etc/apt/sources.list.d/gierens.list
+      "$ESCALATION_TOOL" chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
+      "$ESCALATION_TOOL" "$PACKAGER" update
+      installPkg eza || true
+    fi
+    ;;
+  *)
+    ARCH=$(uname -m)
+    case "$ARCH" in
+    x86_64) EZA_FILE="eza_x86_64-unknown-linux-gnu.tar.gz" ;;
+    aarch64) EZA_FILE="eza_aarch64-unknown-linux-gnu.tar.gz" ;;
+    *)
+      printf "%b\n" "${YELLOW}Unsupported architecture for eza binary install: $ARCH${RC}"
+      return 0
+      ;;
+    esac
+    curl -sSL "https://github.com/eza-community/eza/releases/latest/download/$EZA_FILE" | tar xz
+    "$ESCALATION_TOOL" chmod +x eza
+    "$ESCALATION_TOOL" mv eza /usr/local/bin/eza
+    ;;
+  esac
+
+  if command_exists eza; then
+    printf "%b\n" "${GREEN}eza installed successfully${RC}"
+  else
+    printf "%b\n" "${YELLOW}eza install failed, continuing...${RC}"
+  fi
+}
+
+installFastfetch() {
+  if command_exists fastfetch; then
+    printf "%b\n" "${GREEN}fastfetch already installed${RC}"
+    return 0
+  fi
+
+  printf "%b\n" "${YELLOW}Installing fastfetch...${RC}"
+  case "$PACKAGER" in
+  pacman | apk | xbps-install | dnf | zypper | eopkg | moss | rpm-ostree | pkg)
+    installPkg fastfetch || true
+    ;;
+  apt-get | nala)
+    if ! installPkg fastfetch 2>/dev/null; then
+      case "$ARCH" in
+      x86_64) DEB_FILE="fastfetch-linux-amd64.deb" ;;
+      aarch64) DEB_FILE="fastfetch-linux-aarch64.deb" ;;
+      *)
+        printf "%b\n" "${YELLOW}Unsupported architecture for fastfetch deb: $ARCH${RC}"
+        return 0
+        ;;
+      esac
+      curl -sSLo "/tmp/fastfetch.deb" "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$DEB_FILE" &&
+        installPkg /tmp/fastfetch.deb &&
+        rm -f /tmp/fastfetch.deb ||
+        printf "%b\n" "${YELLOW}Failed to install fastfetch from GitHub, continuing...${RC}"
+    fi
+    ;;
+  *)
+    printf "%b\n" "${YELLOW}No fastfetch package for $PACKAGER, continuing...${RC}"
+    ;;
+  esac
+
+  if command_exists fastfetch; then
+    printf "%b\n" "${GREEN}fastfetch installed successfully${RC}"
+  fi
+}
+
 installDependencies() {
-  printf "%b\n" "${YELLOW}Installing dependencies...${RC}"
+  printf "%b\n" "${YELLOW}Installing shell dependencies...${RC}"
 
-  # Base packages needed for all configurations
-  BASE_PACKAGES="tar bat tree unzip fontconfig git fastfetch starship fzf zoxide"
+  # Always include eza + fastfetch (installed via dedicated helpers below)
+  BASE_PACKAGES="tar bat tree unzip fontconfig git starship fzf zoxide"
 
-  # Add shell-specific packages based on choice
   case "$SHELL_CHOICE" in
   bash)
     PACKAGES="$BASE_PACKAGES bash bash-completion"
@@ -87,62 +169,32 @@ installDependencies() {
     PACKAGES="$BASE_PACKAGES fish"
     ;;
   *)
-    # For sh/skip/auto, just install base packages
     PACKAGES="$BASE_PACKAGES"
     ;;
   esac
 
-  # Install packages based on package manager
   case "$PACKAGER" in
-  pacman)
-    "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
-    ;;
   apt-get | nala)
     "$ESCALATION_TOOL" "$PACKAGER" update
-    "$ESCALATION_TOOL" "$PACKAGER" install -y $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
-    # Install fastfetch from GitHub for latest version if not available
-    if ! command_exists fastfetch; then
-      printf "%b\n" "${YELLOW}Installing Fastfetch from GitHub...${RC}"
-      case "$ARCH" in
-      x86_64)
-        DEB_FILE="fastfetch-linux-amd64.deb"
-        ;;
-      aarch64)
-        DEB_FILE="fastfetch-linux-aarch64.deb"
-        ;;
-      *)
-        printf "%b\n" "${YELLOW}Unsupported architecture for deb install: $ARCH, skipping fastfetch...${RC}"
-        ;;
-      esac
-      if [ -n "$DEB_FILE" ]; then
-        curl -sSLo "/tmp/fastfetch.deb" "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$DEB_FILE" && \
-        "$ESCALATION_TOOL" "$PACKAGER" install -y /tmp/fastfetch.deb && \
-        rm /tmp/fastfetch.deb || printf "%b\n" "${YELLOW}Failed to install fastfetch from GitHub, continuing...${RC}"
-      fi
-    fi
-    ;;
-  apk)
-    "$ESCALATION_TOOL" "$PACKAGER" add $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
-    ;;
-  xbps-install)
-    "$ESCALATION_TOOL" "$PACKAGER" -Sy $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
+    installPkg $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
   rpm-ostree)
-    "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
+    installPkg $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     printf "%b\n" "${YELLOW}Reboot to apply layered packages.${RC}"
     ;;
   *)
-    "$ESCALATION_TOOL" "$PACKAGER" install -y $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
+    installPkg $PACKAGES || printf "%b\n" "${YELLOW}Some packages may not be available, continuing...${RC}"
     ;;
   esac
 
-  # Show helpful message if zsh was installed
+  installEza
+  installFastfetch
+
   if [ "$SHELL_CHOICE" = "zsh" ] && command_exists zsh; then
     printf "%b\n" "${GREEN}Zsh installed successfully!${RC}"
     printf "%b\n" "${YELLOW}To make zsh your default shell, run: chsh -s $(which zsh)${RC}"
   fi
 
-  # Show helpful message if fish was installed
   if [ "$SHELL_CHOICE" = "fish" ] && command_exists fish; then
     printf "%b\n" "${GREEN}Fish installed successfully!${RC}"
     printf "%b\n" "${YELLOW}To make fish your default shell, run: chsh -s $(which fish)${RC}"
@@ -169,16 +221,14 @@ cloneDotfiles() {
 }
 
 getShellChoice() {
-  # Detect current shell
   CURRENT_SHELL=$(detectShell)
   printf "%b\n" "${CYAN}Detected shell: $CURRENT_SHELL${RC}"
 
-  # Ask user which shell config they want to use
   printf "%b\n" "${YELLOW}Which shell configuration would you like to install?${RC}"
   printf "%b\n" "${GREEN}1) Use detected shell ($CURRENT_SHELL) ${YELLOW}(recommended)${RC}"
-  printf "%b\n" "${CYAN}2) bash (recommended for most systems)${RC}"
-  printf "%b\n" "${CYAN}3) zsh (recommended for macOS/advanced users)${RC}"
-  printf "%b\n" "${CYAN}4) fish (modern shell with great defaults)${RC}"
+  printf "%b\n" "${CYAN}2) bash${RC}"
+  printf "%b\n" "${CYAN}3) zsh${RC}"
+  printf "%b\n" "${CYAN}4) fish${RC}"
   printf "%b\n" "${CYAN}5) Skip shell configuration${RC}"
 
   printf "Enter your choice (1-5) [1]: "
@@ -195,65 +245,13 @@ getShellChoice() {
   esac
 }
 
-symlinkConfigs() {
-  printf "%b\n" "${YELLOW}Symlinking configuration files...${RC}"
-
-  # Create necessary directories
-  mkdir -p "$config_dir" "$config_dir/fastfetch" "$config_dir/mise"
-
-  # Symlink starship config
-  if [ -f "$DOTFILES_DIR/config/starship.toml" ]; then
-    if [ -L "$config_dir/starship.toml" ] || [ -f "$config_dir/starship.toml" ]; then
-      rm -f "$config_dir/starship.toml"
-    fi
-    ln -sf "$DOTFILES_DIR/config/starship.toml" "$config_dir/starship.toml"
-    printf "%b\n" "${GREEN}Symlinked starship.toml from dotfiles${RC}"
-  else
-    printf "%b\n" "${YELLOW}starship.toml not found in dotfiles repo, skipping...${RC}"
-  fi
-
-  # Symlink fastfetch config based on platform
-  case "$DTYPE" in
-  linux)
-    FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/linux.jsonc"
-    ;;
-  darwin)
-    FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/macos.jsonc"
-    ;;
-  *)
-    FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/linux.jsonc"
-    ;;
-  esac
-
-  if [ -f "$FASTFETCH_CONFIG" ]; then
-    if [ -L "$config_dir/fastfetch/config.jsonc" ] || [ -f "$config_dir/fastfetch/config.jsonc" ]; then
-      rm -f "$config_dir/fastfetch/config.jsonc"
-    fi
-    ln -sf "$FASTFETCH_CONFIG" "$config_dir/fastfetch/config.jsonc"
-    printf "%b\n" "${GREEN}Symlinked fastfetch config from dotfiles${RC}"
-  else
-    printf "%b\n" "${YELLOW}fastfetch config not found in dotfiles repo, skipping...${RC}"
-  fi
-
-  # Symlink mise config
-  if [ -f "$DOTFILES_DIR/config/mise/config.toml" ]; then
-    if [ -L "$config_dir/mise/config.toml" ] || [ -f "$config_dir/mise/config.toml" ]; then
-      rm -f "$config_dir/mise/config.toml"
-    fi
-    ln -sf "$DOTFILES_DIR/config/mise/config.toml" "$config_dir/mise/config.toml"
-    printf "%b\n" "${GREEN}Symlinked mise config from dotfiles${RC}"
-  else
-    printf "%b\n" "${YELLOW}mise config not found in dotfiles repo, skipping...${RC}"
-  fi
-
-  # Handle shell-specific configs based on user choice
-  case "$SHELL_CHOICE" in
+symlinkShellConfig() {
+  shell_name="$1"
+  case "$shell_name" in
   bash)
     printf "%b\n" "${YELLOW}Setting up bash configuration...${RC}"
     if [ -f "$DOTFILES_DIR/bash/.bashrc" ]; then
-      if [ -L "$HOME/.bashrc" ] || [ -f "$HOME/.bashrc" ]; then
-        rm -f "$HOME/.bashrc"
-      fi
+      rm -f "$HOME/.bashrc"
       ln -sf "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
       printf "%b\n" "${GREEN}Symlinked .bashrc from dotfiles${RC}"
     else
@@ -262,11 +260,8 @@ symlinkConfigs() {
     ;;
   zsh)
     printf "%b\n" "${YELLOW}Setting up zsh configuration...${RC}"
-
     if [ -f "$DOTFILES_DIR/zsh/.zshrc" ]; then
-      if [ -L "$HOME/.zshrc" ] || [ -f "$HOME/.zshrc" ]; then
-        rm -f "$HOME/.zshrc"
-      fi
+      rm -f "$HOME/.zshrc"
       ln -sf "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
       printf "%b\n" "${GREEN}Symlinked .zshrc from dotfiles${RC}"
     else
@@ -275,76 +270,56 @@ symlinkConfigs() {
     ;;
   fish)
     printf "%b\n" "${YELLOW}Setting up fish configuration...${RC}"
-
-    # Create fish config directory if it doesn't exist
     mkdir -p "$HOME/.config/fish"
-
     if [ -f "$DOTFILES_DIR/fish/config.fish" ]; then
-      if [ -L "$HOME/.config/fish/config.fish" ] || [ -f "$HOME/.config/fish/config.fish" ]; then
-        rm -f "$HOME/.config/fish/config.fish"
-      fi
+      rm -f "$HOME/.config/fish/config.fish"
       ln -sf "$DOTFILES_DIR/fish/config.fish" "$HOME/.config/fish/config.fish"
       printf "%b\n" "${GREEN}Symlinked config.fish from dotfiles${RC}"
     else
       printf "%b\n" "${YELLOW}config.fish not found in dotfiles repo, skipping...${RC}"
     fi
     ;;
+  *)
+    symlinkShellConfig bash
+    ;;
+  esac
+}
+
+symlinkConfigs() {
+  printf "%b\n" "${YELLOW}Symlinking configuration files...${RC}"
+
+  mkdir -p "$config_dir" "$config_dir/fastfetch"
+
+  # Starship
+  if [ -f "$DOTFILES_DIR/config/starship.toml" ]; then
+    rm -f "$config_dir/starship.toml"
+    ln -sf "$DOTFILES_DIR/config/starship.toml" "$config_dir/starship.toml"
+    printf "%b\n" "${GREEN}Symlinked starship.toml from dotfiles${RC}"
+  else
+    printf "%b\n" "${YELLOW}starship.toml not found in dotfiles repo, skipping...${RC}"
+  fi
+
+  # Fastfetch (always)
+  case "$DTYPE" in
+  darwin) FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/macos.jsonc" ;;
+  *) FASTFETCH_CONFIG="$DOTFILES_DIR/config/fastfetch/linux.jsonc" ;;
+  esac
+
+  if [ -f "$FASTFETCH_CONFIG" ]; then
+    rm -f "$config_dir/fastfetch/config.jsonc"
+    ln -sf "$FASTFETCH_CONFIG" "$config_dir/fastfetch/config.jsonc"
+    printf "%b\n" "${GREEN}Symlinked fastfetch config from dotfiles${RC}"
+  else
+    printf "%b\n" "${YELLOW}fastfetch config not found in dotfiles repo, skipping...${RC}"
+  fi
+
+  # Shell rc files
+  case "$SHELL_CHOICE" in
+  bash | zsh | fish)
+    symlinkShellConfig "$SHELL_CHOICE"
+    ;;
   auto)
-    case "$(detectShell)" in
-    zsh)
-      printf "%b\n" "${YELLOW}Setting up zsh configuration (detected)...${RC}"
-
-      if [ -f "$DOTFILES_DIR/zsh/.zshrc" ]; then
-        if [ -L "$HOME/.zshrc" ] || [ -f "$HOME/.zshrc" ]; then
-          rm -f "$HOME/.zshrc"
-        fi
-        ln -sf "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
-        printf "%b\n" "${GREEN}Symlinked .zshrc from dotfiles${RC}"
-      else
-        printf "%b\n" "${YELLOW}.zshrc not found in dotfiles repo, skipping...${RC}"
-      fi
-      ;;
-    bash)
-      printf "%b\n" "${YELLOW}Setting up bash configuration (detected)...${RC}"
-      if [ -f "$DOTFILES_DIR/bash/.bashrc" ]; then
-        if [ -L "$HOME/.bashrc" ] || [ -f "$HOME/.bashrc" ]; then
-          rm -f "$HOME/.bashrc"
-        fi
-        ln -sf "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
-        printf "%b\n" "${GREEN}Symlinked .bashrc from dotfiles${RC}"
-      else
-        printf "%b\n" "${YELLOW}.bashrc not found in dotfiles repo, skipping...${RC}"
-      fi
-      ;;
-    fish)
-      printf "%b\n" "${YELLOW}Setting up fish configuration (detected)...${RC}"
-
-      # Create fish config directory if it doesn't exist
-      mkdir -p "$HOME/.config/fish"
-
-      if [ -f "$DOTFILES_DIR/fish/config.fish" ]; then
-        if [ -L "$HOME/.config/fish/config.fish" ] || [ -f "$HOME/.config/fish/config.fish" ]; then
-          rm -f "$HOME/.config/fish/config.fish"
-        fi
-        ln -sf "$DOTFILES_DIR/fish/config.fish" "$HOME/.config/fish/config.fish"
-        printf "%b\n" "${GREEN}Symlinked config.fish from dotfiles${RC}"
-      else
-        printf "%b\n" "${YELLOW}config.fish not found in dotfiles repo, skipping...${RC}"
-      fi
-      ;;
-    *)
-      printf "%b\n" "${YELLOW}Setting up bash configuration (fallback for $(detectShell))...${RC}"
-      if [ -f "$DOTFILES_DIR/bash/.bashrc" ]; then
-        if [ -L "$HOME/.bashrc" ] || [ -f "$HOME/.bashrc" ]; then
-          rm -f "$HOME/.bashrc"
-        fi
-        ln -sf "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
-        printf "%b\n" "${GREEN}Symlinked .bashrc from dotfiles${RC}"
-      else
-        printf "%b\n" "${YELLOW}.bashrc not found in dotfiles repo, skipping...${RC}"
-      fi
-      ;;
-    esac
+    symlinkShellConfig "$(detectShell)"
     ;;
   skip)
     printf "%b\n" "${YELLOW}Skipping shell configuration...${RC}"
@@ -354,23 +329,16 @@ symlinkConfigs() {
     ;;
   esac
 
-  # Handle .profile based on distribution and shell setup
+  # Distro-specific .profile handling
   if grep -qi alpine /etc/os-release 2>/dev/null; then
-    # Alpine: Use custom .profile from dotfiles
     if [ -f "$DOTFILES_DIR/sh/.profile" ]; then
-      if [ -L "$HOME/.profile" ] || [ -f "$HOME/.profile" ]; then
-        rm -f "$HOME/.profile"
-      fi
+      rm -f "$HOME/.profile"
       ln -sf "$DOTFILES_DIR/sh/.profile" "$HOME/.profile"
       printf "%b\n" "${GREEN}Symlinked .profile for Alpine${RC}"
-    else
-      printf "%b\n" "${YELLOW}.profile not found in dotfiles repo, skipping...${RC}"
     fi
   elif grep -qi solus /etc/os-release 2>/dev/null; then
-    # Solus: Create .profile that sources .bashrc (only if we're setting up bash)
     if [ "$SHELL_CHOICE" = "bash" ] || ([ "$SHELL_CHOICE" = "auto" ] && [ "$(detectShell)" = "bash" ]); then
       if [ -f "$HOME/.bashrc" ]; then
-        # Create a .profile that sources .bashrc
         cat >"$HOME/.profile" <<'EOF'
 # Solus-specific: Source .bashrc to avoid configuration duplication
 if [ -f "$HOME/.bashrc" ]; then
@@ -380,39 +348,33 @@ EOF
         printf "%b\n" "${GREEN}Created .profile to source .bashrc for Solus${RC}"
       fi
     fi
-  # Note: Ubuntu and other systems keep their existing .profile (which is usually good)
   fi
 
-  printf "%b\n" "${GREEN}All configuration files symlinked successfully!${RC}"
+  printf "%b\n" "${GREEN}Configuration files symlinked successfully!${RC}"
 }
 
 installStarshipAndFzf() {
   if command_exists starship; then
     printf "%b\n" "${GREEN}Starship already installed${RC}"
-    # fall through for fzf handling
   else
     if [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "moss" ]; then
-      "$ESCALATION_TOOL" "$PACKAGER" install -y starship || {
-        printf "%b\n" "${YELLOW}Failed to install starship with Solus/AeryonOS, continuing...${RC}"
-      }
+      installPkg starship || true
     fi
-    # Fallback when not in repos (e.g. rpm-ostree/Bazzite)
     if ! command_exists starship; then
       printf "%b\n" "${YELLOW}Installing starship via official install script...${RC}"
       curl -sS https://starship.rs/install.sh | sh || printf "%b\n" "${YELLOW}Starship install failed, continuing...${RC}"
     fi
   fi
 
-  # Handle apt systems separately since their fzf package is often outdated
+  # apt/nala fzf is often outdated — prefer GitHub build
   if [ "$PACKAGER" = "apt-get" ] || [ "$PACKAGER" = "nala" ]; then
-    # Check if fzf is installed via apt and remove it
     if command_exists fzf && dpkg -l | grep -q "^ii.*fzf "; then
       printf "%b\n" "${YELLOW}Removing apt-installed fzf...${RC}"
       "$ESCALATION_TOOL" "$PACKAGER" remove -y fzf
     fi
 
     if ! command_exists fzf; then
-      printf "%b\n" "${YELLOW}Installing fzf from GitHub (apt package is outdated)...${RC}"
+      printf "%b\n" "${YELLOW}Installing fzf from GitHub...${RC}"
       git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
       cd ~/.fzf && ./install --all
       printf "%b\n" "${GREEN}Fzf installed successfully!${RC}"
@@ -429,7 +391,7 @@ installZoxide() {
   fi
 
   if [ "$PACKAGER" = "apk" ]; then
-    "$ESCALATION_TOOL" "$PACKAGER" add zoxide || printf "%b\n" "${YELLOW}Failed to install zoxide, continuing...${RC}"
+    installPkg zoxide || printf "%b\n" "${YELLOW}Failed to install zoxide, continuing...${RC}"
   else
     curl -sSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh || {
       printf "%b\n" "${YELLOW}Something went wrong during zoxide install, continuing...${RC}"
@@ -437,102 +399,45 @@ installZoxide() {
   fi
 }
 
-installMise() {
-  if command_exists mise; then
-    printf "%b\n" "${GREEN}Mise already installed${RC}"
-    return
-  fi
-
-  if curl -sSL https://mise.run | sh; then
-    printf "%b\n" "${GREEN}Mise installed successfully!${RC}"
-    printf "%b\n" "${YELLOW}Please restart your shell to see the changes.${RC}"
-  else
-    printf "%b\n" "${YELLOW}Something went wrong during mise install, continuing...${RC}"
-  fi
-}
-
 backupExistingConfigs() {
   printf "%b\n" "${YELLOW}Backing up existing configurations...${RC}"
 
-  # Backup shell configs based on what we're about to install
   case "$SHELL_CHOICE" in
   bash)
-    if [ -e "$HOME/.bashrc" ] && [ ! -e "$HOME/.bashrc.bak" ]; then
-      printf "%b\n" "${YELLOW}Backing up existing .bashrc to .bashrc.bak${RC}"
-      mv "$HOME/.bashrc" "$HOME/.bashrc.bak"
-    fi
+    [ -e "$HOME/.bashrc" ] && [ ! -e "$HOME/.bashrc.bak" ] && mv "$HOME/.bashrc" "$HOME/.bashrc.bak"
     ;;
   zsh)
-    if [ -e "$HOME/.zshrc" ] && [ ! -e "$HOME/.zshrc.bak" ]; then
-      printf "%b\n" "${YELLOW}Backing up existing .zshrc to .zshrc.bak${RC}"
-      mv "$HOME/.zshrc" "$HOME/.zshrc.bak"
-    fi
+    [ -e "$HOME/.zshrc" ] && [ ! -e "$HOME/.zshrc.bak" ] && mv "$HOME/.zshrc" "$HOME/.zshrc.bak"
     ;;
   fish)
-    if [ -e "$HOME/.config/fish/config.fish" ] && [ ! -e "$HOME/.config/fish/config.fish.bak" ]; then
-      printf "%b\n" "${YELLOW}Backing up existing config.fish to config.fish.bak${RC}"
+    [ -e "$HOME/.config/fish/config.fish" ] && [ ! -e "$HOME/.config/fish/config.fish.bak" ] &&
       mv "$HOME/.config/fish/config.fish" "$HOME/.config/fish/config.fish.bak"
-    fi
     ;;
   auto)
-    # Backup based on detected shell
-    CURRENT_SHELL=$(detectShell)
-    case "$CURRENT_SHELL" in
-    bash)
-      if [ -e "$HOME/.bashrc" ] && [ ! -e "$HOME/.bashrc.bak" ]; then
-        printf "%b\n" "${YELLOW}Backing up existing .bashrc to .bashrc.bak${RC}"
-        mv "$HOME/.bashrc" "$HOME/.bashrc.bak"
-      fi
-      ;;
-    zsh)
-      if [ -e "$HOME/.zshrc" ] && [ ! -e "$HOME/.zshrc.bak" ]; then
-        printf "%b\n" "${YELLOW}Backing up existing .zshrc to .zshrc.bak${RC}"
-        mv "$HOME/.zshrc" "$HOME/.zshrc.bak"
-      fi
-      ;;
+    case "$(detectShell)" in
+    bash) [ -e "$HOME/.bashrc" ] && [ ! -e "$HOME/.bashrc.bak" ] && mv "$HOME/.bashrc" "$HOME/.bashrc.bak" ;;
+    zsh) [ -e "$HOME/.zshrc" ] && [ ! -e "$HOME/.zshrc.bak" ] && mv "$HOME/.zshrc" "$HOME/.zshrc.bak" ;;
     fish)
-      if [ -e "$HOME/.config/fish/config.fish" ] && [ ! -e "$HOME/.config/fish/config.fish.bak" ]; then
-        printf "%b\n" "${YELLOW}Backing up existing config.fish to config.fish.bak${RC}"
+      [ -e "$HOME/.config/fish/config.fish" ] && [ ! -e "$HOME/.config/fish/config.fish.bak" ] &&
         mv "$HOME/.config/fish/config.fish" "$HOME/.config/fish/config.fish.bak"
-      fi
       ;;
     esac
     ;;
   esac
 
-  # Backup .profile based on distribution and shell setup
   if grep -qi alpine /etc/os-release 2>/dev/null; then
-    # Alpine: Backup .profile before replacing with custom one
-    if [ -e "$HOME/.profile" ] && [ ! -e "$HOME/.profile.bak" ]; then
-      printf "%b\n" "${YELLOW}Backing up existing .profile to .profile.bak for Alpine${RC}"
-      mv "$HOME/.profile" "$HOME/.profile.bak"
-    fi
+    [ -e "$HOME/.profile" ] && [ ! -e "$HOME/.profile.bak" ] && mv "$HOME/.profile" "$HOME/.profile.bak"
   elif grep -qi solus /etc/os-release 2>/dev/null; then
-    # Solus: Backup .profile only if we're setting up bash
     if [ "$SHELL_CHOICE" = "bash" ] || ([ "$SHELL_CHOICE" = "auto" ] && [ "$(detectShell)" = "bash" ]); then
-      if [ -e "$HOME/.profile" ] && [ ! -e "$HOME/.profile.bak" ]; then
-        printf "%b\n" "${YELLOW}Backing up existing .profile to .profile.bak for Solus${RC}"
-        mv "$HOME/.profile" "$HOME/.profile.bak"
-      fi
+      [ -e "$HOME/.profile" ] && [ ! -e "$HOME/.profile.bak" ] && mv "$HOME/.profile" "$HOME/.profile.bak"
     fi
-  # Note: Ubuntu and other systems keep their existing .profile (no backup needed)
   fi
 
-  # Backup config files
-  if [ -e "$config_dir/starship.toml" ] && [ ! -e "$config_dir/starship.toml.bak" ]; then
-    printf "%b\n" "${YELLOW}Backing up existing starship.toml to starship.toml.bak${RC}"
+  [ -e "$config_dir/starship.toml" ] && [ ! -e "$config_dir/starship.toml.bak" ] &&
     mv "$config_dir/starship.toml" "$config_dir/starship.toml.bak"
-  fi
 
-  if [ -e "$config_dir/mise/config.toml" ] && [ ! -e "$config_dir/mise/config.toml.bak" ]; then
-    printf "%b\n" "${YELLOW}Backing up existing mise config to config.toml.bak${RC}"
-    mv "$config_dir/mise/config.toml" "$config_dir/mise/config.toml.bak"
-  fi
-
-  if [ -e "$config_dir/fastfetch/config.jsonc" ] && [ ! -e "$config_dir/fastfetch/config.jsonc.bak" ]; then
-    printf "%b\n" "${YELLOW}Backing up existing fastfetch config to config.jsonc.bak${RC}"
+  [ -e "$config_dir/fastfetch/config.jsonc" ] && [ ! -e "$config_dir/fastfetch/config.jsonc.bak" ] &&
     mv "$config_dir/fastfetch/config.jsonc" "$config_dir/fastfetch/config.jsonc.bak"
-  fi
 
   printf "%b\n" "${GREEN}Backup completed!${RC}"
 }
@@ -547,5 +452,6 @@ backupExistingConfigs
 symlinkConfigs
 installStarshipAndFzf
 installZoxide
-installMise
 
+printf "%b\n" "${CYAN}Shell setup complete (includes eza + fastfetch).${RC}"
+printf "%b\n" "${CYAN}For language toolchains, install Mise from the Development tab first.${RC}"
