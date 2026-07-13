@@ -33,6 +33,7 @@ cleanup_system() {
     "$ESCALATION_TOOL" "$PACKAGER" -y remove-orphans
     ;;
   moss)
+    "$ESCALATION_TOOL" "$PACKAGER" -y state prune --keep 10
     "$ESCALATION_TOOL" "$PACKAGER" -y cache prune
     ;;
   rpm-ostree)
@@ -45,14 +46,15 @@ cleanup_system() {
 }
 
 common_cleanup() {
+  # Skip AppImage FUSE mounts (.mount_*) — Cursor/Helium/etc. under /tmp are not traversable.
   if [ -d /var/tmp ]; then
-    "$ESCALATION_TOOL" find /var/tmp -type f -atime +5 -delete
+    "$ESCALATION_TOOL" find /var/tmp -name '.mount_*' -prune -o -type f -atime +5 -delete 2>/dev/null || true
   fi
   if [ -d /tmp ]; then
-    "$ESCALATION_TOOL" find /tmp -type f -atime +5 -delete
+    "$ESCALATION_TOOL" find /tmp -name '.mount_*' -prune -o -type f -atime +5 -delete 2>/dev/null || true
   fi
   if [ -d /var/log ]; then
-    "$ESCALATION_TOOL" find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+    "$ESCALATION_TOOL" find /var/log -type f -name "*.log" -exec truncate -s 0 {} \; 2>/dev/null || true
   fi
   if [ "$INIT_MANAGER" = "systemctl" ]; then
     "$ESCALATION_TOOL" journalctl --vacuum-time=3d
