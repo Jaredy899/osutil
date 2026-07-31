@@ -3,20 +3,17 @@
 . ../../common-script.sh
 
 installThunderBird() {
-    if ! command_exists thunderbird; then
+    if ! command_exists thunderbird && ! command_exists org.mozilla.Thunderbird; then
         printf "%b\n" "${YELLOW}Installing Thunderbird...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm thunderbird
+            pacman|apk|xbps-install|apt-get|nala|dnf|zypper|eopkg|moss|pkg)
+                installPkg thunderbird
                 ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add thunderbird
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy thunderbird
+            rpm-ostree)
+                installFlatpak org.mozilla.Thunderbird
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y thunderbird 
+                unsupportedPackager
                 ;;
         esac
     else

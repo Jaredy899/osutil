@@ -5,36 +5,11 @@
 installDependencies() {
     printf "%b\n" "${YELLOW}Installing dependencies for pkg-tui...${RC}"
     case "$PACKAGER" in
-        pacman)
-            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm fzf curl
-            ;;
-        apt-get|nala)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf curl
-            ;;
-        dnf)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf curl
-            ;;
-        zypper)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf curl
-            ;;
-        apk)
-            "$ESCALATION_TOOL" "$PACKAGER" add fzf curl
-            ;;
-        eopkg)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf curl
-            ;;
-        moss)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y fzf curl
-            ;;
-        xbps-install)
-            "$ESCALATION_TOOL" "$PACKAGER" -Sy fzf curl
-            ;;
-        rpm-ostree)
-            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive fzf curl
+        pacman|apt-get|nala|dnf|zypper|apk|eopkg|moss|xbps-install|rpm-ostree|pkg)
+            installPkg fzf curl
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
     printf "%b\n" "${GREEN}Dependencies installed.${RC}"

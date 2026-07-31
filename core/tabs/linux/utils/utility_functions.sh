@@ -8,22 +8,16 @@ setup_xrandr() {
     if ! command_exists xrandr; then
         case "$PACKAGER" in
             pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm xorg-xrandr
+                installPkg xorg-xrandr
                 ;;
             apt-get|nala)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y x11-xserver-utils
+                installPkg x11-xserver-utils
                 ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add xrandr
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy xrandr
-                ;;
-            dnf|eopkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y xrandr
+            apk|xbps-install|dnf|eopkg|moss)
+                installPkg xrandr
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y xorg-x11-server-utils
+                installPkg xorg-x11-server-utils
                 ;;
         esac
     else

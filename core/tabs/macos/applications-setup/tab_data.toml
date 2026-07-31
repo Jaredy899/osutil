@@ -305,6 +305,6 @@ task_list = "I FM"
 
 [[data]]
 name = "ZSH Prompt"
-description = "The Z shell is a Unix shell that can be used as an interactive login shell and as a command interpreter for shell scripting. Zsh is an extended Bourne shell with many improvements, including some features of Bash, ksh, and tcsh. This command installs ZSH prompt and provides basic configuration."
+description = "Installs zsh tools (always includes eza + fastfetch), starship/fzf/zoxide, and symlinks configs from your dotfiles. Mise/language toolchains are under Development."
 script = "zsh.sh"
 task_list = "I FM"

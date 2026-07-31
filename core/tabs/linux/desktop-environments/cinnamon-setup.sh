@@ -18,31 +18,30 @@ installCinnamon() {
     case "$PACKAGER" in
         apt-get|nala)
             "$ESCALATION_TOOL" "$PACKAGER" update
-            "$ESCALATION_TOOL" "$PACKAGER" install -y cinnamon-desktop-environment
+            installPkg cinnamon-desktop-environment
             installDisplayManager
             ;;
         dnf)
-            "$ESCALATION_TOOL" "$PACKAGER" group install -y cinnamon-desktop-environment
+            installGroup cinnamon-desktop-environment
             installDisplayManager
             ;;
         pacman)
             "$ESCALATION_TOOL" "$PACKAGER" -Syu --noconfirm
-            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm cinnamon
+            installPkg cinnamon
             installDisplayManager
             ;;
         zypper)
             "$ESCALATION_TOOL" "$PACKAGER" refresh
-            "$ESCALATION_TOOL" "$PACKAGER" install -y -t pattern cinnamon
+            installGroup cinnamon
             installDisplayManager
             ;;
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Su
-            "$ESCALATION_TOOL" "$PACKAGER" -y cinnamon-all
+            installPkg cinnamon-all
             installDisplayManager
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
     
@@ -54,4 +53,4 @@ installCinnamon() {
 checkEnv
 checkEscalationTool
 checkDisplayManager
-installCinnamon 
+installCinnamon

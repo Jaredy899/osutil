@@ -6,17 +6,11 @@ installOkular() {
     if ! command_exists okular; then
         printf "%b\n" "${YELLOW}Installing Okular...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm okular
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add okular
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy okular
+            pacman|apk|xbps-install|apt-get|nala|dnf|zypper|eopkg|moss|rpm-ostree|pkg)
+                installPkg okular
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y okular
+                unsupportedPackager
                 ;;
         esac
     else

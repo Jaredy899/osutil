@@ -34,42 +34,41 @@ installDepend() {
                 ncurses lib32-ncurses vulkan-icd-loader lib32-vulkan-icd-loader ocl-icd lib32-ocl-icd libva lib32-libva \
                 gst-plugins-base-libs lib32-gst-plugins-base-libs sdl2 lib32-sdl2 v4l-utils lib32-v4l-utils sqlite lib32-sqlite"
 
-            $AUR_HELPER -S --needed --noconfirm $DEPENDENCIES $DISTRO_DEPS
+            installAurPkg $DEPENDENCIES $DISTRO_DEPS
             ;;
         apt-get | nala)
             "$ESCALATION_TOOL" dpkg --add-architecture i386
             "$ESCALATION_TOOL" "$PACKAGER" update
             
-            "$ESCALATION_TOOL" "$PACKAGER" install -y $DEPENDENCIES
+            installPkg $DEPENDENCIES
             
             DISTRO_DEPS="libasound2-plugins:i386 libsdl2-2.0-0:i386 libdbus-1-3:i386 libsqlite3-0:i386 wine32:i386"
             apt-cache show software-properties-common >/dev/null 2>&1 && DISTRO_DEPS="$DISTRO_DEPS software-properties-common"
             
-            "$ESCALATION_TOOL" "$PACKAGER" install -y $DISTRO_DEPS
+            installPkg $DISTRO_DEPS
             ;;
         dnf)
             printf "%b\n" "${CYAN}Installing rpmfusion repos.${RC}"
-            "$ESCALATION_TOOL" "$PACKAGER" install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-"$(rpm -E %fedora)".noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-"$(rpm -E %fedora)".noarch.rpm -y
+            installPkg https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-"$(rpm -E %fedora)".noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-"$(rpm -E %fedora)".noarch.rpm
             "$ESCALATION_TOOL" "$PACKAGER" config-manager setopt --repo fedora-cisco-openh264 enabled=1
     
-            "$ESCALATION_TOOL" "$PACKAGER" install -y $DEPENDENCIES
+            installPkg $DEPENDENCIES
             ;;
         rpm-ostree)
             printf "%b\n" "${CYAN}Layering RPM Fusion and gaming deps (reboot to apply).${RC}"
-            "$ESCALATION_TOOL" "$PACKAGER" install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-"$(rpm -E %fedora)".noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-"$(rpm -E %fedora)".noarch.rpm
-            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive $DEPENDENCIES
+            installPkg https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-"$(rpm -E %fedora)".noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-"$(rpm -E %fedora)".noarch.rpm
+            installPkg $DEPENDENCIES
             ;;
         zypper)
-            "$ESCALATION_TOOL" "$PACKAGER" -n install $DEPENDENCIES
+            installPkg $DEPENDENCIES
             ;;
         eopkg)
             DISTRO_DEPS="libgnutls libgtk-2 libgtk-3 pulseaudio alsa-lib alsa-plugins giflib libpng openal-soft libxcomposite libxinerama ncurses vulkan ocl-icd libva sdl2 v4l-utils sqlite3"
 
-            "$ESCALATION_TOOL" "$PACKAGER" install -y $DEPENDENCIES $DISTRO_DEPS
+            installPkg $DEPENDENCIES $DISTRO_DEPS
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager ${PACKAGER}${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
 }
@@ -78,7 +77,7 @@ installAdditionalDepend() {
     case "$PACKAGER" in
         pacman)
             DISTRO_DEPS='steam lutris goverlay'
-            "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm $DISTRO_DEPS
+            installPkg $DISTRO_DEPS
             ;;
         apt-get | nala)
             printf "%b\n" "${YELLOW}Installing Lutris...${RC}"
@@ -87,35 +86,34 @@ installAdditionalDepend() {
             if [ -n "$lutris_url" ]; then
                 printf "%b\n" "${YELLOW}Downloading latest Lutris from GitHub...${RC}"
                 curl -sSLo lutris.deb "$lutris_url"
-                "$ESCALATION_TOOL" "$PACKAGER" install -y ./lutris.deb
+                installPkg ./lutris.deb
                 rm lutris.deb
                 "$ESCALATION_TOOL" "$PACKAGER" update
-                "$ESCALATION_TOOL" "$PACKAGER" install -y lutris
+                installPkg lutris
             fi
 
             printf "%b\n" "${GREEN}Lutris Installation complete.${RC}"
             printf "%b\n" "${YELLOW}Installing steam...${RC}"
-            "$ESCALATION_TOOL" "$PACKAGER" install -y steam
+            installPkg steam
             ;;
         dnf)
             DISTRO_DEPS='steam lutris'
-            "$ESCALATION_TOOL" "$PACKAGER" install -y $DISTRO_DEPS
+            installPkg $DISTRO_DEPS
             ;;
         rpm-ostree)
             DISTRO_DEPS='steam lutris'
-            "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive $DISTRO_DEPS
+            installPkg $DISTRO_DEPS
             ;;
         zypper)
             DISTRO_DEPS='lutris'
-            "$ESCALATION_TOOL" "$PACKAGER" -n install $DISTRO_DEPS
+            installPkg $DISTRO_DEPS
             ;;
         eopkg)
             DISTRO_DEPS='steam lutris'
-            "$ESCALATION_TOOL" "$PACKAGER" install -y $DISTRO_DEPS
+            installPkg $DISTRO_DEPS
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager ${PACKAGER}${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
 }

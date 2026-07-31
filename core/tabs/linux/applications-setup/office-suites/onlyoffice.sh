@@ -4,22 +4,20 @@
 
 installOnlyOffice() {
     if ! command_exists org.onlyoffice.desktopeditors && ! command_exists onlyoffice-desktopeditors; then
-        printf "%b\n" "${YELLOW}Installing Only Office..${RC}."
+        printf "%b\n" "${YELLOW}Installing Only Office...${RC}"
         case "$PACKAGER" in
             apt-get|nala)
                 curl -O https://download.onlyoffice.com/install/desktop/editors/linux/onlyoffice-desktopeditors_amd64.deb
-                "$ESCALATION_TOOL" "$PACKAGER" install -y ./onlyoffice-desktopeditors_amd64.deb
-                ;;
-            zypper|dnf|xbps-install|eopkg|apk)
-                checkFlatpak
-                "$ESCALATION_TOOL" flatpak install -y flathub org.onlyoffice.desktopeditors
+                installPkg ./onlyoffice-desktopeditors_amd64.deb
                 ;;
             pacman)
-                "$AUR_HELPER" -S --needed --noconfirm onlyoffice
+                installAurPkg onlyoffice
+                ;;
+            zypper|dnf|xbps-install|eopkg|apk|moss|rpm-ostree|pkg)
+                installFlatpak org.onlyoffice.desktopeditors
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else

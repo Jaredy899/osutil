@@ -7,17 +7,11 @@ installKitty() {
     if ! command_exists kitty; then
         printf "%b\n" "${YELLOW}Installing Kitty...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm kitty
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add kitty
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy kitty
+            pacman|apk|xbps-install|apt-get|nala|dnf|zypper|eopkg|moss|rpm-ostree|pkg)
+                installPkg kitty
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y kitty
+                unsupportedPackager
                 ;;
         esac
     else

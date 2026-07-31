@@ -17,7 +17,7 @@ update() {
         y|Y)
             printf "%b\n" "${CYAN}Preparing to update to $next_version...${RC}"
         
-            if ! "$ESCALATION_TOOL" "$PACKAGER" install dnf-plugin-system-upgrade -y; then
+            if ! installPkg dnf-plugin-system-upgrade; then
                 printf "%b\n" "${RED}Failed to install dnf-plugin-system-upgrade.${RC}"
                 exit 1
             fi
@@ -55,8 +55,7 @@ post_upgrade() {
             "$ESCALATION_TOOL" "$PACKAGER" distro-sync -y
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager: $PACKAGER.${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
 }

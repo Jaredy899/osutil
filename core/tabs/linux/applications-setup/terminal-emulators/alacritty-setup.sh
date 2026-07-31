@@ -5,19 +5,13 @@
 
 installAlacritty() {
     if ! command_exists alacritty; then
-    printf "%b\n" "${YELLOW}Installing Alacritty...${RC}"
+        printf "%b\n" "${YELLOW}Installing Alacritty...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm alacritty
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add alacritty
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy alacritty
+            pacman|apk|xbps-install|apt-get|nala|dnf|zypper|eopkg|moss|rpm-ostree|pkg)
+                installPkg alacritty
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y alacritty
+                unsupportedPackager
                 ;;
         esac
     else

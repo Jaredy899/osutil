@@ -7,11 +7,10 @@ installWpsOffice() {
         printf "%b\n" "${YELLOW}Installing WPS Office...${RC}"
         case "$PACKAGER" in
             pacman)
-                "$AUR_HELPER" -S --needed --noconfirm wps-office
+                installAurPkg wps-office
                 ;;
             *)
-                checkFlatpak
-                "$ESCALATION_TOOL" flatpak install flathub com.wps.Office
+                installFlatpak com.wps.Office
                 ;;
         esac
     else

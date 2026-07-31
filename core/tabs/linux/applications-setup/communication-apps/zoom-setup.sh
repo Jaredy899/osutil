@@ -7,11 +7,10 @@ installZoom() {
         printf "%b\n" "${YELLOW}Installing Zoom...${RC}"
         case "$PACKAGER" in
             pacman)
-                "$AUR_HELPER" -S --needed --noconfirm zoom
+                installAurPkg zoom
                 ;;
             *)
-                checkFlatpak
-                "$ESCALATION_TOOL" flatpak install -y flathub us.zoom.Zoom
+                installFlatpak us.zoom.Zoom
                 ;;
         esac
     else

@@ -10,17 +10,11 @@ install_package() {
     if ! command_exists "$PACKAGE"; then
         # shellcheck disable=SC2153
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm "$PACKAGE"
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add "$PACKAGE"
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy "$PACKAGE"
+            pacman|apk|xbps-install|apt-get|nala|dnf|zypper|eopkg|moss|rpm-ostree|pkg)
+                installPkg "$PACKAGE"
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y "$PACKAGE"
+                unsupportedPackager
                 ;;
         esac
     else

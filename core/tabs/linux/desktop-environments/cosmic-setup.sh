@@ -24,8 +24,8 @@ installCOSMIC() {
             printf "%b" "${YELLOW}Choice (1-2) [1]: ${RC}"
             read -r choice
             case "$choice" in
-                2) "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm cosmic ;;
-                *) "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm cosmic-session ;;
+                2) installPkg cosmic ;;
+                *) installPkg cosmic-session ;;
             esac
             installDisplayManager
             ;;
@@ -41,11 +41,10 @@ installCOSMIC() {
                 3) PKGSET="pkgset-aeryn-cosmic-full" ;;
                 *) PKGSET="pkgset-aeryn-cosmic-recommended" ;;
             esac
-            "$ESCALATION_TOOL" moss install -y "$PKGSET"
+            installPkg "$PKGSET"
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager for COSMIC: $PACKAGER${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
 

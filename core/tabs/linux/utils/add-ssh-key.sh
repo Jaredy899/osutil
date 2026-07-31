@@ -13,7 +13,7 @@ setup_ssh() {
     case "$PACKAGER" in
         apt-get|nala)
             if ! command_exists "openssh-server"; then
-                "$ESCALATION_TOOL" "$PACKAGER" install -y openssh-server
+                installPkg openssh-server
             else
                 printf "%b\n" "${GREEN}openssh-server is already installed.${RC}"
             fi
@@ -21,7 +21,7 @@ setup_ssh() {
             ;;
         pacman)
             if ! command_exists "openssh"; then
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm openssh
+                installPkg openssh
             else
                 printf "%b\n" "${GREEN}openssh is already installed.${RC}"
             fi
@@ -29,7 +29,7 @@ setup_ssh() {
             ;;
         apk)
             if ! command_exists "openssh"; then
-                "$ESCALATION_TOOL" "$PACKAGER" add openssh
+                installPkg openssh
             else
                 printf "%b\n" "${GREEN}openssh is already installed.${RC}"
             fi
@@ -37,7 +37,7 @@ setup_ssh() {
             ;;
         xbps-install)
             if ! command_exists "openssh"; then
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy openssh
+                installPkg openssh
             else
                 printf "%b\n" "${GREEN}openssh is already installed.${RC}"
             fi
@@ -45,7 +45,7 @@ setup_ssh() {
             ;;
         *)
             if ! command_exists "openssh-server"; then
-                "$ESCALATION_TOOL" "$PACKAGER" install -y openssh-server
+                installPkg openssh-server
             else
                 printf "%b\n" "${GREEN}openssh-server is already installed.${RC}"
             fi

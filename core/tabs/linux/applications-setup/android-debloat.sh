@@ -7,23 +7,13 @@ install_adb() {
         printf "%b\n" "${YELLOW}Installing ADB...${RC}."
         case "$PACKAGER" in
             apt-get|nala)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y android-sdk-platform-tools
+                installPkg android-sdk-platform-tools
                 ;;
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm android-tools
-                ;;
-            dnf|zypper|moss|rpm-ostree)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y android-tools
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add android-tools
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy android-tools
+            pacman|dnf|zypper|moss|rpm-ostree|apk|xbps-install)
+                installPkg android-tools
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else
@@ -40,9 +30,9 @@ install_universal_android_debloater() {
     else
         printf "%b\n" "${GREEN}Universal Android Debloater is already installed. Run 'uad' command to execute.${RC}"
     fi
-}                   
+}
 
 checkEnv
 checkEscalationTool
 install_adb
-install_universal_android_debloater 
+install_universal_android_debloater

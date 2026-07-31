@@ -7,11 +7,11 @@ installYazi() {
     printf "%b\n" "${YELLOW}Installing Yazi...${RC}"
     case "$PACKAGER" in
     pacman)
-      "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm yazi ffmpeg 7zip jq poppler fd ripgrep fzf zoxide resvg imagemagick
+      installPkg yazi ffmpeg 7zip jq poppler fd ripgrep fzf zoxide resvg imagemagick
       ;;
     apt-get|nala)
       "$ESCALATION_TOOL" "$PACKAGER" update
-      "$ESCALATION_TOOL" "$PACKAGER" install -y ffmpeg 7zip jq poppler-utils fd-find ripgrep imagemagick # fzf and zoxide will be installed from shell-setup
+      installPkg ffmpeg 7zip jq poppler-utils fd-find ripgrep imagemagick # fzf and zoxide will be installed from shell-setup
 
       case "$ARCH" in
       x86_64)
@@ -34,32 +34,32 @@ installYazi() {
       rm "/tmp/yazi.zip"
       ;;
     zypper)
-      "$ESCALATION_TOOL" "$PACKAGER" install -y yazi ffmpeg 7zip jq poppler-tools fd ripgrep fzf zoxide ImageMagick
+      installPkg yazi ffmpeg 7zip jq poppler-tools fd ripgrep fzf zoxide ImageMagick
       ;;
     apk)
-      "$ESCALATION_TOOL" "$PACKAGER" add yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
+      installPkg yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide imagemagick
       ;;
     dnf)
       # Try COPR repository first
       if ! "$ESCALATION_TOOL" dnf copr enable lihaohong/yazi -y; then
         printf "%b\n" "${YELLOW}COPR repository not available, installing dependencies only...${RC}"
-        "$ESCALATION_TOOL" "$PACKAGER" install -y ffmpeg p7zip jq poppler-utils fd-find ripgrep fzf zoxide ImageMagick
+        installPkg ffmpeg p7zip jq poppler-utils fd-find ripgrep fzf zoxide ImageMagick
         printf "%b\n" "${YELLOW}Please install Yazi manually from GitHub releases${RC}"
         return 0
       fi
-      "$ESCALATION_TOOL" "$PACKAGER" install -y yazi ffmpeg p7zip jq poppler-utils fd-find ripgrep fzf zoxide ImageMagick
+      installPkg yazi ffmpeg p7zip jq poppler-utils fd-find ripgrep fzf zoxide ImageMagick
       ;;
     eopkg)
-      "$ESCALATION_TOOL" "$PACKAGER" install -y yazi ffmpeg 7zip jq poppler-utils fd ripgrep fzf zoxide resvg imagemagick
+      installPkg yazi ffmpeg 7zip jq poppler-utils fd ripgrep fzf zoxide resvg imagemagick
       ;;
     xbps-install)
-      "$ESCALATION_TOOL" "$PACKAGER" -Sy yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide resvg ImageMagick
+      installPkg yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide resvg ImageMagick
       ;;
     moss)
-      "$ESCALATION_TOOL" moss -y install yazi
+      installPkg yazi
       ;;
     *)
-      "$ESCALATION_TOOL" "$PACKAGER" install -y yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide ImageMagick
+      installPkg yazi ffmpeg p7zip jq poppler-utils fd ripgrep fzf zoxide ImageMagick
       ;;
     esac
     printf "%b\n" "${GREEN}Yazi installed successfully!${RC}"

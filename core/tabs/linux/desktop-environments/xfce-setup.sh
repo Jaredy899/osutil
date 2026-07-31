@@ -18,26 +18,26 @@ installXFCE() {
     case "$PACKAGER" in
         apt-get|nala)
             "$ESCALATION_TOOL" "$PACKAGER" update
-            "$ESCALATION_TOOL" "$PACKAGER" install -y xfce4 xfce4-goodies
+            installPkg xfce4 xfce4-goodies
             installDisplayManager
             ;;
         dnf)
-            "$ESCALATION_TOOL" "$PACKAGER" group install -y xfce-desktop-environment
+            installGroup xfce-desktop-environment
             installDisplayManager
             ;;
         pacman)
             "$ESCALATION_TOOL" "$PACKAGER" -Syu --noconfirm
-            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm xfce4 xfce4-goodies
+            installPkg xfce4 xfce4-goodies
             installDisplayManager
             ;;
         zypper)
             "$ESCALATION_TOOL" "$PACKAGER" refresh
-            "$ESCALATION_TOOL" "$PACKAGER" install -y patterns-xfce-xfce
+            installGroup patterns-xfce-xfce
             installDisplayManager
             ;;
         eopkg)
             "$ESCALATION_TOOL" "$PACKAGER" update-repo
-            "$ESCALATION_TOOL" "$PACKAGER" install -y xfce4-session xfce4-panel
+            installPkg xfce4-session xfce4-panel
             installDisplayManager
             ;;
         apk)
@@ -45,12 +45,11 @@ installXFCE() {
             ;;
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Su
-            "$ESCALATION_TOOL" "$PACKAGER" -y xfce4
+            installPkg xfce4
             installDisplayManager
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
     
@@ -66,4 +65,4 @@ checkEscalationTool
 if [ "$PACKAGER" != "apk" ]; then
     checkDisplayManager
 fi
-installXFCE 
+installXFCE

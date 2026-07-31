@@ -6,17 +6,11 @@ installEvince() {
     if ! command_exists evince; then
         printf "%b\n" "${YELLOW}Installing Evince...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm evince
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add evince
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy evince
+            pacman|apk|xbps-install|apt-get|nala|dnf|zypper|eopkg|moss|rpm-ostree|pkg)
+                installPkg evince
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y evince
+                unsupportedPackager
                 ;;
         esac
     else

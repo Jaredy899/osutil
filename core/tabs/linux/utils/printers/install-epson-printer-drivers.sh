@@ -6,23 +6,24 @@
 installEpsonPrinterDriver() {
     clear
 
+    printf "%b\n" "${YELLOW}Installing Epson printer drivers...${RC}"
     case "$PACKAGER" in
-    pacman)
-        "$AUR_HELPER" -S --noconfirm epson-inkjet-printer-escpr
-        ;;
-    apt-get|nala)
-        "$ESCALATION_TOOL" "$PACKAGER" install -y printer-driver-escpr
-        ;;
-    dnf|eopkg)
-        "$ESCALATION_TOOL" "$PACKAGER" install -y epson-inkjet-printer-escpr
-        ;;
-    xbps-install) 
-        "$ESCALATION_TOOL" "$PACKAGER" -Sy epson-inkjet-printer-escpr
-        ;;
-    *)
-        printf "%b\n" "${RED}Unsupported package manager ${PACKAGER}${RC}"
-        exit 1
-        ;;
+        pacman)
+            installAurPkg epson-inkjet-printer-escpr
+            ;;
+        apt-get|nala)
+            installPkg printer-driver-escpr
+            ;;
+        dnf|eopkg|xbps-install)
+            installPkg epson-inkjet-printer-escpr
+            ;;
+        moss|rpm-ostree|apk|zypper|pkg)
+            printf "%b\n" "${YELLOW}No native Epson ESC/P-R package for ${PACKAGER}.${RC}"
+            printf "%b\n" "${CYAN}CUPS is installed; add the printer via CUPS/system settings or vendor drivers.${RC}"
+            ;;
+        *)
+            unsupportedPackager
+            ;;
     esac
 }
 

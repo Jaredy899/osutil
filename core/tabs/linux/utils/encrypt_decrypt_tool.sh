@@ -7,24 +7,11 @@ printf "%b\n" "${YELLOW}Ensuring OpenSSL is installed...${RC}"
 # Install OpenSSL
 if ! command_exists openssl; then
     case "$PACKAGER" in
-        pacman)
-            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm --needed openssl
-            ;;
-        apt-get|nala|dnf|eopkg)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y openssl
-            ;;
-        zypper)
-            "$ESCALATION_TOOL" "$PACKAGER" install openssl
-            ;;
-        apk)
-            "$ESCALATION_TOOL" "$PACKAGER" add openssl
-            ;;
-        xbps-install)
-            "$ESCALATION_TOOL" "$PACKAGER" -Sy openssl
+        pacman|apt-get|nala|dnf|eopkg|zypper|apk|xbps-install|moss|rpm-ostree|pkg)
+            installPkg openssl
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
 fi

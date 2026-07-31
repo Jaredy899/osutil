@@ -6,7 +6,7 @@ LIBVA_DIR="$HOME/.local/share/linutil/libva"
 MPV_CONF="$HOME/.config/mpv/mpv.conf"
 
 installDeps() {
-    "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm base-devel dkms ninja meson git
+    installPkg base-devel dkms ninja meson git
 
     installed_kernels=$("$PACKAGER" -Q | grep -E '^linux(| |-rt|-rt-lts|-hardened|-zen|-lts)[^-headers]' | cut -d ' ' -f 1)
 
@@ -14,7 +14,7 @@ installDeps() {
         header="${kernel}-headers"
         printf "%b\n" "${CYAN}Installing headers for $kernel...${RC}"
 
-        if ! "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm "$header" ; then
+        if ! installPkg "$header" ; then
             printf "%b\n" "${RED}Failed to install headers.${RC}"
             printf "%b" "${YELLOW}Do you want to continue anyway? [y/N]: ${RC}"
             read -r continue_anyway
@@ -66,7 +66,7 @@ setupHardwareAcceleration() {
         return
     fi
 
-    "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm libva-nvidia-driver
+    installPkg libva-nvidia-driver
 
     mkdir -p "$HOME/.local/share/linutil"
     if [ -d "$LIBVA_DIR" ]; then
@@ -102,11 +102,11 @@ installDriver() {
     if checkNvidiaHardware && promptUser "install nvidia's open source drivers"; then
         printf "%b\n" "${YELLOW}Installing nvidia open source driver...${RC}"
         installDeps
-        "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm nvidia-open-dkms nvidia-utils
+        installPkg nvidia-open-dkms nvidia-utils
     else
         printf "%b\n" "${YELLOW}Installing nvidia proprietary driver...${RC}"
         installDeps
-        "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm nvidia-dkms nvidia-utils
+        installPkg nvidia-dkms nvidia-utils
     fi
 
     if checkIntelHardware; then

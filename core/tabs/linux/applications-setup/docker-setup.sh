@@ -25,17 +25,11 @@ install_docker() {
     if ! command_exists docker; then
         printf "%b\n" "${YELLOW}Installing Docker...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm --needed docker docker-compose
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy docker docker-compose
+            pacman|xbps-install|eopkg|moss)
+                installPkg docker docker-compose
                 ;;
             zypper)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y docker docker-compose docker-compose-switch
-                ;;
-            eopkg|moss)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y docker docker-compose
+                installPkg docker docker-compose docker-compose-switch
                 ;;
             apk)
                 "$ESCALATION_TOOL" apk add --no-cache --update-cache \
@@ -47,13 +41,13 @@ install_docker() {
                     "$ESCALATION_TOOL" dnf remove -y docker docker-client docker-client-latest \
                         docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine
                     "$ESCALATION_TOOL" dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+                    installPkg docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
                 else
                     curl -fsSL https://get.docker.com | "$ESCALATION_TOOL" sh
                 fi
                 ;;
             rpm-ostree)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y docker-cli docker-compose
+                installPkg docker-cli docker-compose
                 ;;
             *)
                 curl -fsSL https://get.docker.com | "$ESCALATION_TOOL" sh

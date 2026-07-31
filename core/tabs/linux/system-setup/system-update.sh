@@ -5,7 +5,7 @@
 updateSystem() {
     case "$PACKAGER" in
         pacman)
-            "$ESCALATION_TOOL" "$PACKAGER" -Sy --noconfirm --needed archlinux-keyring
+            installPkg archlinux-keyring
             "$AUR_HELPER" -Su --noconfirm
             ;;
         apt-get|nala)
@@ -31,8 +31,7 @@ updateSystem() {
             "$ESCALATION_TOOL" "$PACKAGER" -y sync
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
 }

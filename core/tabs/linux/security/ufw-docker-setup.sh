@@ -8,7 +8,7 @@ installUfwDocker() {
         
         case "$PACKAGER" in
             pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm ufw-docker
+                installPkg ufw-docker
                 ;;
             *)
                 # Download ufw-docker script for other distributions

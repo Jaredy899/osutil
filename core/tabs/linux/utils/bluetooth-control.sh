@@ -9,16 +9,16 @@ setupBluetooth() {
     if ! command_exists bluetoothctl; then
         case "$PACKAGER" in
             pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm bluez bluez-utils
+                installPkg bluez bluez-utils
                 ;;
             apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add bluez
+                installPkg bluez
                 ;;
             xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy bluez
+                installPkg bluez
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y bluez
+                installPkg bluez
                 ;;
         esac
     else

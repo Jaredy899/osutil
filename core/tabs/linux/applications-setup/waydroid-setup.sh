@@ -14,27 +14,27 @@ installWaydroid() {
         printf "%b\n" "${YELLOW}Installing Waydroid...${RC}"
         case "$PACKAGER" in
             pacman)
-                "$AUR_HELPER" -S --needed --noconfirm waydroid
+                installAurPkg waydroid
 
                 if ! command_exists dkms; then
-                    "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm dkms
+                    installPkg dkms
                 fi
 
                 installed_kernels=$("$PACKAGER" -Q | grep -E '^linux(| |-rt|-rt-lts|-hardened|-zen|-lts)[^-headers]' | cut -d ' ' -f 1)
                 for kernel in $installed_kernels; do
                     header="${kernel}-headers"
                     printf "%b\n" "${CYAN}Installing headers for $kernel...${RC}"
-                    "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm "$header"
+                    installPkg "$header"
                 done
 
-                "$AUR_HELPER" -S --needed --noconfirm binder_linux-dkms
+                installAurPkg binder_linux-dkms
                 "$ESCALATION_TOOL" modprobe binder-linux device=binder,hwbinder,vndbinder
                 ;;
-            apt-get | nala)
+            apt-get|nala)
                 curl https://repo.waydro.id | "$ESCALATION_TOOL" sh
-                "$ESCALATION_TOOL" "$PACKAGER" install -y waydroid
+                installPkg waydroid
                 if command_exists dkms; then
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y git
+                    installPkg git
                     mkdir -p "$HOME/.local/share/"
                     git clone https://github.com/choff/anbox-modules.git "$HOME/.local/share/anbox-modules"
                     cd "$HOME/.local/share/anbox-modules"
@@ -47,9 +47,9 @@ installWaydroid() {
                 fi
                 ;;
             dnf)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y waydroid
+                installPkg waydroid
                 if command_exists dkms; then
-                    "$ESCALATION_TOOL" "$PACKAGER" install -y git
+                    installPkg git
                     mkdir -p "$HOME/.local/share/"
                     git clone https://github.com/choff/anbox-modules.git "$HOME/.local/share/anbox-modules"
                     cd "$HOME/.local/share/anbox-modules"
@@ -62,11 +62,10 @@ installWaydroid() {
                 fi
                 ;;
             moss|rpm-ostree)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y waydroid
+                installPkg waydroid
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else

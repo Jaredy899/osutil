@@ -5,7 +5,7 @@
 setupPorts() {
   # Check if git is available
   if ! command_exists git; then
-    "$ESCALATION_TOOL" "$PACKAGER" install -y git
+    installPkg git
     if ! command_exists git; then
       printf "%b\n" "${RED}Failed to install git. Cannot proceed.${RC}"
       exit 1

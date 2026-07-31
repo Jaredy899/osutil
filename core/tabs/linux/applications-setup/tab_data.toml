@@ -39,6 +39,18 @@ description = "Zoom is a widely-used video conferencing platform that allows use
 script = "communication-apps/zoom-setup.sh"
 task_list = "I"
 
+[[data.entries]]
+name = "Jitsi Meet"
+description = "Jitsi Meet is an open-source video conferencing solution for secure meetings without requiring an account."
+script = "communication-apps/jitsi-setup.sh"
+task_list = "I FI"
+
+[[data.entries]]
+name = "ZapZap"
+description = "ZapZap is an unofficial WhatsApp desktop client for Linux."
+script = "communication-apps/zapzap-setup.sh"
+task_list = "I FI"
+
 [[data]]
 name = "Developer Tools"
 
@@ -370,6 +382,30 @@ script = "docker-setup.sh"
 task_list = "I SS"
 
 [[data]]
+name = "Android Debloat"
+description = "Installs ADB and Universal Android Debloater to remove bloatware from Android devices."
+script = "android-debloat.sh"
+task_list = "I"
+
+[[data]]
+name = "auto-cpufreq"
+description = "Automatic CPU speed and power optimizer for Linux."
+script = "auto-cpufreq.sh"
+task_list = "I SS"
+
+[[data]]
+name = "GRUB Theme"
+description = "Install bootloader themes from Chris Titus Tech's Top-5-Bootloader-Themes."
+script = "grub-theme.sh"
+task_list = "I FM"
+
+[[data]]
+name = "Waydroid"
+description = "Container-based approach to boot a full Android system on Linux (not compatible with NVIDIA GPUs)."
+script = "waydroid-setup.sh"
+task_list = "I SS"
+
+[[data]]
 name = "eza"
 description = "A modern replacement for ls."
 script = "eza.sh"
@@ -422,9 +458,14 @@ description = "Rofi is a window switcher, run dialog, ssh-launcher and dmenu rep
 script = "rofi-setup.sh"
 task_list = "I FM"
 
+[[data.preconditions]]
+matches = false
+data = "command_exists"
+values = ["moss", "rpm-ostree", "pkg"]
+
 [[data]]
 name = "Shell Setup"
-description = "Sets up aliases and shell features."
+description = "Installs shell tools (always includes eza + fastfetch), starship/fzf/zoxide, and symlinks configs from your dotfiles. Mise/language toolchains are under Development."
 script = "shell-setup.sh"
 task_list = "I FM"
 

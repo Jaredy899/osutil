@@ -7,7 +7,7 @@ CONFIG_BASE_URL="${CONFIG_BASE_URL:-https://raw.githubusercontent.com/Jaredy899/
 
 installDepend() {
     printf "%b\n" "${YELLOW}Installing required packages...${RC}"
-    "$ESCALATION_TOOL" "$PACKAGER" install -y curl zoxide fastfetch starship bat fzf
+    installPkg curl zoxide fastfetch starship bat fzf
 }
 
 downloadProfile() {

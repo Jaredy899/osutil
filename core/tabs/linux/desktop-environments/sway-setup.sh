@@ -18,40 +18,39 @@ installSway() {
     case "$PACKAGER" in
         apt-get|nala)
             "$ESCALATION_TOOL" "$PACKAGER" update
-            "$ESCALATION_TOOL" "$PACKAGER" install -y sway swaylock swayidle waybar wofi mako
+            installPkg sway swaylock swayidle waybar wofi mako
             installDisplayManager
             ;;
         dnf)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y sway swaylock swayidle waybar wofi mako
+            installPkg sway swaylock swayidle waybar wofi mako
             installDisplayManager
             ;;
         pacman)
             "$ESCALATION_TOOL" "$PACKAGER" -Syu --noconfirm
-            "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm sway swaylock swayidle waybar wofi mako
+            installPkg sway swaylock swayidle waybar wofi mako
             installDisplayManager
             ;;
         zypper)
             "$ESCALATION_TOOL" "$PACKAGER" refresh
-            "$ESCALATION_TOOL" "$PACKAGER" install -y sway swaylock swayidle waybar wofi mako
+            installPkg sway swaylock swayidle waybar wofi mako
             installDisplayManager
             ;;
         eopkg)
             "$ESCALATION_TOOL" "$PACKAGER" update-repo
-            "$ESCALATION_TOOL" "$PACKAGER" install -y sway swaylock swayidle waybar wofi mako
+            installPkg sway swaylock swayidle waybar wofi mako
             installDisplayManager
             ;;
         xbps-install)
             "$ESCALATION_TOOL" "$PACKAGER" -Su
-            "$ESCALATION_TOOL" "$PACKAGER" -y sway swaylock swayidle waybar wofi mako
+            installPkg sway swaylock swayidle waybar wofi mako
             installDisplayManager
             ;;
         moss)
-            "$ESCALATION_TOOL" moss install -y pkgset-aeryn-sway-minimal branding-aeryn-sway
+            installPkg pkgset-aeryn-sway-minimal branding-aeryn-sway
             installDisplayManager
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager: $PACKAGER${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
     

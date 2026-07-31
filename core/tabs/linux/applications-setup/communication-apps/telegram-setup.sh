@@ -3,23 +3,20 @@
 . ../../common-script.sh
 
 installTelegram() {
-    if ! command_exists telegram-desktop; then
+    if ! command_exists telegram-desktop && ! command_exists org.telegram.desktop && ! command_exists telegram; then
         printf "%b\n" "${YELLOW}Installing Telegram...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm telegram-desktop 
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add telegram-desktop
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy telegram-desktop
+            pacman|apk|xbps-install|apt-get|nala|dnf|zypper)
+                installPkg telegram-desktop
                 ;;
             eopkg)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y telegram
+                installPkg telegram
+                ;;
+            moss|rpm-ostree|pkg)
+                installFlatpak org.telegram.desktop
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y telegram-desktop 
+                unsupportedPackager
                 ;;
         esac
     else

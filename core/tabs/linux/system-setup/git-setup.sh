@@ -6,17 +6,11 @@ checkGitInstalled() {
     if ! command_exists git; then
         printf "%b\n" "${YELLOW}Git is not installed. Installing git...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm git
-                ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add git
-                ;;
-            xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy git
+            pacman|apk|xbps-install|apt-get|nala|dnf|zypper|eopkg|moss|rpm-ostree|pkg)
+                installPkg git
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y git
+                unsupportedPackager
                 ;;
         esac
         printf "%b\n" "${GREEN}Git installed successfully.${RC}"
@@ -29,20 +23,14 @@ checkGhInstalled() {
     if ! command_exists gh; then
         printf "%b\n" "${YELLOW}GitHub CLI (gh) is not installed. Installing gh...${RC}"
         case "$PACKAGER" in
-            pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm gh
+            pacman|xbps-install|apt-get|nala|dnf|zypper|rpm-ostree|pkg)
+                installPkg gh
                 ;;
-            apk)
-                "$ESCALATION_TOOL" "$PACKAGER" add github-cli
-                ;;
-            eopkg|moss)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y github-cli
-                ;;
-             xbps-install)
-                "$ESCALATION_TOOL" "$PACKAGER" -Sy gh
+            apk|eopkg|moss)
+                installPkg github-cli
                 ;;
             *)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y gh
+                unsupportedPackager
                 ;;
         esac
         printf "%b\n" "${GREEN}GitHub CLI installed successfully.${RC}"

@@ -30,12 +30,12 @@ installDevTools() {
     printf "%b\n" "${CYAN}=== Installing Solus packaging development tools ===${RC}"
     case "$PACKAGER" in
         eopkg)
-            "$ESCALATION_TOOL" "$PACKAGER" install -y $SOLUS_DEV_PACKAGES
+            # shellcheck disable=SC2086
+            installPkg $SOLUS_DEV_PACKAGES
             printf "%b\n" "${GREEN}Development tools installed.${RC}"
             ;;
         *)
-            printf "%b\n" "${RED}Unsupported package manager for Solus packaging: $PACKAGER${RC}"
-            exit 1
+            unsupportedPackager
             ;;
     esac
 }

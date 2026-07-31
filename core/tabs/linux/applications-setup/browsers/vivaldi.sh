@@ -7,35 +7,39 @@ installVivaldi() {
         printf "%b\n" "${YELLOW}Installing Vivaldi...${RC}"
         case "$PACKAGER" in
             apt-get|nala)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y curl
+                installPkg curl
                 "$ESCALATION_TOOL" curl -fsSL https://repo.vivaldi.com/archive/linux_signing_key.pub | gpg --dearmor | sudo dd of=/usr/share/keyrings/vivaldi-browser.gpg
                 "$ESCALATION_TOOL" echo "deb [signed-by=/usr/share/keyrings/vivaldi-browser.gpg arch=$(dpkg --print-architecture)] https://repo.vivaldi.com/archive/deb/ stable main" | sudo dd of=/etc/apt/sources.list.d/vivaldi-archive.list
                 "$ESCALATION_TOOL" "$PACKAGER" update
-                "$ESCALATION_TOOL" "$PACKAGER" install -y vivaldi-stable
+                installPkg vivaldi-stable
                 ;;
             dnf)
-                "$ESCALATION_TOOL" "$PACKAGER" install -y dnf-plugins-core
+                installPkg dnf-plugins-core
                 dnf_version=$(dnf --version | head -n 1 | cut -d '.' -f 1)
                 if [ "$dnf_version" -eq 4 ]; then
                     "$ESCALATION_TOOL" "$PACKAGER" config-manager --add-repo https://repo.vivaldi.com/stable/vivaldi-fedora.repo
                 else
                     "$ESCALATION_TOOL" "$PACKAGER" config-manager addrepo --from-repofile=https://repo.vivaldi.com/stable/vivaldi-fedora.repo
                 fi
-                "$ESCALATION_TOOL" "$PACKAGER" install -y vivaldi-stable
+                installPkg vivaldi-stable
                 ;;
             zypper)
                 "$ESCALATION_TOOL" zypper ar https://repo.vivaldi.com/archive/vivaldi-suse.repo
                 "$ESCALATION_TOOL" zypper --non-interactive --gpg-auto-import-keys in vivaldi-stable
                 ;;
             pacman)
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm vivaldi
+                installPkg vivaldi
                 ;;
             eopkg)
-                "$ESCALATION_TOOL" "$PACKAGER" -y install vivaldi-stable
+                installPkg vivaldi-stable
+                ;;
+            moss|rpm-ostree|apk|xbps-install|pkg)
+                # No official Flatpak; fall back to Chromium Flatpak
+                printf "%b\n" "${YELLOW}Vivaldi has no package for ${PACKAGER}; installing Chromium Flatpak instead.${RC}"
+                installFlatpak org.chromium.Chromium
                 ;;
             *)
-                printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-                exit 1
+                unsupportedPackager
                 ;;
         esac
     else

@@ -7,11 +7,10 @@ installZapZap() {
   printf "%b\n" "${YELLOW}Installing Zap-Zap...${RC}"
     case "$PACKAGER" in
       pacman)
-        "$AUR_HELPER" -S --needed --noconfirm zapzap
+        installAurPkg zapzap
         ;;
       *)
-        checkFlatpak
-        "$ESCALATION_TOOL" flatpak install flathub com.rtosta.zapzap
+        installFlatpak com.rtosta.zapzap
         ;;
     esac
   else
@@ -20,4 +19,5 @@ installZapZap() {
 }
 
 checkEnv
+checkAURHelper
 installZapZap

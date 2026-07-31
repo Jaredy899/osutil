@@ -7,16 +7,15 @@ installTermius() {
         printf "%b\n" "${YELLOW}Installing Termius...${RC}"
         case "$PACKAGER" in
             pacman)
-                "$AUR_HELPER" -S --needed --noconfirm termius
+                installAurPkg termius
                 ;;
             apt-get|nala)
                 "$ESCALATION_TOOL" wget -O termius.deb https://www.termius.com/download/linux/Termius.deb
-                "$ESCALATION_TOOL" "$PACKAGER" install -y ./termius.deb
+                installPkg ./termius.deb
                 "$ESCALATION_TOOL" rm termius.deb
                 ;;
             *)
-                checkFlatpak
-                "$ESCALATION_TOOL" flatpak install flathub com.termius.Termius
+                installFlatpak com.termius.Termius
                 ;;
         esac
     else

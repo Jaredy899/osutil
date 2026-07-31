@@ -14,10 +14,10 @@ MACOS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 # This ensures relative paths in sourced scripts work correctly
 # Returns 0 on success, 1 on failure, but doesn't exit the script
 source_script() {
-    local script_path="$1"
-    local script_dir="$(cd "$(dirname "$script_path")" && pwd)"
-    local script_name="$(basename "$script_path")"
-    local old_pwd="$PWD"
+    script_path="$1"
+    script_dir="$(cd "$(dirname "$script_path")" && pwd)"
+    script_name="$(basename "$script_path")"
+    old_pwd="$PWD"
 
     # Temporarily disable exit on error for sourced scripts
     set +e
@@ -29,7 +29,7 @@ source_script() {
 
     # Source the script (errors won't exit due to set +e)
     . "./$script_name"
-    local result=$?
+    result=$?
 
     cd "$old_pwd" || {
         set -e

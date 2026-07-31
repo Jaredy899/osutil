@@ -7,11 +7,10 @@ installSlack() {
         printf "%b\n" "${YELLOW}Installing Slack...${RC}"
         case "$PACKAGER" in
             pacman)
-                "$AUR_HELPER" -S --needed --noconfirm slack-desktop
+                installAurPkg slack-desktop
                 ;;
-            *)  
-                checkFlatpak
-                "$ESCALATION_TOOL" flatpak install -y flathub com.slack.Slack
+            *)
+                installFlatpak com.slack.Slack
                 ;;
         esac
     else

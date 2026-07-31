@@ -1,39 +1,43 @@
 name = "Development"
 
 [[data]]
-name = "Rust (mise)"
-description = "Installs the latest stable Rust toolchain via mise and adds rustfmt and clippy."
+name = "Mise"
+description = "Installs mise (polyglot toolchain manager) and links config from your dotfiles. Run this before installing language toolchains."
+script = "mise.sh"
+task_list = "I"
+
+[[data]]
+name = "Rust"
+description = "Installs the latest stable Rust toolchain via mise and adds rustfmt and clippy. Requires Mise (auto-installs if missing)."
 script = "rust.sh"
 task_list = "I"
 
 [[data]]
-name = "Go (mise)"
-description = "Installs the latest stable Go via mise."
+name = "Go"
+description = "Installs the latest stable Go via mise. Requires Mise (auto-installs if missing)."
 script = "go.sh"
 task_list = "I"
 
 [[data]]
-name = "Node.js (mise)"
-description = "Installs the latest Node.js via mise and enables Corepack (Yarn/pnpm)."
+name = "Node.js"
+description = "Installs the latest Node.js via mise and enables Corepack (Yarn/pnpm). Requires Mise (auto-installs if missing)."
 script = "node.sh"
 task_list = "I"
 
 [[data]]
-name = "Zig (mise)"
-description = "Installs the latest stable Zig via mise."
+name = "Zig"
+description = "Installs the latest stable Zig via mise. Requires Mise (auto-installs if missing)."
 script = "zig.sh"
 task_list = "I"
 
 [[data]]
-name = "Java (mise)"
-description = "Installs OpenJDK (prefers 21, falls back to 17) via mise."
+name = "Java"
+description = "Installs OpenJDK (prefers 21, falls back to 17) via mise. Requires Mise (auto-installs if missing)."
 script = "java.sh"
 task_list = "I"
 
 [[data]]
-name = "Ruby (mise)"
-description = "Installs the latest stable Ruby via mise."
+name = "Ruby"
+description = "Installs build dependencies and the latest stable Ruby via mise. Requires Mise (auto-installs if missing)."
 script = "ruby.sh"
 task_list = "I"
-
-

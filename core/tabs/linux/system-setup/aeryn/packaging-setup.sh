@@ -33,7 +33,7 @@ checkAeryn() {
 installBuildEssential() {
     printf "%b\n" "${CYAN}=== Installing build-essential ===${RC}"
     "$ESCALATION_TOOL" "$PACKAGER" sync -u
-    "$ESCALATION_TOOL" "$PACKAGER" install -y build-essential
+    installPkg build-essential
     printf "%b\n" "${GREEN}build-essential installed (includes just, boulder, etc.).${RC}"
 }
 
