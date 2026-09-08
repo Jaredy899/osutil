@@ -28,7 +28,7 @@ sh <(curl -fsSL jaredcervantes.com/os)
 | **Debian** / **Ubuntu** | apt/nala |
 | **Fedora** | dnf |
 | **Fedora Atomic** (Bazzite, Silverblue, Kinoite) | rpm-ostree |
-| **AerynOS** | moss |
+| **aerynOS** | moss |
 | **openSUSE** | zypper |
 | **Alpine** | apk |
 | **Void** | xbps |
