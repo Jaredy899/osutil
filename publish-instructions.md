@@ -1,43 +1,24 @@
 # Publishing Instructions
 
-## Automated Release
-
-1. Update version in `Cargo.toml` (workspace package section)
-2. Commit and push changes
-3. Create and push a tag: `git tag v1.0.0 && git push origin v1.0.0`
-4. The GitHub Actions workflow will automatically:
-   - Build for Linux (x86_64 & ARM) and macOS (x86_64 & ARM)
-   - Create a release with all platform binaries
-
-## Version Management
-
-The workspace uses a single version defined in the root `Cargo.toml`:
-
-```toml
-[workspace.package]
-version = "1.0.0"
+```bash
+./build.sh
 ```
 
-All crates in the workspace inherit this version via `version.workspace = true`.
+That's it. The script:
+
+1. Asks which version to build (Enter keeps the current one)
+2. Sets the version in `Cargo.toml`, runs `cargo update`, and builds
+   Linux (x86_64, aarch64, armv7) and macOS (Intel, Apple Silicon) binaries into `dist/`
+3. Asks whether to commit, tag, push, and publish a GitHub release with the binaries
+
+Answer `n` at step 3 to just get local binaries.
+
+Works from Linux or macOS. Requires `zig`, Rust, and `gh` (authenticated, only for releasing).
+Rust cross targets, `cargo-zigbuild`, and the macOS SDK (cached in `~/.cache/osutil`) are
+installed automatically. Set `SDKROOT` to use your own macOS SDK.
 
 ## Installation
 
-Users can install osutil on macOS and Linux:
-
 ```bash
 sh <(curl -fsSL https://raw.githubusercontent.com/Jaredy899/osutil/main/install.sh)
-```
-
-## Local Development
-
-To build for all platforms locally:
-
-```bash
-./build-all.sh
-```
-
-To build for the current platform only:
-
-```bash
-cargo build --release
 ```

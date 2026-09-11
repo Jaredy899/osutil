@@ -1,6 +1,6 @@
 # Local Build + GitHub Release Upload
 # Build your packages locally, then upload them to GitHub releases
-# Use: ./build-and-release.sh
+# Use: ./build.sh
 name: Release Documentation
 
 on:
@@ -18,7 +18,4 @@ jobs:
           echo "Release ${{ github.ref_name }} created via local build script"
           echo "View at: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
           echo ""
-          echo "To create releases locally, use:"
-          echo "  git tag v1.0.0"
-          echo "  git push origin v1.0.0"
-          echo "  ./build-and-release.sh"
+          echo "To create releases locally, run ./build.sh and answer the prompts."
