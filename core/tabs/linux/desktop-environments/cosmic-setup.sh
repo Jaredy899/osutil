@@ -50,7 +50,7 @@ installCOSMIC() {
 
     if [ "$PACKAGER" = "moss" ]; then
         printDMMessage "$DE_NAME" "cosmic-session"
-        printf "%b\n" "${CYAN}Optional: use COSMIC greeter instead of GDM: sudo moss install cosmic-greeter && sudo moss remove gdm${RC}"
+        printf "%b\n" "${CYAN}Optional: use COSMIC greeter instead of GDM: sudo moss pkg add cosmic-greeter && sudo moss pkg remove gdm${RC}"
     elif [ "$PACKAGER" = "pacman" ]; then
         printDMMessage "$DE_NAME" "cosmic-session"
     fi

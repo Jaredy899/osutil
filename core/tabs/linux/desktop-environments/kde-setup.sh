@@ -72,7 +72,7 @@ installKDE() {
     if [ "$PACKAGER" != "apk" ]; then
         printDMMessage "$DE_NAME" "startplasma-x11"
         if [ "$PACKAGER" = "moss" ]; then
-            printf "%b\n" "${CYAN}Optional: use SDDM or Plasma login: sudo moss install sddm (or plasma-login-manager) && sudo moss remove gdm${RC}"
+            printf "%b\n" "${CYAN}Optional: use SDDM or Plasma login: sudo moss pkg add sddm (or plasma-login-manager) && sudo moss pkg remove gdm${RC}"
         fi
     fi
 }

@@ -9,7 +9,7 @@
 . ../../common-script.sh
 
 AERYNOS_RECIPES_URL="https://github.com/AerynOS/recipes"
-VOLATILE_URI="https://build.aerynos.dev/volatile/x86_64/stone.index"
+VOLATILE_BASE_URI="https://cdn.aerynos.dev"
 LOCAL_URI="file://${HOME}/.cache/local_repo/x86_64/stone.index"
 AERYNOS_RECIPES_DIR="${HOME}/repos/aerynos/recipes"
 
@@ -87,10 +87,11 @@ setupJustInit() {
 }
 
 setupGitMossDiff() {
-    printf "%b\n" "${CYAN}=== Git diff for manifest.*.bin (moss inspect) ===${RC}"
+    printf "%b\n" "${CYAN}=== Git diff for manifest.*.bin (moss pkg inspect) ===${RC}"
     [ -d "${AERYNOS_RECIPES_DIR}/.git" ] || return 0
-    if ! git -C "$AERYNOS_RECIPES_DIR" config --get diff.moss.textconv >/dev/null 2>&1; then
-        git -C "$AERYNOS_RECIPES_DIR" config 'diff.moss.textconv' 'moss inspect'
+    moss_diff="$(git -C "$AERYNOS_RECIPES_DIR" config --get diff.moss.textconv 2>/dev/null || true)"
+    if [ "$moss_diff" != "moss pkg inspect" ]; then
+        git -C "$AERYNOS_RECIPES_DIR" config 'diff.moss.textconv' 'moss pkg inspect'
         git -C "$AERYNOS_RECIPES_DIR" config 'diff.moss.binary' 'true'
         printf "%b\n" "${GREEN}Git moss diff configured.${RC}"
     else
@@ -133,12 +134,18 @@ createLocalRepoAndMossRepos() {
         [Yy]*)
             (cd "$AERYNOS_RECIPES_DIR" && just create-local && just index-local)
             if ! "$PACKAGER" repo list 2>/dev/null | grep -q "volatile"; then
-                "$ESCALATION_TOOL" "$PACKAGER" repo add volatile "$VOLATILE_URI" -p 10
+                "$ESCALATION_TOOL" "$PACKAGER" repo add volatile "$VOLATILE_BASE_URI" \
+                    --root-index "channel=main,version=stream/volatile" \
+                    --priority 10 \
+                    --comment "aerynOS volatile stream"
             fi
             if ! "$PACKAGER" repo list 2>/dev/null | grep -q "local"; then
-                "$ESCALATION_TOOL" "$PACKAGER" repo add local "$LOCAL_URI" -p 100
+                "$ESCALATION_TOOL" "$PACKAGER" repo add local "$LOCAL_URI" \
+                    --priority 100 \
+                    --comment "Local repository"
             fi
-            printf "%b\n" "${YELLOW}Add boulder profile for local builds: boulder profile add --reponame=volatile,uri=${VOLATILE_URI},priority=0 --reponame=local,uri=${LOCAL_URI},priority=100 local-x86_64${RC}"
+            printf "%b\n" "${YELLOW}Add boulder profile for local builds:${RC}"
+            printf "%b\n" "${CYAN}boulder profile add --repo name=volatile,base-uri=${VOLATILE_BASE_URI},version=stream/volatile,priority=0 --repo name=local,uri=${LOCAL_URI},priority=100 local-x86_64${RC}"
             printf "%b\n" "${GREEN}Local repo created; volatile and local moss repos added. Enable with: sudo moss repo enable volatile; sudo moss repo enable local; sudo moss sync -u${RC}"
             ;;
         *)

@@ -107,8 +107,11 @@ installDisplayManager() {
     if [ "$DM_EXISTS" -eq 1 ] && [ "$DM" != "none" ]; then
         printf "%b\n" "${CYAN}Installing and enabling $DM display manager...${RC}"
         case "$PACKAGER" in
-            apt-get|nala|dnf|zypper|eopkg|moss)
+            apt-get|nala|dnf|zypper|eopkg)
                 "$ESCALATION_TOOL" "$PACKAGER" install -y "$DM"
+                ;;
+            moss)
+                installPkg "$DM"
                 ;;
             pacman)
                 "$ESCALATION_TOOL" "$PACKAGER" -S --noconfirm "$DM"

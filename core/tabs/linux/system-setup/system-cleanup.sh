@@ -33,7 +33,7 @@ cleanup_system() {
     "$ESCALATION_TOOL" "$PACKAGER" -y remove-orphans
     ;;
   moss)
-    "$ESCALATION_TOOL" "$PACKAGER" -y state prune --keep 10
+    "$ESCALATION_TOOL" "$PACKAGER" -y state remove --keep 10
     "$ESCALATION_TOOL" "$PACKAGER" -y cache prune
     ;;
   rpm-ostree)
