@@ -246,11 +246,11 @@ case "$PKG_MGR" in
     INSTALLED_CMD="eopkg list-installed | awk '{print \$1}'"
     ;;
   moss)
-    LIST_CMD="moss list available"
-    INFO_CMD="moss info {1}"
-    INSTALL_CMD="$ESCALATION_TOOL moss install -y"
-    REMOVE_CMD="$ESCALATION_TOOL moss remove -y"
-    INSTALLED_CMD="moss list installed | awk '{print \$1}'"
+    LIST_CMD="moss pkg list --available"
+    INFO_CMD="moss pkg info {1}"
+    INSTALL_CMD="$ESCALATION_TOOL moss pkg add -y"
+    REMOVE_CMD="$ESCALATION_TOOL moss pkg remove -y"
+    INSTALLED_CMD="moss state info active | awk '/^Packages:/ {p=1; next} p && NF {print \$1}'"
     ;;
   xbps-install)
     LIST_CMD="xbps-query -Rs '' | awk '{print \$2}'"
@@ -408,7 +408,23 @@ fi
 exit 0
 EOF
 
-    if [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "moss" ] || [ "$PACKAGER" = "rpm-ostree" ]; then
+    if [ "$PACKAGER" = "moss" ]; then
+        # moss replaces /usr on every sync, so a copy there disappears.
+        bindir="$HOME/.local/bin"
+        mkdir -p "$bindir"
+        mv "$tmpfile" "$bindir/pkg-tui"
+        chmod +x "$bindir/pkg-tui"
+        if [ -e /usr/bin/pkg-tui ]; then
+            "$ESCALATION_TOOL" rm -f /usr/bin/pkg-tui || true
+        fi
+        printf "%b\n" "${GREEN}pkg-tui script installed to ${bindir}/pkg-tui${RC}"
+        case ":$PATH:" in
+            *":${bindir}:"*) ;;
+            *)
+                printf "%b\n" "${CYAN}Note: Add ${bindir} to your PATH if pkg-tui is not found.${RC}"
+                ;;
+        esac
+    elif [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "rpm-ostree" ]; then
         "$ESCALATION_TOOL" mv "$tmpfile" /usr/bin/pkg-tui
         "$ESCALATION_TOOL" chmod +x /usr/bin/pkg-tui
         printf "%b\n" "${GREEN}pkg-tui script installed to /usr/bin/pkg-tui${RC}"

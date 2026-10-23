@@ -191,6 +191,7 @@ checkDistro() {
 ## Install packages with the detected package manager.
 ## Usage: installPkg pkg1 [pkg2 ...]
 ## Respects pacman/apk/xbps/zypper/dnf/eopkg/moss/rpm-ostree/apt/nala/pkg flags.
+## moss 0.26+: `moss pkg add` (the old `moss install` command is gone).
 installPkg() {
     if [ -z "$PACKAGER" ]; then
         printf "%b\n" "${RED}PACKAGER is not set. Run checkEnv/checkPackageManager first.${RC}"
@@ -208,8 +209,11 @@ installPkg() {
         apt-get|nala)
             "$ESCALATION_TOOL" "$PACKAGER" install -y "$@"
             ;;
-        dnf|eopkg|moss)
+        dnf|eopkg)
             "$ESCALATION_TOOL" "$PACKAGER" install -y "$@"
+            ;;
+        moss)
+            "$ESCALATION_TOOL" "$PACKAGER" pkg add -y "$@"
             ;;
         rpm-ostree)
             "$ESCALATION_TOOL" "$PACKAGER" install --allow-inactive "$@"
