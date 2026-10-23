@@ -71,19 +71,29 @@ command -v cargo-zigbuild >/dev/null || { echo "==> Installing cargo-zigbuild"; 
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
     [[ -n "${SDKROOT:-}" ]] || export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
-elif [[ -z "${SDKROOT:-}" || ! -d "$SDKROOT" ]]; then
+else
     sdk_ver="${MACOSX_SDK_VERSION:-14.5}"
     cache="${XDG_CACHE_HOME:-$HOME/.cache}/osutil"
     sdk="$cache/MacOSX${sdk_ver}.sdk"
-    if [[ ! -d "$sdk" ]]; then
+    # A previous extract can leave the directory tree with every file missing.
+    # Zig then fails at link time looking for usr/lib/libobjc.tbd.
+    if [[ -z "${SDKROOT:-}" || ! -d "$SDKROOT" ]]; then
+        SDKROOT="$sdk"
+    fi
+    if [[ "$SDKROOT" == "$sdk" && ! -f "$sdk/usr/lib/libobjc.tbd" ]]; then
         echo "==> Downloading macOS $sdk_ver SDK to $cache"
+        rm -rf "$sdk"
         mkdir -p "$cache"
         curl -fL --retry 3 -o "$cache/sdk.tar.xz" \
             "https://github.com/joseluisq/macosx-sdks/releases/download/${sdk_ver}/MacOSX${sdk_ver}.sdk.tar.xz"
         tar -xJf "$cache/sdk.tar.xz" -C "$cache"
         rm -f "$cache/sdk.tar.xz"
     fi
-    export SDKROOT="$sdk"
+    if [[ ! -f "$SDKROOT/usr/lib/libobjc.tbd" ]]; then
+        echo "error: macOS SDK at $SDKROOT is missing usr/lib/libobjc.tbd" >&2
+        exit 1
+    fi
+    export SDKROOT
 fi
 
 ########################################
