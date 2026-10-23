@@ -1248,7 +1248,7 @@ dependencies = [
 
 [[package]]
 name = "osutil_core"
-version = "2.2.3"
+version = "2.2.4"
 dependencies = [
  "ego-tree",
  "include_dir",
@@ -1260,7 +1260,7 @@ dependencies = [
 
 [[package]]
 name = "osutil_tui"
-version = "2.2.3"
+version = "2.2.4"
 dependencies = [
  "anyhow",
  "clap",
