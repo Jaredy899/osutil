@@ -1,33 +1,33 @@
 #!/bin/sh -e
 #
-# Prepares AerynOS for packaging per the official workflow:
-# https://aerynos.dev/packaging/workflow/
+# Prepares aerynOS for packaging per the official workflow:
+# https://aerynos.com/packaging/workflow/
 # Covers: build-essential, clone recipes, helpers, just init, subuid/subgid,
 # optional local repo + boulder profile + moss repos (volatile/local).
 #
 
 . ../../common-script.sh
 
-AERYNOS_RECIPES_URL="https://github.com/AerynOS/recipes"
+AERYNOS_RECIPES_URL="https://github.com/aerynOS/recipes"
 VOLATILE_BASE_URI="https://cdn.aerynos.dev"
 LOCAL_URI="file://${HOME}/.cache/local_repo/x86_64/stone.index"
-AERYNOS_RECIPES_DIR="${HOME}/repos/aerynos/recipes"
+AERYNOS_RECIPES_DIR="${HOME}/Projects/aerynos/recipes"
 
 checkAeryn() {
     if [ "$PACKAGER" != "moss" ]; then
-        printf "%b\n" "${RED}This script is for AerynOS (moss). Current packager: ${PACKAGER}${RC}"
+        printf "%b\n" "${RED}This script is for aerynOS (moss). Current packager: ${PACKAGER}${RC}"
         exit 1
     fi
     if [ -f /etc/os-release ]; then
         . /etc/os-release
         if [ "$ID" != "aerynos" ] && [ "${ID#aeryn}" = "$ID" ]; then
             if ! command_exists moss 2>/dev/null; then
-                printf "%b\n" "${RED}This script is for AerynOS. Detected OS: ${ID:-unknown}${RC}"
+                printf "%b\n" "${RED}This script is for aerynOS. Detected OS: ${ID:-unknown}${RC}"
                 exit 1
             fi
         fi
     fi
-    printf "%b\n" "${CYAN}AerynOS detected. Preparing packaging environment.${RC}"
+    printf "%b\n" "${CYAN}aerynOS detected. Preparing packaging environment.${RC}"
 }
 
 installBuildEssential() {
@@ -37,9 +37,34 @@ installBuildEssential() {
     printf "%b\n" "${GREEN}build-essential installed (includes just, boulder, etc.).${RC}"
 }
 
+# Symlink helpers into a bashrc.d that this shell actually loads.
+# Prefer DOTFILES modular *.sh (common here), else official ~/.bashrc.d.
+linkHelpers() {
+    HELPERS_BASH="$1"
+    DOTFILES_BASHRC_D="${DOTFILES:-${HOME}/dotfiles}/bash/.bashrc.d"
+
+    if [ -d "$DOTFILES_BASHRC_D" ]; then
+        BASHRC_D="$DOTFILES_BASHRC_D"
+        # Jared's (and similar) bashrc only sources *.sh from this dir.
+        HELPER_LINK="${BASHRC_D}/90-aerynos-helpers.sh"
+    else
+        BASHRC_D="${HOME}/.bashrc.d"
+        HELPER_LINK="${BASHRC_D}/90-aerynos-helpers.bash"
+        mkdir -p "$BASHRC_D"
+        if ! grep -q '\.bashrc\.d' "${HOME}/.bashrc" 2>/dev/null; then
+            printf "%b\n" "${YELLOW}Add this to ~/.bashrc so helpers load:${RC}"
+            printf "%b\n" "${CYAN}if [ -d \"\$HOME/.bashrc.d\" ]; then for f in \"\$HOME\"/.bashrc.d/*; do [ -r \"\$f\" ] && . \"\$f\"; done; fi${RC}"
+        fi
+    fi
+
+    mkdir -p "$BASHRC_D"
+    ln -sf "$HELPERS_BASH" "$HELPER_LINK"
+    printf "%b\n" "${GREEN}Symlinked helpers to ${HELPER_LINK}. Source ~/.bashrc or open a new shell, then run: gotoaosrepo${RC}"
+}
+
 cloneAndSetupHelpers() {
-    printf "%b\n" "${CYAN}=== Clone AerynOS recipes and activate helpers ===${RC}"
-    REPOS_BASE="${HOME}/repos/aerynos"
+    printf "%b\n" "${CYAN}=== Clone aerynOS recipes and activate helpers ===${RC}"
+    REPOS_BASE="${HOME}/Projects/aerynos"
     RECIPES_DIR="${REPOS_BASE}/recipes"
     printf "%b" "${CYAN}Recipes clone path [${RECIPES_DIR}]: ${RC}"
     read -r clone_path
@@ -55,7 +80,7 @@ cloneAndSetupHelpers() {
             printf "%b\n" "${RED}Path exists and is not a git repo: $clone_path${RC}"
             return 1
         fi
-        printf "%b\n" "${YELLOW}Cloning AerynOS/recipes to ${clone_path} ...${RC}"
+        printf "%b\n" "${YELLOW}Cloning aerynOS/recipes to ${clone_path} ...${RC}"
         git clone "$AERYNOS_RECIPES_URL" "$clone_path"
         RECIPES_DIR="$clone_path"
         AERYNOS_RECIPES_DIR="$clone_path"
@@ -67,12 +92,8 @@ cloneAndSetupHelpers() {
         return 1
     fi
 
-    BASHRC_D="${HOME}/dotfiles/bash/.bashrc.d"
-    mkdir -p "$BASHRC_D"
-    chmod 700 "$BASHRC_D"
-    ln -sf "$HELPERS_BASH" "${BASHRC_D}/90-aerynos-helpers.bash"
     AERYNOS_RECIPES_DIR="$RECIPES_DIR"
-    printf "%b\n" "${GREEN}Symlinked helpers to ${BASHRC_D}/90-aerynos-helpers.bash. Source ~/.bashrc or open a new shell, then run: gotoaosrepo${RC}"
+    linkHelpers "$HELPERS_BASH"
 }
 
 setupJustInit() {
@@ -87,11 +108,12 @@ setupJustInit() {
 }
 
 setupGitMossDiff() {
-    printf "%b\n" "${CYAN}=== Git diff for manifest.*.bin (moss pkg inspect) ===${RC}"
+    # just init usually configures this; keep a correct fallback (moss inspect, not moss pkg inspect).
+    printf "%b\n" "${CYAN}=== Git diff for manifest.*.bin (moss inspect) ===${RC}"
     [ -d "${AERYNOS_RECIPES_DIR}/.git" ] || return 0
     moss_diff="$(git -C "$AERYNOS_RECIPES_DIR" config --get diff.moss.textconv 2>/dev/null || true)"
-    if [ "$moss_diff" != "moss pkg inspect" ]; then
-        git -C "$AERYNOS_RECIPES_DIR" config 'diff.moss.textconv' 'moss pkg inspect'
+    if [ "$moss_diff" != "moss inspect" ]; then
+        git -C "$AERYNOS_RECIPES_DIR" config 'diff.moss.textconv' 'moss inspect'
         git -C "$AERYNOS_RECIPES_DIR" config 'diff.moss.binary' 'true'
         printf "%b\n" "${GREEN}Git moss diff configured.${RC}"
     else
@@ -122,6 +144,22 @@ setupSubuidSubgid() {
     printf "%b\n" "${GREEN}subuid/subgid entries configured.${RC}"
 }
 
+ensureBoulderLocalProfile() {
+    if ! command_exists boulder; then
+        return 0
+    fi
+    if boulder profile list 2>/dev/null | grep -q 'local-x86_64'; then
+        printf "%b\n" "${CYAN}boulder profile local-x86_64 already present.${RC}"
+        return 0
+    fi
+    printf "%b\n" "${CYAN}Adding boulder profile local-x86_64...${RC}"
+    boulder profile add \
+        --repo "name=volatile,base-uri=${VOLATILE_BASE_URI},version=stream/volatile,priority=0" \
+        --repo "name=local,uri=${LOCAL_URI},priority=100" \
+        local-x86_64
+    printf "%b\n" "${GREEN}boulder profile local-x86_64 added.${RC}"
+}
+
 createLocalRepoAndMossRepos() {
     printf "%b\n" "${CYAN}=== Local repo and moss volatile/local ===${RC}"
     if [ ! -d "$AERYNOS_RECIPES_DIR" ] || ! command_exists just; then
@@ -144,12 +182,11 @@ createLocalRepoAndMossRepos() {
                     --priority 100 \
                     --comment "Local repository"
             fi
-            printf "%b\n" "${YELLOW}Add boulder profile for local builds:${RC}"
-            printf "%b\n" "${CYAN}boulder profile add --repo name=volatile,base-uri=${VOLATILE_BASE_URI},version=stream/volatile,priority=0 --repo name=local,uri=${LOCAL_URI},priority=100 local-x86_64${RC}"
+            ensureBoulderLocalProfile
             printf "%b\n" "${GREEN}Local repo created; volatile and local moss repos added. Enable with: sudo moss repo enable volatile; sudo moss repo enable local; sudo moss sync -u${RC}"
             ;;
         *)
-            printf "%b\n" "${CYAN}Skipped. See https://aerynos.dev/packaging/workflow/basic-workflow/${RC}"
+            printf "%b\n" "${CYAN}Skipped. See https://aerynos.com/packaging/workflow/basic-workflow/${RC}"
             ;;
     esac
 }

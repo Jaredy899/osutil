@@ -250,7 +250,7 @@ case "$PKG_MGR" in
     INFO_CMD="moss pkg info {1}"
     INSTALL_CMD="$ESCALATION_TOOL moss pkg add -y"
     REMOVE_CMD="$ESCALATION_TOOL moss pkg remove -y"
-    INSTALLED_CMD="moss state info active | awk '/^Packages:/ {p=1; next} p && NF {print \$1}'"
+    INSTALLED_CMD="moss pkg list --installed | awk '{print \$1}'"
     ;;
   xbps-install)
     LIST_CMD="xbps-query -Rs '' | awk '{print \$2}'"
@@ -408,31 +408,28 @@ fi
 exit 0
 EOF
 
-    if [ "$PACKAGER" = "moss" ]; then
-        # moss replaces /usr on every sync, so a copy there disappears.
-        bindir="$HOME/.local/bin"
-        mkdir -p "$bindir"
-        mv "$tmpfile" "$bindir/pkg-tui"
-        chmod +x "$bindir/pkg-tui"
-        if [ -e /usr/bin/pkg-tui ]; then
-            "$ESCALATION_TOOL" rm -f /usr/bin/pkg-tui || true
+    # Always install under ~/.local/bin:
+    # - hermetic (moss / rpm-ostree): /usr is replaced on sync/upgrade
+    # - traditional distros: no root needed; XDG user bin is usually on PATH
+    bindir="${XDG_BIN_HOME:-$HOME/.local/bin}"
+    mkdir -p "$bindir"
+    mv "$tmpfile" "$bindir/pkg-tui"
+    chmod +x "$bindir/pkg-tui"
+
+    # Drop stale system copies from older installs so PATH prefers the user one.
+    for stale in /usr/bin/pkg-tui /usr/local/bin/pkg-tui; do
+        if [ -e "$stale" ]; then
+            "$ESCALATION_TOOL" rm -f "$stale" || true
         fi
-        printf "%b\n" "${GREEN}pkg-tui script installed to ${bindir}/pkg-tui${RC}"
-        case ":$PATH:" in
-            *":${bindir}:"*) ;;
-            *)
-                printf "%b\n" "${CYAN}Note: Add ${bindir} to your PATH if pkg-tui is not found.${RC}"
-                ;;
-        esac
-    elif [ "$PACKAGER" = "eopkg" ] || [ "$PACKAGER" = "rpm-ostree" ]; then
-        "$ESCALATION_TOOL" mv "$tmpfile" /usr/bin/pkg-tui
-        "$ESCALATION_TOOL" chmod +x /usr/bin/pkg-tui
-        printf "%b\n" "${GREEN}pkg-tui script installed to /usr/bin/pkg-tui${RC}"
-    else
-        "$ESCALATION_TOOL" mv "$tmpfile" /usr/local/bin/pkg-tui
-        "$ESCALATION_TOOL" chmod +x /usr/local/bin/pkg-tui
-        printf "%b\n" "${GREEN}pkg-tui script installed to /usr/local/bin/pkg-tui${RC}"
-    fi
+    done
+
+    printf "%b\n" "${GREEN}pkg-tui script installed to ${bindir}/pkg-tui${RC}"
+    case ":$PATH:" in
+        *":${bindir}:"*) ;;
+        *)
+            printf "%b\n" "${CYAN}Note: Add ${bindir} to your PATH if pkg-tui is not found.${RC}"
+            ;;
+    esac
 }
 
 addAlias() {

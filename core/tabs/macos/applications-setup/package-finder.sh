@@ -10,7 +10,7 @@ installDependencies() {
 }
 
 buildPkgTui() {
-    printf "%b\n" "${YELLOW}Building pkg-tui script (Homebrew)...${RC}"
+    printf "%b\n" "${YELLOW}Building pkg-tui script...${RC}"
     tmpfile=$(mktemp)
     cat > "$tmpfile" <<"EOF"
 #!/bin/sh
@@ -298,12 +298,27 @@ fi
 exit 0
 EOF
 
-    ensureHomebrewAvailable
-    BREW_BIN="$(brew --prefix)/bin"
-    mkdir -p "$BREW_BIN"
-    mv "$tmpfile" "$BREW_BIN/pkg-tui"
-    chmod +x "$BREW_BIN/pkg-tui"
-    printf "%b\n" "${GREEN}pkg-tui installed to ${BREW_BIN}/pkg-tui${RC}"
+    # Same as Linux: user-local bin survives brew upgrades and needs no root.
+    bindir="${XDG_BIN_HOME:-$HOME/.local/bin}"
+    mkdir -p "$bindir"
+    mv "$tmpfile" "$bindir/pkg-tui"
+    chmod +x "$bindir/pkg-tui"
+
+    # Drop a stale brew-prefix copy from older installs if present.
+    if command -v brew >/dev/null 2>&1; then
+        brew_pkg="$(brew --prefix 2>/dev/null)/bin/pkg-tui"
+        if [ -e "$brew_pkg" ] && [ "$brew_pkg" != "$bindir/pkg-tui" ]; then
+            rm -f "$brew_pkg" || true
+        fi
+    fi
+
+    printf "%b\n" "${GREEN}pkg-tui installed to ${bindir}/pkg-tui${RC}"
+    case ":$PATH:" in
+        *":${bindir}:"*) ;;
+        *)
+            printf "%b\n" "${CYAN}Note: Add ${bindir} to your PATH if pkg-tui is not found.${RC}"
+            ;;
+    esac
 }
 
 addAlias() {

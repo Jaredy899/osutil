@@ -39,9 +39,9 @@ installGNOME() {
             installDisplayManager
             ;;
         moss)
-            printf "%b\n" "${YELLOW}On AerynOS, GNOME is the default when installing via lichen.${RC}"
+            printf "%b\n" "${YELLOW}On aerynOS, GNOME is the default when installing via lichen.${RC}"
             printf "%b\n" "${YELLOW}If you are on an existing install without GNOME, prefer reinstalling with lichen and selecting GNOME.${RC}"
-            printf "%b\n" "${CYAN}See https://aerynos.dev/users/desktops/gnome/${RC}"
+            printf "%b\n" "${CYAN}See https://aerynos.com/users/desktops/gnome/${RC}"
             exit 0
             ;;
         *)

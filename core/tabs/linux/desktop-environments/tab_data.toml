@@ -3,7 +3,7 @@ warning = "⚠️ BETA WARNING ⚠️\n\nDesktop Environment installations are c
 
 [[data]]
 name = "COSMIC"
-description = "COSMIC is a Wayland-native desktop from System76, written in Rust. On AerynOS install via moss (minimal, recommended, or full package set)."
+description = "COSMIC is a Wayland-native desktop from System76, written in Rust. On aerynOS install via moss (minimal, recommended, or full package set)."
 script = "cosmic-setup.sh"
 task_list = "I SS"
 

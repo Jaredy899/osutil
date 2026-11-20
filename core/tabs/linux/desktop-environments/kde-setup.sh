@@ -49,7 +49,7 @@ installKDE() {
             installDisplayManager
             ;;
         moss)
-            printf "%b\n" "${YELLOW}Select Plasma package set (see https://aerynos.dev/users/desktops/plasma/):${RC}"
+            printf "%b\n" "${YELLOW}Select Plasma package set (see https://aerynos.com/users/desktops/plasma/):${RC}"
             printf "%b\n" "  1) Minimal   - minimum for a Plasma session"
             printf "%b\n" "  2) Recommended (default) - minimal + recommended apps"
             printf "%b\n" "  3) Full      - recommended + all available KDE apps"

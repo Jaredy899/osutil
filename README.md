@@ -58,7 +58,7 @@ Rust 1.85+. Build: `cargo build --release` · Run: `cargo run`
 
 ## Acknowledgments
 
-Based on [Chris Titus Tech's linutil](https://github.com/ChrisTitusTech/linutil). Extended for macOS and additional Linux distros (including Fedora Atomic and AerynOS).
+Based on [Chris Titus Tech's linutil](https://github.com/ChrisTitusTech/linutil). Extended for macOS and additional Linux distros (including Fedora Atomic and aerynOS).
 
 ## License
 

@@ -30,7 +30,7 @@ installCOSMIC() {
             installDisplayManager
             ;;
         moss)
-            printf "%b\n" "${YELLOW}Select COSMIC package set (see https://aerynos.dev/users/desktops/cosmic/):${RC}"
+            printf "%b\n" "${YELLOW}Select COSMIC package set (see https://aerynos.com/users/desktops/cosmic/):${RC}"
             printf "%b\n" "  1) Minimal   - minimum for a COSMIC session"
             printf "%b\n" "  2) Recommended (default) - minimal + recommended apps"
             printf "%b\n" "  3) Full      - recommended + optional apps"

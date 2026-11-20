@@ -11,7 +11,7 @@ installRofi() {
                 ;;
             moss|rpm-ostree|pkg)
                 printf "%b\n" "${YELLOW}Rofi is not packaged for ${PACKAGER}.${RC}"
-                printf "%b\n" "${CYAN}On AerynOS/Wayland, try fuzzel via Package Finder instead.${RC}"
+                printf "%b\n" "${CYAN}On aerynOS/Wayland, try fuzzel via Package Finder instead.${RC}"
                 return 1
                 ;;
             *)

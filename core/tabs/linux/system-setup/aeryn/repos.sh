@@ -1,21 +1,21 @@
 #!/bin/sh -e
 #
-# Manage AerynOS moss repositories (volatile for packaging, local for build artifacts).
-# https://aerynos.dev/packaging/workflow/basic-workflow/
+# Manage aerynOS moss repositories (volatile for packaging, local for build artifacts).
+# https://aerynos.com/packaging/workflow/basic-workflow/
 #
 
 . ../../common-script.sh
 
 checkAeryn() {
     if [ "$PACKAGER" != "moss" ]; then
-        printf "%b\n" "${RED}This script is for AerynOS (moss). Current packager: ${PACKAGER}${RC}"
+        printf "%b\n" "${RED}This script is for aerynOS (moss). Current packager: ${PACKAGER}${RC}"
         exit 1
     fi
     if [ -f /etc/os-release ]; then
         . /etc/os-release
         if [ "$ID" != "aerynos" ] && [ "${ID#aeryn}" = "$ID" ]; then
             if ! command_exists moss 2>/dev/null; then
-                printf "%b\n" "${RED}This script is for AerynOS. Detected OS: ${ID:-unknown}${RC}"
+                printf "%b\n" "${RED}This script is for aerynOS. Detected OS: ${ID:-unknown}${RC}"
                 exit 1
             fi
         fi
